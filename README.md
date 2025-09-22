@@ -41,10 +41,14 @@ Bio TBD
 
 ## License
 
-TBD
+We’ve deliberately chosen not to license this repository.
+
+All source code here is the proprietary intellectual property of the BiteScan team and may not be copied, modified, or redistributed without our explicit written authorization. Keeping the code unlicensed preserves our complete control over its use and distribution and supports future commercialization without added legal complexity.
+
+Questions or permission requests? Please reach out via our public contact channels.
 
 ---
 
 ## Disclaimer
 
-TBD
+BiteScan is provided as is, without warranties of any kind. Nutrition and pricing insights are estimates and are not medical or financial advice. Always verify information independently and consult a qualified professional for health-related decisions. BiteScan is not affiliated with or endorsed by any retailers or brands referenced. Do not upload sensitive personal data. Use at your own risk.
