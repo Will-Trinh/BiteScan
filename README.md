@@ -23,7 +23,7 @@ Android Studio, Kotlin
 
 ### William Trinh - Full-Stack Engineer / Project Manager
 
-Bio TBD
+William Trinh is a software engineer with a diverse background in full-stack development and product management. His interests include fitness, hiking, and cooking.
 
 ### Brandon Wong - Lead Engineer
 
