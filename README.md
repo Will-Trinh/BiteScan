@@ -15,7 +15,7 @@ BiteScan helps people and busy households turn grocery receipts into actionable 
 
 ## Technologies Used
 
-TBD
+Android Studio, Kotlin
 
 ---
 
@@ -29,7 +29,7 @@ Bio TBD
 
 Bio TBD
 
-### Tran Nguyen - Full-Stack Engineer
+### Tran Nguyen - Front-End Engineer
 
 Bio TBD
 
