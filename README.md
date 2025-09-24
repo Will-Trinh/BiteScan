@@ -31,7 +31,7 @@ Bio TBD
 
 ### Tran Nguyen - Front-End Engineer
 
-Tran is passionate about front-end development and creating intuitive, user-friendly UI/UX designs. Outside of tech, she enjoy trying new restaurants, cooking at home, spending time at the beach, and traveling.
+Tran is passionate about front-end development and creating intuitive, user-friendly UI/UX designs. Outside of tech, she enjoys trying new restaurants, cooking at home, spending time at the beach, and traveling.
 
 ### Hoang Nguyen - Full-stack Engineer
 
