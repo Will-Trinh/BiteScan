@@ -1,0 +1,78 @@
+<!--
+  ~ Copyright (C) 2023 The Android Open Source Project
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     https://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<resources>
+    <string name="app_name">Inventory</string>
+    <string name="attention">Attention</string>
+    <string name="back_button">Back</string>
+    <string name="delete">Delete</string>
+    <string name="delete_question">Are you sure you want to delete?</string>
+    <string name="no_item_description">Oops!\nNo items in the inventory.\nTap + to add.</string>
+    <string name="edit_item_title">Edit Item</string>
+    <string name="item">Item</string>
+    <string name="item_detail_title">Item Details</string>
+    <string name="item_comfirm_title">Item Comfirm</string>
+    <string name="item_entry_title">Add Item</string>
+    <string name="item_name_req">Item Name*</string>
+    <string name="item_price_req">Item Price*</string>
+    <string name="no">No</string>
+    <string name="price">Price</string>
+    <string name="quantity_in_stock">Quantity in stock</string>
+    <string name="in_stock">%d in stock</string>
+    <string name="quantity_req">Quantity in Stock*</string>
+    <string name="save_action">Save</string>
+    <string name="sell">Sell</string>
+    <string name="yes">Yes</string>
+    <string name="required_fields">*required fields</string>
+    <string name="order_item_title">Order Item</string>
+    <string name="order">Order</string>
+    <string name="search_results_title">Search result</string>
+    <string name="search_button">Search</string>
+    <string name="comfirm_button">Comfirm</string>"
+    <string name="search_title">Search Item here</string>
+    <string name="comfirm_item_title">Comfirm Order</string>
+    <string name="back_home">Back to Home</string>
+    <string name="no_search_results">No search results found.</string>
+    <string name="quantity_ordered">Quantity ordered.</string>
+    <string name="total_cost">Total Ordered Cost</string>
+
+    //receipt
+    <string name="no_receipt_description">No Receipt</string>
+    <string name="receipt_title">Receipt</string>
+    <string name="edit_receipt_title">Edit Receipt</string>
+    //home
+    <string name="home_title">Home</string>
+    <string name="top_pick_title">Top Pick</string>
+    <string name="shop_deals_title">Shop Deals</string>
+
+    <string name="recipes_title">Recipes</string>
+    <string name="settings_title">Settings</string>
+    <string name="favorites_title">Favorites</string>
+    <string name="deals_title">Deals</string>
+    <string name="update_information_title">Update Information</string>
+    <string name="my_fridge_title">My Fridge</string>
+    <string name="my_subscription_title">My Subscription</string>
+    <string name="not_found_title">Page Not Found</string>
+    <string name="legal_title">Legal</string>
+    <string name="about_title">About</string>
+
+    <string name="upload">Upload</string>
+    <string name="history">History</string>
+    <string name="dashboard">Dashboard</string>
+    <string name="my_pantry_title">My Pantry</string>
+
+
+
+</resources>

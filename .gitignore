@@ -1,0 +1,57 @@
+# Gradle files
+.gradle/
+build/
+*/build/
+
+# Local configuration file (SDK path, keystore, etc.)
+local.properties
+
+# IntelliJ / Android Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Logs
+*.log
+
+# Generated files
+captures/
+outputs/
+
+# Android specific
+.externalNativeBuild/
+.cxx/
+
+# Misc
+.DS_Store
+Thumbs.db
+
+# Kotlin/Java
+*.class
+*.jar
+*.war
+*.ear
+
+# Exclude Google Services config if not needed
+google-services.json
+
+# Keystore files (security reasons)
+*.jks
+*.keystore
+
+# Ignore NDK build folders
+obj/
+
+# Ignore profiling files
+*.hprof
+
+Ignore build directory
+
+build/
+
+Ignore other common build-related files
+
+*.iml .gradle local.properties .idea/
+
+local.properties
