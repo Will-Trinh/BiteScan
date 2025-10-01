@@ -27,7 +27,7 @@ Will is a software engineer with a diverse background in full-stack development 
 
 ### Brandon Wong - Lead Engineer
 
-Bio TBD
+Brandon wong is a software engineer with a passion for high-quality technology and food.
 
 ### Tran Nguyen - Front-End Engineer
 
