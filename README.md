@@ -35,7 +35,7 @@ Tran is passionate about front-end development and creating intuitive, user-frie
 
 ### Hoang Nguyen - Full-stack Engineer
 
-Bio TBD
+Hoang is a full-stack engineer passionate about development and gaming.
 
 ---
 
