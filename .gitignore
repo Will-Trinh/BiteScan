@@ -1,7 +1,5 @@
 # Gradle files
-.gradle/
-build/
-*/build/
+
 
 # Local configuration file (SDK path, keystore, etc.)
 local.properties
