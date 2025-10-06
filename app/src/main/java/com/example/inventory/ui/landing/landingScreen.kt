@@ -21,6 +21,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.inventory.ui.theme.CookingAssistantTheme
 import androidx.compose.ui.draw.shadow
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import com.example.inventory.R
 
 // Define a color for the primary green, consistent with your settings screen
 val PrimaryGreen = Color(0xFF4CAF50)
@@ -48,32 +51,23 @@ fun LandingScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            // "Landing Page" Header (for reference, can be removed)
-            Text(
-                text = "Landing Page",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Light,
-                color = Color.DarkGray,
-                modifier = Modifier.padding(bottom = 24.dp)
-            )
-
             // BiteScan Logo Section
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(bottom = 48.dp)
+                modifier = Modifier.padding(top=80.dp)
             ) {
                 // Leaf Icon (Replace with your actual Image/Logo)
                 Icon(
                     imageVector = Icons.Default.Eco, // Placeholder leaf icon
                     contentDescription = "BiteScan Logo",
                     tint = PrimaryGreen,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(40.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "BiteScan",
-                    fontSize = 24.sp,
+                    fontSize = 30.sp,
                     fontWeight = FontWeight.Bold,
                     color = PrimaryGreen
                 )
@@ -82,23 +76,15 @@ fun LandingScreen(
             // Image Placeholder Section (Receipt and Phone)
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(0.9f) // Slightly smaller width
-                    .height(180.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(PrimaryGreen.copy(alpha = 0.1f)) // Light green background
-                    .padding(24.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                // Placeholder for the receipt and phone images
-                // TODO: Replace with your actual image composable: Image(painter = painterResource(id = R.drawable.your_receipt_and_phone_image), ...)
-                Text(
-                    text = "[Image Placeholder]",
-                    color = PrimaryGreen,
-                    fontWeight = FontWeight.Medium
-                )
-            }
+                    .fillMaxWidth(0.9f), // Slightly smaller width
+                contentAlignment = Alignment.Center,
 
-            Spacer(modifier = Modifier.height(32.dp))
+            ) {
+                Image(painter = painterResource(id = R.drawable.your_receipt_and_phone_image),
+                    contentDescription = "Receipt and Phone Placeholder",
+                    modifier = Modifier.size(300.dp)
+                    )
+            }
 
             // Main Title
             Text(
@@ -116,7 +102,7 @@ fun LandingScreen(
                 modifier = Modifier.padding(horizontal = 32.dp)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Subtitle/Description
             Text(
@@ -127,30 +113,33 @@ fun LandingScreen(
                 modifier = Modifier.padding(horizontal = 48.dp)
             )
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(40.dp))
 
             // Get Started Button
             Button(
                 onClick = onGetStartedClick,
                 modifier = Modifier
                     .fillMaxWidth(0.8f) // Controls the button width
-                    .height(56.dp)
+                    .height(40.dp)
                     .shadow(elevation = 8.dp, shape = RoundedCornerShape(28.dp), clip = true), // Added shadow for lift
                 shape = RoundedCornerShape(28.dp), // Pill-shaped button
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen),
-                contentPadding = PaddingValues(horizontal = 24.dp)
+                contentPadding = PaddingValues(horizontal = 24.dp),
             ) {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 60.dp)
                 ) {
                     Text(
                         text = "Get Started",
+                        color = Color.White,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Icon(
                         imageVector = Icons.Default.ArrowForward,
+                        tint = Color.White,
                         contentDescription = "Get Started",
                         modifier = Modifier.size(20.dp)
                     )
@@ -161,8 +150,6 @@ fun LandingScreen(
         }
     }
 }
-
-// ---
 
 @Preview(showBackground = true)
 @Composable
