@@ -96,7 +96,11 @@ fun ReceiptScreen(
                                 .padding(end = 48.dp),
                             horizontalArrangement = Arrangement.Center
                         ) {
-                            Text("History & Trends", fontWeight = FontWeight.Bold, color = Color.Black)
+                            Text(
+                                "History & Trends",
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Black
+                            )
                         }
                     },
                     navigationIcon = {
@@ -128,6 +132,7 @@ fun ReceiptScreen(
             ) {
                 ReceiptBody(
                     receiptList = actualViewModel.receiptUiState.collectAsState().value.receiptList,
+                    dayAndPrice = actualViewModel.receiptUiState.collectAsState().value.dayAndPrice,
                     onReceiptClick = navigateToReceiptUpdate,
                     navController = navController,
                     viewModel = actualViewModel
@@ -140,11 +145,15 @@ fun ReceiptScreen(
 @Composable
 fun ReceiptBody(
     receiptList: List<Receipt>,
+    dayAndPrice: List<Pair<String, Double>>,
     onReceiptClick: (Int) -> Unit,
     navController: NavController,
     viewModel: ReceiptViewModel,
     modifier: Modifier = Modifier,
 ) {
+    LaunchedEffect(dayAndPrice) {
+        println("dayAndPrice: $dayAndPrice")
+    }
     // We use LazyColumn for the receipts, but the top elements (Chart, Button)
     // must be in a standard Column outside the LazyColumn, or use a LazyColumn with items
     // and items(header). To allow all elements to scroll together, we'll wrap everything
@@ -158,7 +167,6 @@ fun ReceiptBody(
 
     // Since we can't nest LazyColumn inside LazyColumn, and we want the Chart/Button
     // to scroll with the list, we'll use a single LazyColumn and define the top elements as items.
-
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = 8.dp),
@@ -166,12 +174,15 @@ fun ReceiptBody(
     ) {
         // 1. Chart Card
         item {
-            ChartCard(modifier = Modifier.padding(bottom = 8.dp))
+            ChartCard(dayAndPrice = dayAndPrice, modifier = Modifier.padding(bottom = 8.dp))
         }
 
         // 2. Track Prices Button
         item {
-            TrackPricesButton(onClick = { /* TODO: Navigate to price trends screen */ }, modifier = Modifier.padding(bottom = 8.dp))
+            TrackPricesButton(
+                onClick = { /* TODO: Navigate to price trends screen */ },
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
         }
 
         // 3. Recent Receipts Header
@@ -211,8 +222,9 @@ fun ReceiptBody(
     }
 }
 
+
 @Composable
-fun ChartCard(modifier: Modifier = Modifier) {
+fun ChartCard(dayAndPrice: List<Pair<String, Double>>, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -226,13 +238,12 @@ fun ChartCard(modifier: Modifier = Modifier) {
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
-
             LineChartPlaceholder(
+                dayAndPrice = dayAndPrice,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(150.dp)
             )
-
             Text(
                 text = "Daily spending trend",
                 fontSize = 12.sp,
@@ -246,47 +257,45 @@ fun ChartCard(modifier: Modifier = Modifier) {
     }
 }
 
+
 @Composable
-fun LineChartPlaceholder(modifier: Modifier = Modifier) {
-    // Placeholder data for the chart's X-axis
-    val days = listOf("Mon", "Tue", "Wed", "Thu", "Fri")
+fun LineChartPlaceholder(dayAndPrice: List<Pair<String, Double>>, modifier: Modifier = Modifier) {
+    val days = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+    val priceMap = dayAndPrice.associate { it.first to it.second }
+    val maxPrice = dayAndPrice.maxOfOrNull { it.second }?.takeIf { it > 0 } ?: 1.0
 
     Box(
         modifier = modifier
             .padding(horizontal = 4.dp, vertical = 8.dp)
             .background(Color.White)
     ) {
-        // Simple line drawing to simulate the chart curve
-        // NOTE: A real implementation would use a charting library here.
-
         Row(
             modifier = Modifier.fillMaxSize(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Bottom
         ) {
-            val heights = listOf(0.4f, 0.6f, 0.7f, 0.5f, 0.8f, 0.6f) // Simulating data points
-            days.forEachIndexed { index, day ->
+            days.forEach { day ->
+                val price = priceMap[day] ?: 0.0
+                val heightFraction = if (maxPrice > 0) (price / maxPrice).toFloat() else 0f
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.fillMaxHeight()
                 ) {
-                    Spacer(modifier = Modifier.weight(1f - heights[index])) // Space above the point
-
-                    // Small green circle for the data point
+                    Spacer(modifier = Modifier.weight(1f - heightFraction))
                     Box(
                         modifier = Modifier
                             .size(8.dp)
                             .clip(RoundedCornerShape(4.dp))
                             .background(PrimaryGreen)
                     )
-
-                    Spacer(modifier = Modifier.height(8.dp)) // Space above the day label
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(text = day, fontSize = 12.sp, color = Color.Gray)
                 }
             }
         }
     }
 }
+
 
 @Composable
 fun TrackPricesButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -517,7 +526,12 @@ fun ReceiptCard(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Total Price: $${String.format("%.2f", viewModel.calculateTotalPrice(receiptUiState.itemList))}",
+                        text = "Total Price: $${
+                            String.format(
+                                "%.2f",
+                                viewModel.calculateTotalPrice(receiptUiState.itemList)
+                            )
+                        }",
                         fontSize = 14.sp,
                         color = Color(0xFF4CAF50),
                         fontWeight = FontWeight.Bold
