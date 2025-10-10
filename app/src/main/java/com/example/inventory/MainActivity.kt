@@ -24,9 +24,7 @@ import com.example.inventory.data.OfflineUsersRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.example.inventory.ui.navigation.*
-import com.example.inventory.ui.upload.UploadDestination
-import com.example.inventory.ui.receipt.ReceiptDestination
-import com.example.inventory.ui.settings.MyPantryScreen
+import com.example.inventory.ui.history.HistoryDestination
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,8 +44,10 @@ class MainActivity : ComponentActivity() {
             // Add listener to handle invalid routes and redirect to 404
             navController.addOnDestinationChangedListener { _, destination, _ ->
                 val validRoutes = listOf(
+                    DashboardDestination.route,
+                    DashboardDestination.routeWithArgs,
                     UploadDestination.route,
-                    ReceiptDestination.routeWithArgs,
+                    HistoryDestination.routeWithArgs,
                     "edit_receipt/{receiptId}/{userId}",
                     SettingsDestination.routeWithArgs,
                     UpdateInformationDestination.routeWithArgs,
@@ -141,6 +141,16 @@ class DatabaseSeeder {
                     date = java.sql.Date(System.currentTimeMillis()),
                     store = "Walmart",
                     category = "Dairy",
+                    receiptId = receiptId.toInt()
+                ),
+                Item(
+                    id = 0,
+                    name = "Chicken breast",
+                    price = 4.99,
+                    quantity = 1f,
+                    date = java.sql.Date(System.currentTimeMillis()),
+                    store = "Walmart",
+                    category = "Meat",
                     receiptId = receiptId.toInt()
                 )
             )

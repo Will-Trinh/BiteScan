@@ -53,4 +53,27 @@ interface ItemDao {
 
     @Delete
     suspend fun delete(item: Item)
+
+
+    /**
+     * Retrieve items for a specific user (joined via receipts.userId).
+     */
+    @Query("""
+    SELECT i.* FROM items i 
+    INNER JOIN receipts r ON i.receiptId = r.receiptId 
+    WHERE r.userId = :userId 
+    ORDER BY i.name ASC
+""")
+    fun getItemsForUser(userId: Int): Flow<List<Item>>
+
+    /**
+     * Retrieve items for a user by category (joined via receipts).
+     */
+    @Query("""
+    SELECT i.* FROM items i 
+    INNER JOIN receipts r ON i.receiptId = r.receiptId 
+    WHERE r.userId = :userId AND i.category = :category 
+    ORDER BY i.name ASC
+""")
+    fun getItemsForUserByCategory(userId: Int, category: String): Flow<List<Item>>
 }

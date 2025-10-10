@@ -292,7 +292,7 @@ fun SettingScreen(
 
                         // My Receipt
                         Button(
-                            onClick = { navController.navigate("receipt/$userId") },
+                            onClick = { navController.navigate("history/$userId") },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp),

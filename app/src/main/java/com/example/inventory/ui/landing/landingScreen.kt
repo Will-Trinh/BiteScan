@@ -27,7 +27,6 @@ import com.example.inventory.R
 
 // Define a color for the primary green, consistent with your settings screen
 val PrimaryGreen = Color(0xFF4CAF50)
-val BackgroundGray = Color(0xFFEEEEEE) // Light gray for the outer background
 
 @Composable
 fun LandingScreen(
@@ -38,9 +37,9 @@ fun LandingScreen(
     Surface(
         modifier = modifier
             .fillMaxSize()
-            .background(BackgroundGray) // Outer gray background
+            .background(Color.White)
             .padding(16.dp), // Padding around the main content card
-        color = BackgroundGray // Set Surface color to match
+        color = Color.White // Set Surface color to match
     ) {
         Column(
             modifier = Modifier
