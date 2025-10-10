@@ -1,47 +1,29 @@
-//package com.example.inventory.ui.theme
-//
-//import androidx.compose.material3.MaterialTheme
-//import androidx.compose.material3.lightColorScheme
-//import androidx.compose.runtime.Composable
-//import androidx.compose.ui.graphics.Color
-//
-//private val LightColorScheme = lightColorScheme(
-//    primary = Color(0xFFFFA500), // Orange nhạt cho button/card
-//    secondary = Color(0xFFFF4500), // Red accent cho deals
-//    background = Color(0xFFFFF5E1), // Pastel nhạt (beige)
-//    surface = Color(0xFFFFF5E1), // Nền card
-//    onPrimary = Color.White,
-//    onSecondary = Color.White,
-//    onBackground = Color.Black,
-//    onSurface = Color.Black
-//)
-//
-//@Composable
-//fun CookingAssistantTheme(content: @Composable () -> Unit) {
-//    MaterialTheme(
-//        colorScheme = LightColorScheme,
-//        typography = MaterialTheme.typography, // Giữ mặc định hoặc custom nếu cần
-//        content = content
-//    )
-//}
-//
-
 package com.example.inventory.ui.theme
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
+// Define your custom colors here (reusable across the app)
+private val PrimaryGreen = Color(0xFF4CAF50) // Used for total spent, bars, main accents
+private val LightGreen = Color(0xFFE8F5E9) // Used for insight backgrounds
+private val CardBackground = Color.White
+
 private val LightColorScheme = lightColorScheme(
-    primary = Color.White, // Light Orange for buttons/cards
-    secondary = Color.White, // Red accent for deals
-    background = Color.White, // New background color for main screen
-    surface = Color.White, // New surface color for TopAppBar and BottomNavigationBar
-    onPrimary = Color.Black,
-    onSecondary = Color.White,
-    onBackground = Color.Black, // Changed to pure black for text on background
-    onSurface = Color.Black // Changed to pure black for text on surface
+    primary = PrimaryGreen,  // Use PrimaryGreen for main accents (e.g., buttons, bars)
+    secondary = PrimaryGreen.copy(alpha = 0.8f),  // Subtle variant for secondary elements (e.g., icons)
+    tertiary = LightGreen,  // Use LightGreen for tertiary elements like insight backgrounds
+    background = Color.White,  // Light grey for main screen backgrounds
+    surface = CardBackground,  // White for cards and surfaces (e.g., TopAppBar, BottomNav)
+    onPrimary = Color.Black,  // White text/icons on primary green
+    onSecondary = Color.White,  // White on secondary
+    onTertiary = Color.Black.copy(alpha = 0.87f),  // Dark text on light green backgrounds
+    onBackground = Color.Black.copy(alpha = 0.87f),  // Dark text on dashboard background
+    onSurface = Color.Black.copy(alpha = 0.87f),  // Dark text on white cards/surfaces
+    surfaceVariant = LightGreen,  // Reuse LightGreen for variant surfaces (e.g., subtle cards)
+    onSurfaceVariant = Color.Black.copy(alpha = 0.74f)  // Slightly faded text on variants
 )
 
 @Composable

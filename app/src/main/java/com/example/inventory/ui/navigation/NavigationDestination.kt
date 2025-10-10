@@ -10,6 +10,11 @@ interface NavigationDestination {
     val titleRes: Int
 }
 
+object UploadDestination : NavigationDestination {
+    override val route = "upload"
+    override val titleRes = R.string.upload
+}
+
 object UpdateInformationDestination : NavigationDestination {
     override val route = "update_information"
     const val userIdArg = "userId"
@@ -51,14 +56,10 @@ object SettingsDestination : NavigationDestination {
     val routeWithArgs = "$route/{userId}" // Corrected placeholder syntax
 }
 
-// Placeholder destinations (disabled for now)
 object DashboardDestination : NavigationDestination {
     override val route = "dashboard"
-    override val titleRes = R.string.dashboard
-}
-
-object HistoryDestination : NavigationDestination {
-    override val route = "history"
-    override val titleRes = R.string.history
+    const val userIdArg = "userId"
+    override val titleRes = R.string.dashboard_title
+    val routeWithArgs = "$route/{userId}"
 }
 

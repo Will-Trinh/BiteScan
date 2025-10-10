@@ -1,4 +1,4 @@
-package com.example.inventory.ui.receipt
+package com.example.inventory.ui.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Calendar
+
 
 
 class ReceiptViewModel(
@@ -108,6 +109,14 @@ class ReceiptViewModel(
         return items.count()
     }
 //    //Function get the list of day and price from the receipt list
+// Inside your ReceiptViewModel class (where your data processing methods are)
+
+    /**
+     * Calculates the total spending per day of the week for the last 7 days.
+     * This method should be called after `loadReceiptsUser` and whenever the receipt list changes.
+     */
+
+
 
 
 }

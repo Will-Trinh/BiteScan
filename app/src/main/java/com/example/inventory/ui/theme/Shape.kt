@@ -15,13 +15,12 @@
  */
 package com.example.inventory.ui.theme
 
-import androidx.compose.foundation.shape.CutCornerShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Shapes
 import androidx.compose.ui.unit.dp
 
 val Shapes = Shapes(
-
-    extraSmall = CutCornerShape(topEnd = 8.dp, bottomStart = 8.dp),
-    small = CutCornerShape(topEnd = 8.dp, bottomStart = 8.dp),
-    medium = CutCornerShape(topEnd = 16.dp, bottomStart = 16.dp)
+    extraSmall = RoundedCornerShape(4.dp),   // Smallest radius for tiny elements
+    small = RoundedCornerShape(8.dp),        // For buttons/icons
+    medium = RoundedCornerShape(12.dp)       // For Cards/surfaces (your main fix)
 )

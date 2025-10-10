@@ -43,5 +43,17 @@ interface ItemsRepository{
      */
     suspend fun insertItem(item: Item): Item
 
+
+    /**
+     * Retrieve items for a specific user (joined via receipts).
+     */
+    fun getItemsForUser(userId: Int): Flow<List<Item>>
+
+    /**
+     * Retrieve items for a user by category (joined via receipts).
+     */
+    fun getItemsForUserByCategory(userId: Int, category: String): Flow<List<Item>>
+
+
 }
 

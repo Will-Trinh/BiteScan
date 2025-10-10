@@ -25,5 +25,16 @@ class OfflineItemsRepository (val itemDao: ItemDao) : ItemsRepository {
             ?: throw IllegalStateException("Item with id $id not found after insertion")
     }
 
+    /**
+     * Retrieve items for a specific user (joined via receipts).
+     */
+    override fun getItemsForUser(userId: Int): Flow<List<Item>> = itemDao.getItemsForUser(userId)
+
+    /**
+     * Retrieve items for a user by category (joined via receipts).
+     */
+    override fun getItemsForUserByCategory(userId: Int, category: String): Flow<List<Item>> =
+        itemDao.getItemsForUserByCategory(userId, category)
+
     companion object
 }
