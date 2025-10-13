@@ -32,10 +32,6 @@ import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.ui.draw.shadow
 
-object UploadDestination : NavigationDestination {
-    override val route = "upload"
-    override val titleRes = R.string.upload
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

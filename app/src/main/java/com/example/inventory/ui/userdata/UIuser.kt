@@ -10,52 +10,14 @@ import kotlinx.coroutines.flow.flowOf
 import java.sql.Date
 import java.util.concurrent.atomic.AtomicInteger
 
-
-// Fake ItemsRepository preview
-class FakeItemsRepository : ItemsRepository {
-    private val idCounter = AtomicInteger(3) // Start ID after initial fake items
-    private val fakeItems = mutableListOf(
-        Item(id = 1, name = "Milk", price = 2.5, quantity = 1f, date = Date(System.currentTimeMillis()), store = "Cosco", category = "Dairy", receiptId = 1),
-        Item(id = 2, name = "Bread", price = 3.0, quantity = 2f, date = Date(System.currentTimeMillis()), store = "Cosco", category = "Bakery", receiptId = 1),
-        Item(id = 3, name = "Apple", price = 1.0, quantity = 5f, date = Date(System.currentTimeMillis()), store = "Cosco", category = "Fruit", receiptId = 1)
-    )
-
-    override fun getAllItemsStream(): Flow<List<Item>> = flowOf(fakeItems)
-
-    override fun getItemStream(id: Int): Flow<Item?> = flowOf(fakeItems.find { it.id == id })
-
-    override fun getItemsForReceipt(receiptId: Int): Flow<List<Item>> = flowOf(fakeItems.filter { it.receiptId == receiptId })
-
-    override fun searchItems(query: String): Flow<List<Item>> = flowOf(
-        fakeItems.filter { it.name.contains(query, ignoreCase = true) } // Mimics LIKE query
-    )
-
-    override suspend fun insertItem(item: Item): Item {
-        val newItem = item.copy(id = idCounter.incrementAndGet()) // Simulate auto-generated ID
-        fakeItems.add(newItem)
-        return newItem
-    }
-
-    override suspend fun deleteItem(item: Item) {
-        fakeItems.removeIf { it.id == item.id }
-    }
-
-    override suspend fun updateItem(item: Item) {
-        val index = fakeItems.indexOfFirst { it.id == item.id }
-        if (index != -1) {
-            fakeItems[index] = item
-        }
-    }
-}
-
-// Fake ReceiptsRepository cho preview
+// Fake ReceiptsRepository for preview (updated userId to 1 for consistency)
 class FakeReceiptsRepository : ReceiptsRepository {
-    private val receiptIdCounter = AtomicInteger(0) // Start ID after initial fake receipts
+    private val receiptIdCounter = AtomicInteger(4) // Start after initial fake receipts
     private val fakeReceipts = mutableListOf(
-        Receipt(receiptId = 1, userId = 0, date = Date(System.currentTimeMillis()), source = "Lalala", status = "Completed"),
-        Receipt(receiptId = 2, userId = 0, date = Date(System.currentTimeMillis() -86400000), source = "Cosco", status = "Completed"),
-        Receipt(receiptId = 3, userId = 0, date = Date(System.currentTimeMillis() -172800000), source = "Walmart", status = "Completed"),
-        Receipt(receiptId = 4, userId = 0, date = Date(System.currentTimeMillis() -259200000), source = "Target", status = "Completed")
+        Receipt(receiptId = 1, userId = 1, date = Date(System.currentTimeMillis()), source = "Lalala", status = "Completed"),
+        Receipt(receiptId = 2, userId = 1, date = Date(System.currentTimeMillis() - 86400000), source = "Cosco", status = "Completed"),
+        Receipt(receiptId = 3, userId = 1, date = Date(System.currentTimeMillis() - 172800000), source = "Walmart", status = "Completed"),
+        Receipt(receiptId = 4, userId = 1, date = Date(System.currentTimeMillis() - 259200000), source = "Target", status = "Completed")
     )
 
     override fun getAllReceiptsStream(): Flow<List<Receipt>> = flowOf(fakeReceipts)
@@ -63,7 +25,7 @@ class FakeReceiptsRepository : ReceiptsRepository {
     override fun getReceiptsForUser(userId: Int): Flow<List<Receipt>> = flowOf(fakeReceipts.filter { it.userId == userId })
 
     override fun searchReceipts(query: String): Flow<List<Receipt>> = flowOf(
-        fakeReceipts.filter { it.source.contains(query, ignoreCase = true) || it.status.contains(query, ignoreCase = true) } // Mimics LIKE query on source/status
+        fakeReceipts.filter { it.source.contains(query, ignoreCase = true) || it.status.contains(query, ignoreCase = true) }
     )
 
     override suspend fun getReceipt(id: Int): Receipt? = fakeReceipts.find { it.receiptId == id }
@@ -71,7 +33,7 @@ class FakeReceiptsRepository : ReceiptsRepository {
     override suspend fun insertReceipt(receipt: Receipt): Long {
         val newReceipt = receipt.copy(receiptId = receiptIdCounter.incrementAndGet())
         fakeReceipts.add(newReceipt)
-        return newReceipt.receiptId.toLong() // Simulate returning generated ID
+        return newReceipt.receiptId.toLong()
     }
 
     override suspend fun deleteReceipt(receipt: Receipt) {
@@ -86,7 +48,59 @@ class FakeReceiptsRepository : ReceiptsRepository {
     }
 }
 
-// fake UIuser
+// Updated Fake ItemsRepository (self-contained: hardcodes receipt IDs for user 1 to simulate join without calling getReceipt)
+class FakeItemsRepository : ItemsRepository {
+    private val idCounter = AtomicInteger(3) // Start ID after initial fake items
+    private val fakeItems = mutableListOf(
+        Item(id = 1, name = "Milk", price = 2.5, quantity = 1f, date = Date(System.currentTimeMillis()), store = "Cosco", category = "Dairy", receiptId = 1),
+        Item(id = 2, name = "Bread", price = 3.0, quantity = 2f, date = Date(System.currentTimeMillis()), store = "Cosco", category = "Bakery", receiptId = 1),
+        Item(id = 3, name = "Apple", price = 1.0, quantity = 5f, date = Date(System.currentTimeMillis()), store = "Cosco", category = "Fruit", receiptId = 2)
+    )
 
-val fakeUIuser = User(userId = 0, username = "previewUser", password = "hashedPass", phone = "1234567890")
+    // Hardcoded receipt IDs for user 1 (simulates join without external getReceipt call)
+    private fun getReceiptIdsForUser(userId: Int): List<Int> {
+        return if (userId == 1) listOf(1, 2, 3, 4) else emptyList()  // All receipts for user 1
+    }
 
+    override fun getAllItemsStream(): Flow<List<Item>> = flowOf(fakeItems)
+
+    override fun getItemStream(id: Int): Flow<Item?> = flowOf(fakeItems.find { it.id == id })
+
+    override fun getItemsForReceipt(receiptId: Int): Flow<List<Item>> = flowOf(fakeItems.filter { it.receiptId == receiptId })
+
+    override fun searchItems(query: String): Flow<List<Item>> = flowOf(
+        fakeItems.filter { it.name.contains(query, ignoreCase = true) }
+    )
+
+    override suspend fun insertItem(item: Item): Item {
+        val newItem = item.copy(id = idCounter.incrementAndGet())
+        fakeItems.add(newItem)
+        return newItem
+    }
+
+    override suspend fun deleteItem(item: Item) {
+        fakeItems.removeIf { it.id == item.id }
+    }
+
+    override suspend fun updateItem(item: Item) {
+        val index = fakeItems.indexOfFirst { it.id == item.id }
+        if (index != -1) {
+            fakeItems[index] = item
+        }
+    }
+
+    // Implement getItemsForUser (filters by hardcoded receipt IDs for user)
+    override fun getItemsForUser(userId: Int): Flow<List<Item>> {
+        val receiptIdsForUser = getReceiptIdsForUser(userId)
+        return flowOf(fakeItems.filter { it.receiptId in receiptIdsForUser })
+    }
+
+    // Implement getItemsForUserByCategory (filters by receipt IDs + category)
+    override fun getItemsForUserByCategory(userId: Int, category: String): Flow<List<Item>> {
+        val receiptIdsForUser = getReceiptIdsForUser(userId)
+        return flowOf(fakeItems.filter { it.receiptId in receiptIdsForUser && it.category.equals(category, ignoreCase = true) })
+    }
+}
+
+// Fake UI user (updated to userId = 1 for consistency)
+val fakeUIuser = User(userId = 1, username = "previewUser", password = "hashedPass", phone = "1234567890")

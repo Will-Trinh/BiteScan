@@ -20,8 +20,7 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
-import com.example.inventory.ui.upload.UploadDestination
-import com.example.inventory.ui.receipt.ReceiptDestination
+import com.example.inventory.ui.history.HistoryDestination
 
 @Composable
 fun BottomNavigationBar(navController: NavController) {
@@ -36,7 +35,7 @@ fun BottomNavigationBar(navController: NavController) {
         val items = listOf(
             DashboardDestination to Icons.Default.Dashboard,
             UploadDestination to Icons.Default.CameraAlt,
-            ReceiptDestination to Icons.Default.History,
+            HistoryDestination to Icons.Default.History,
             SettingsDestination to Icons.Default.Settings
         )
 
@@ -47,7 +46,9 @@ fun BottomNavigationBar(navController: NavController) {
                 selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true,
                 onClick = {
                     val route = when (destination) {
-                        ReceiptDestination -> "${destination.route}/1" // Default userId = 1 for Receipt
+                        UploadDestination -> UploadDestination.route
+                        DashboardDestination -> "${DashboardDestination.route}/1" // Default userId = 1 for Dashboard
+                        HistoryDestination -> "${destination.route}/1" // Default userId = 1 for Receipt
                         SettingsDestination -> "${SettingsDestination.route}/1" // Default userId = 1 for Settings
                         else -> destination.route
                     }

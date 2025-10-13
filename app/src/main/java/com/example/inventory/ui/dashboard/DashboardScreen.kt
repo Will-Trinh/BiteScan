@@ -1,48 +1,68 @@
 package com.example.inventory.ui.dashboard
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.inventory.ui.navigation.BottomNavigationBar
-import com.example.inventory.ui.navigation.NavigationDestination
 import com.example.inventory.ui.theme.CookingAssistantTheme
 import androidx.compose.material.icons.filled.Restaurant
 import com.example.inventory.R
+import androidx.compose.ui.platform.LocalContext
+import com.example.inventory.InventoryApplication
+import com.example.inventory.data.OfflineUsersRepository
+import com.example.inventory.data.ItemsRepository
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.text.style.TextAlign
 
-// Define colors based on the screenshot
-private val PrimaryGreen = Color(0xFF4CAF50) // Used for total spent, bars, main accents
-private val LightGreen = Color(0xFFE8F5E9) // Used for insight backgrounds
-private val CardBackground = Color.White
-private val DashboardBackground = Color(0xFFF5F5F5) // Light grey background
-
-// Placeholder destinations (disabled for now)
-object DashboardDestination : NavigationDestination {
-    override val route = "dashboard"
-    override val titleRes = R.string.dashboard
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     navController: NavController,
+    userId: Int,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val appContainer = (context.applicationContext as InventoryApplication).container
+    val viewModel = remember {
+        DashboardViewModel(
+            usersRepository = appContainer.usersRepository as OfflineUsersRepository,
+            itemsRepository = appContainer.itemsRepository as ItemsRepository
+        )
+    }
+    LaunchedEffect(userId) {
+        viewModel.setCurrentUserId(userId)
+    }
+
+    val metrics by viewModel.metrics.collectAsState()
+    val macroBreakdown by viewModel.macroBreakdown.collectAsState()
+    val spendingByCategory by viewModel.spendingByCategory.collectAsState()
+    val insights by viewModel.insights.collectAsState()
+    val recipes by viewModel.recipes.collectAsState()
+
+    // Loading state
+    val isLoading = metrics.calories == 0 && metrics.items == 0
+
     CookingAssistantTheme {
         Scaffold(
             topBar = {
@@ -51,70 +71,73 @@ fun DashboardScreen(
                         Text(
                             "Nutrition Dashboard",
                             fontWeight = FontWeight.Bold,
-                            color = Color.Black,
-                            modifier = Modifier.fillMaxWidth()
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center
                         )
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = DashboardBackground, // Match screen background
-                        titleContentColor = Color.Black
+                        containerColor = MaterialTheme.colorScheme.background,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface
                     )
                 )
             },
             bottomBar = { BottomNavigationBar(navController) }
         ) { paddingValues ->
-            // Use LazyColumn to make the entire content scrollable
-            LazyColumn(
-                modifier = modifier
-                    .fillMaxSize()
-                    .background(DashboardBackground)
-                    .padding(paddingValues)
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // 1. Metrics Section (Calories, Protein, Spend, Items)
-                item { MetricsSection(modifier = Modifier.padding(top = 8.dp)) }
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                }
+            } else {
+                LazyColumn(
+                    modifier = modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background)
+                        .padding(paddingValues)
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    item { MetricsSection(metrics = metrics, modifier = Modifier.padding(top = 8.dp)) }
 
-                // 2. Macro Breakdown Chart
-                item { MacroBreakdownSection() }
+                    item { MacroBreakdownSection(macroBreakdown = macroBreakdown) }
 
-                // 3. Spending by Category Chart
-                item { SpendingByCategorySection() }
+                    item { SpendingByCategorySection(spendingByCategory = spendingByCategory) }
 
-                // 4. Insights
-                item {
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = "Insights",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(bottom = 12.dp)
-                        )
-                        InsightsCard(
-                            title = "Great produce choices",
-                            message = "Spinach is packed with iron and folate - perfect for your fitness goals.",
-                            color = PrimaryGreen.copy(alpha = 0.8f),
-                            backgroundColor = LightGreen
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        InsightsCard(
-                            title = "Higher protein than last trip",
-                            message = "You're getting 16% more protein per dollar spent compared to your previous shopping trip.",
-                            color = Color(0xFFF4A142), // Orange/Yellow
-                            backgroundColor = Color(0xFFFFF3E0) // Light orange background
+                    item {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = "Insights",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.padding(bottom = 12.dp)
+                            )
+                            insights.forEach { insight ->
+                                InsightsCard(
+                                    title = insight.title,
+                                    message = insight.message,
+                                    color = insight.color,
+                                    backgroundColor = insight.backgroundColor
+                                )
+                                Spacer(Modifier.height(8.dp))
+                            }
+                        }
+                    }
+
+                    item {
+                        RecipesSection(
+                            recipes = recipes,
+                            onSeeAllClick = { /* TODO: Navigate to recipes list with userId */ }
                         )
                     }
-                }
 
-                // 5. Recipes You Can Make
-                item {
-                    RecipesSection(
-                        onSeeAllClick = { /* TODO: Navigate to recipes list */ }
-                    )
+                    item { Spacer(Modifier.height(32.dp)) }
                 }
-
-                // Add padding at the very bottom to ensure the last elements aren't cut off by the Bottom Bar
-                item { Spacer(Modifier.height(32.dp)) }
             }
         }
     }
@@ -123,27 +146,21 @@ fun DashboardScreen(
 // --- Metrics Section ---
 
 @Composable
-fun MetricsSection(modifier: Modifier = Modifier) {
-    // Placeholder Data
-    val calories = 1847
-    val protein = 142
-    val spend = 19.76
-    val items = 4
-
+fun MetricsSection(metrics: DashboardMetrics, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             MetricPill(
-                value = "$calories",
+                value = "${metrics.calories}",
                 label = "Calories",
-                color = Color.Black
+                color = Color(0xFF068378)
             )
             MetricPill(
-                value = "${protein}g",
+                value = "${metrics.protein}g",
                 label = "Protein",
-                color = Color.Black
+                color = Color(0xFF2196F3)
             )
         }
         Spacer(Modifier.height(16.dp))
@@ -152,14 +169,14 @@ fun MetricsSection(modifier: Modifier = Modifier) {
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             MetricPill(
-                value = "$${String.format("%.2f", spend)}",
+                value = "$${String.format("%.2f", metrics.spend)}",
                 label = "Total Spent",
-                color = PrimaryGreen
+                color = MaterialTheme.colorScheme.primary
             )
             MetricPill(
-                value = "$items",
+                value = "${metrics.items}",
                 label = "Items",
-                color = Color.Black
+                color = Color(0xFFF59304)
             )
         }
     }
@@ -182,7 +199,7 @@ fun RowScope.MetricPill(value: String, label: String, color: Color) {
         Text(
             text = label,
             fontSize = 14.sp,
-            color = Color.Gray,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Medium
         )
     }
@@ -191,20 +208,20 @@ fun RowScope.MetricPill(value: String, label: String, color: Color) {
 // --- Macro Breakdown Section ---
 
 @Composable
-fun MacroBreakdownSection() {
+fun MacroBreakdownSection(macroBreakdown: MacroBreakdown) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = "Macro Breakdown",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        // Donut Chart Placeholder
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = CardBackground),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(2.dp)
         ) {
             Row(
@@ -213,8 +230,9 @@ fun MacroBreakdownSection() {
                     .padding(24.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Placeholder for Donut Chart (approx 120dp size)
-                MacroChartPlaceholder(
+                // Pie Chart (size 120.dp)
+                PieChart(
+                    macroBreakdown = macroBreakdown,
                     modifier = Modifier.size(120.dp)
                 )
 
@@ -222,9 +240,21 @@ fun MacroBreakdownSection() {
 
                 // Legend
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    MacroLegendItem(Color(0xFF4CAF50), "Protein", "30%") // Green
-                    MacroLegendItem(Color(0xFF757575), "Carbs", "45%") // Grey
-                    MacroLegendItem(Color(0xFFF4A142), "Fats", "25%") // Orange/Yellow
+                    MacroLegendItem(
+                        color = Color(0xFF2F6C30),  // Green for Protein
+                        label = "Protein",
+                        percentage = macroBreakdown.proteinPercent
+                    )
+                    MacroLegendItem(
+                        color = Color(0xFF711E81),  // Gray for Carbs
+                        label = "Carbs",
+                        percentage = macroBreakdown.carbsPercent
+                    )
+                    MacroLegendItem(
+                        color = Color(0xFFF4A142),  // Orange for Fats
+                        label = "Fats",
+                        percentage = macroBreakdown.fatsPercent
+                    )
                 }
             }
         }
@@ -232,22 +262,57 @@ fun MacroBreakdownSection() {
 }
 
 @Composable
-fun MacroChartPlaceholder(modifier: Modifier = Modifier) {
-    // Simple Circular Box to represent the Donut Chart
-    Box(
-        modifier = modifier
-            .clip(MaterialTheme.shapes.extraLarge)
-            .background(Color(0xFF757575)) // Carbs 45% (Grey)
-    ) {
-        // Overlay slices (simplistic representation)
-        // This would be replaced by a proper charting library
+fun PieChart(
+    macroBreakdown: MacroBreakdown,
+    modifier: Modifier = Modifier
+) {
+    Canvas(modifier = modifier) {
+        val percentages = listOf(
+            macroBreakdown.proteinPercent.removeSuffix("%").toFloatOrNull() ?: 0f,
+            macroBreakdown.carbsPercent.removeSuffix("%").toFloatOrNull() ?: 0f,
+            macroBreakdown.fatsPercent.removeSuffix("%").toFloatOrNull() ?: 0f
+        )
+        val total = percentages.sum()
+        if (total == 0f) return@Canvas  // Skip if no data
+
+        val center = Offset(size.width / 2, size.height / 2)
+        val radius = size.minDimension / 2
+        var startAngle = 0f
+
+        // Colors for each slice
+        val colors = listOf(
+            Color(0xFF2F6C30),      // Protein: Green
+            Color(0xFF757575),                      // Carbs: Gray
+            Color(0xFFF4A142)                       // Fats: Orange
+        )
+
+        percentages.forEachIndexed { index, percent ->
+            val sweepAngle = (percent / total) * 360f
+            drawArc(
+                color = colors[index],
+                startAngle = startAngle,
+                sweepAngle = sweepAngle,
+                useCenter = true,
+                topLeft = Offset(center.x - radius, center.y - radius),
+                size = Size(radius * 2, radius * 2),
+                style = androidx.compose.ui.graphics.drawscope.Fill
+            )
+            startAngle += sweepAngle
+        }
+
+        // Optional: White border for clarity
+        drawCircle(
+            color = Color.White,
+            radius = radius * 0.9f,
+            center = center,
+            style = Stroke(width = 2.dp.toPx())
+        )
     }
 }
 
 @Composable
 fun MacroLegendItem(color: Color, label: String, percentage: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        // Color Dot
         Box(
             modifier = Modifier
                 .size(8.dp)
@@ -258,13 +323,13 @@ fun MacroLegendItem(color: Color, label: String, percentage: String) {
         Text(
             text = "$label ",
             fontSize = 14.sp,
-            color = Color.Black
+            color = MaterialTheme.colorScheme.onSurface
         )
         Text(
             text = percentage,
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
-            color = Color.Gray
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -272,35 +337,35 @@ fun MacroLegendItem(color: Color, label: String, percentage: String) {
 // --- Spending by Category Section ---
 
 @Composable
-fun SpendingByCategorySection() {
+fun SpendingByCategorySection(spendingByCategory: SpendingByCategory) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = "Spending by Category",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        // Bar Chart Placeholder
-        CategoryBarChartPlaceholder(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(100.dp)
-        )
+        if (spendingByCategory.categories.isEmpty()) {
+            Text(
+                text = "No data available",
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(16.dp)
+            )
+        } else {
+            CategoryBarChartPlaceholder(categories = spendingByCategory.categories)
+        }
     }
 }
 
 @Composable
-fun CategoryBarChartPlaceholder(modifier: Modifier = Modifier) {
-    val categories = listOf(
-        "Produce" to 0.8f,
-        "Meat" to 0.4f,
-        "Dairy" to 0.7f,
-        "Grains" to 0.6f
-    )
-
+fun CategoryBarChartPlaceholder(categories: List<Pair<String, Float>>) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(100.dp),
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.Bottom
     ) {
@@ -311,10 +376,10 @@ fun CategoryBarChartPlaceholder(modifier: Modifier = Modifier) {
                         .fillMaxHeight(heightRatio)
                         .width(24.dp)
                         .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
-                        .background(PrimaryGreen)
+                        .background(MaterialTheme.colorScheme.primary)
                 )
                 Spacer(Modifier.height(4.dp))
-                Text(text = label, fontSize = 12.sp, color = Color.Gray)
+                Text(text = label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
@@ -332,9 +397,8 @@ fun InsightsCard(title: String, message: String, color: Color, backgroundColor: 
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Placeholder Icon/Emoji
                 Text(
-                    text = "🌱", // Placeholder for spinach/leaf icon
+                    text = "🌱",
                     fontSize = 18.sp,
                     modifier = Modifier.padding(end = 4.dp)
                 )
@@ -349,7 +413,7 @@ fun InsightsCard(title: String, message: String, color: Color, backgroundColor: 
             Text(
                 text = message,
                 fontSize = 14.sp,
-                color = Color.Black.copy(alpha = 0.8f)
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
             )
         }
     }
@@ -358,13 +422,7 @@ fun InsightsCard(title: String, message: String, color: Color, backgroundColor: 
 // --- Recipes Section ---
 
 @Composable
-fun RecipesSection(onSeeAllClick: () -> Unit) {
-    val recipes = listOf(
-        RecipeItemData("Chicken & Spinach Power Bowl", "Uses 7 of 9 items • 25 min", R.drawable.spanish_chicken_soup_recipe),
-        RecipeItemData("Greek Yogurt Berry Parfait", "Uses 3 of 5 items • 5 min", R.drawable.spanish_chicken_soup_recipe)
-    )
-
-    // Using a regular Column since the LazyColumn is the parent
+fun RecipesSection(recipes: List<RecipeSuggestion>, onSeeAllClick: () -> Unit) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -374,50 +432,58 @@ fun RecipesSection(onSeeAllClick: () -> Unit) {
             Text(
                 text = "Recipes You Can Make",
                 fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
             )
             TextButton(onClick = onSeeAllClick) {
-                Text("See All", color = PrimaryGreen, fontWeight = FontWeight.SemiBold)
+                Text("See All", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
             }
         }
         Spacer(Modifier.height(12.dp))
 
-        // Since the parent is a LazyColumn, we use a standard Column here for the items
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            recipes.forEach { recipe ->
-                RecipeItem(recipe = recipe)
-                if (recipe != recipes.last()) {
-                    Divider(color = Color.LightGray.copy(alpha = 0.5f), thickness = 0.5.dp)
+        if (recipes.isEmpty()) {
+            Text(
+                text = "No recipes available yet",
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(16.dp)
+            )
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                recipes.forEach { recipe ->
+                    RecipeItem(
+                        title = recipe.title,
+                        details = recipe.details,
+                        iconResId = recipe.iconResId
+                    )
+                    if (recipe != recipes.last()) {
+                        Divider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), thickness = 0.5.dp)
+                    }
                 }
             }
         }
     }
 }
 
-data class RecipeItemData(val title: String, val details: String, val iconResId: Int)
-
 @Composable
-fun RecipeItem(recipe: RecipeItemData) {
+fun RecipeItem(title: String, details: String, iconResId: Int) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Icon/Image Placeholder
-        // NOTE: Placeholder using a Restaurant Icon. You'd replace R.drawable.ic_recipe_xxx
-        // with your actual image resources.
         Box(
             modifier = Modifier
                 .size(48.dp)
                 .clip(RoundedCornerShape(8.dp))
-                .background(LightGreen),
+                .background(MaterialTheme.colorScheme.tertiary),
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = Icons.Default.Restaurant, // Placeholder
+                imageVector = Icons.Default.Restaurant,
                 contentDescription = null,
-                tint = PrimaryGreen,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(32.dp)
             )
         }
@@ -426,26 +492,25 @@ fun RecipeItem(recipe: RecipeItemData) {
 
         Column {
             Text(
-                text = recipe.title,
+                text = title,
                 fontSize = 16.sp,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = recipe.details,
+                text = details,
                 fontSize = 14.sp,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
 }
-
-// --- Preview ---
 
 @Preview(showBackground = true)
 @Composable
 fun DashboardScreenPreview() {
     val navController = rememberNavController()
     CookingAssistantTheme {
-        DashboardScreen(navController = navController)
+        DashboardScreen(navController = navController, userId = 1)
     }
 }

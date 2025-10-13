@@ -8,13 +8,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.inventory.ui.upload.UploadScreen
-import com.example.inventory.ui.upload.UploadDestination
 import com.example.inventory.ui.receipt.EditReceiptDestination
 import com.example.inventory.ui.receipt.EditReceiptScreen
-import com.example.inventory.ui.receipt.ReceiptDestination
-import com.example.inventory.ui.receipt.ReceiptScreen
-import com.example.inventory.ui.receipt.ReceiptViewModel
-import com.example.inventory.InventoryApplication
+import com.example.inventory.ui.history.HistoryDestination
+import com.example.inventory.ui.history.ReceiptScreen
 import com.example.inventory.ui.settings.SettingScreen
 import com.example.inventory.ui.settings.UpdateInformationScreen
 import com.example.inventory.ui.settings.MyPantryScreen
@@ -23,7 +20,7 @@ import com.example.inventory.ui.NotFoundScreen
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.unit.dp
 import com.example.inventory.ui.settings.LegalScreen
-
+import com.example.inventory.ui.dashboard.DashboardScreen
 
 @Composable
 fun InventoryNavHost(
@@ -41,12 +38,37 @@ fun InventoryNavHost(
                 navController = navController
             )
         }
-
         composable(
-            route = ReceiptDestination.routeWithArgs,
-            arguments = listOf(navArgument(ReceiptDestination.userIdArg) { type = NavType.IntType })
+            route = DashboardDestination.routeWithArgs,
+            arguments = listOf(navArgument(DashboardDestination.userIdArg) { type = NavType.IntType })
         ) { backStackEntry ->
-            val userId = backStackEntry.arguments?.getInt(ReceiptDestination.userIdArg) ?: 0
+            val userId = backStackEntry.arguments?.getInt(DashboardDestination.userIdArg) ?: 0
+            // Share userId via savedStateHandle for bottom nav
+            backStackEntry.savedStateHandle.set("userId", userId)
+            DashboardScreen(
+                navController = navController,
+                userId = userId
+            )
+        }
+
+        // New no-arg route for Dashboard (for bottom nav; extracts shared userId)
+        composable(route = DashboardDestination.route) {
+            val userId = navController.previousBackStackEntry?.savedStateHandle?.get<Int>("userId")
+                ?: navController.currentBackStackEntry?.savedStateHandle?.get<Int>("userId") ?: 0
+            if (userId != 0) {
+                DashboardScreen(
+                    navController = navController,
+                    userId = userId
+                )
+            } else {
+                NotFoundScreen(navController = navController)
+            }
+        }
+        composable(
+            route = HistoryDestination.routeWithArgs,
+            arguments = listOf(navArgument(HistoryDestination.userIdArg) { type = NavType.IntType })
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getInt(HistoryDestination.userIdArg) ?: 0
             ReceiptScreen(
                 navigateToReceiptEntry = {},
                 navigateToReceiptUpdate = { receiptId ->
@@ -71,7 +93,7 @@ fun InventoryNavHost(
                 receiptId = receiptId,
                 userId = userId,
                 navigateUp = {
-                    navController.navigate("receipt/$userId") {
+                    navController.navigate("history/$userId") {
                         popUpTo(navController.graph.startDestinationId) { inclusive = false }
                         launchSingleTop = true
                     }
@@ -113,7 +135,6 @@ fun InventoryNavHost(
             )
         }
 
-
         composable(
             route = LegalDestination.routeWithArgs,
             arguments = listOf(navArgument(LegalDestination.userIdArg) { type = NavType.IntType })
@@ -139,20 +160,6 @@ fun InventoryNavHost(
                 navController = navController,
                 userId = userId
             )
-        }
-
-        composable(route = DashboardDestination.route) {
-            navController.navigate(NotFoundDestination.route) {
-                popUpTo(navController.graph.startDestinationId) { inclusive = false }
-                launchSingleTop = true
-            }
-        }
-
-        composable(route = HistoryDestination.route) {
-            navController.navigate(ReceiptDestination.route) {
-                popUpTo(navController.graph.startDestinationId) { inclusive = false }
-                launchSingleTop = true
-            }
         }
 
         composable(route = NotFoundDestination.routeWithArgs) {

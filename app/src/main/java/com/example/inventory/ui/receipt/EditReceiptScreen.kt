@@ -362,7 +362,6 @@ fun ItemCard(
             Text(
                 text = "$${String.format("%.2f", price.toDoubleOrNull() ?: item.price)}",
                 fontSize = 16.sp,
-                color = Color.Green,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.End,
                 modifier = Modifier.weight(1f)
