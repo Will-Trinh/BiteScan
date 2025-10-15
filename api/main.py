@@ -3,8 +3,10 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import receipts, users, auth, system, nutrition
+from contextlib import asynccontextmanager
 
+from routers import receipts, users, auth, system, nutrition
+from database import create_db_and_tables
 
 app = FastAPI()
 
@@ -21,3 +23,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # startup
+    create_db_and_tables()
+    yield
+    # shutdown
