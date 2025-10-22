@@ -29,7 +29,7 @@ class ReceiptsRepositoryImpl(
                     offlineRepo.updateReceipt(onlineReceipt)
                 }
             }
-            onlineReceipts
+            offlineRepo.getAllReceiptsStream().first()
         } else {
             offlineRepo.getAllReceiptsStream().first()
         }
