@@ -70,7 +70,7 @@ class MainActivity : ComponentActivity() {
 
             InventoryTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    Text(text = "API Key: ${BuildConfig.apikeysafe}")
+//                    Text(text = "API Key: ${BuildConfig.apikeysafe}")
                     InventoryNavHost(navController = navController)
                 }
             }
