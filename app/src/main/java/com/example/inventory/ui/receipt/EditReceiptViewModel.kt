@@ -1,5 +1,6 @@
 package com.example.inventory.ui.receipt
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.inventory.data.Item
@@ -12,14 +13,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.sql.Date
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
+import org.json.JSONArray
+import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
-import android.util.Log
-import kotlinx.serialization.decodeFromString
-
+import java.sql.Date
 
 class EditReceiptViewModel(
     private val itemsRepository: ItemsRepository,
@@ -30,10 +28,8 @@ class EditReceiptViewModel(
     val editUiState: StateFlow<EditUiState> = _editUiState.asStateFlow()
 
     /**
-     * Load draft receipt from API.
-     * Run network call in IO dispatcher to avoid blocking UI.
+     * Load draft receipt from API using JSONObject (no serialization plugin needed)
      */
-
     fun loadDraftFromApi(draftCode: String) {
         viewModelScope.launch {
             try {
@@ -44,42 +40,50 @@ class EditReceiptViewModel(
                     connection.inputStream.bufferedReader().use { it.readText() }
                 }
 
-                // Log for debugging
                 Log.d("API_TEST", "Draft JSON: $jsonString")
 
-                // Parse JSON
-                val json = Json { ignoreUnknownKeys = true } // ignores extra fields
-                val draftData = json.decodeFromString<DraftResponse>(jsonString)
+                // Parse JSON manually using JSONObject
+                val jsonObject = JSONObject(jsonString)
 
+                val source = jsonObject.optString("source", "")
+                val date = jsonObject.optLong("date")
+                val status = jsonObject.optString("status")
 
-                // Convert to Receipt and Items
+                val itemsArray = jsonObject.getJSONArray("items")
+                val items = mutableListOf<Item>()
+
+                for (i in 0 until itemsArray.length()) {
+                    val itemObj = itemsArray.getJSONObject(i)
+                    items.add(
+                        Item(
+                            id = itemObj.getInt("id"),
+                            name = itemObj.getString("name"),
+                            price = itemObj.getDouble("price"),
+                            quantity = itemObj.getDouble("quantity").toFloat(),
+                            date = Date(System.currentTimeMillis()),
+                            store = itemObj.optString("store", ""),
+                            category = itemObj.optString("category", ""),
+                            receiptId = 0
+                        )
+                    )
+                }
+
                 val receipt = Receipt(
                     receiptId = 0,
                     userId = 0,
-                    source = draftData.source ?: "",
-                    date = Date(draftData.date),
-                    status = draftData.status
+                    source = source,
+                    date = Date(date),
+                    status = status
                 )
-                val items = draftData.items.map { item ->
-                    Item(
-                        id = item.id,
-                        name = item.name,
-                        price = item.price,
-                        quantity = item.quantity,
-                        date = Date(System.currentTimeMillis()),
-                        store = item.store ?: "",
-                        category = item.category ?: "",
-                        receiptId = 0
-                    )
-                }
 
                 // Update UI state
                 _editUiState.value = _editUiState.value.copy(
                     receipt = receipt,
                     itemList = items.sortedBy { it.id },
-                    totalItems = calculateTotalItem(items),
-                    totalPrice = calculateTotalPrice(items)
+                    totalItems = items.size,
+                    totalPrice = items.sumOf { it.price * it.quantity }
                 )
+
             } catch (e: Exception) {
                 Log.e("EditReceiptVM", "Error loading draft: ${e.message}")
                 _editUiState.value = _editUiState.value.copy(
@@ -155,26 +159,7 @@ class EditReceiptViewModel(
     }
 }
 
-// Data classes to parse JSON
-@Serializable
-data class DraftResponse(
-    val draftCode: String,
-    val source: String? = null,
-    val date: Long,
-    val status: String,
-    val items: List<DraftItem>
-)
-
-@Serializable
-data class DraftItem(
-    val id: Int,
-    val name: String,
-    val price: Double,
-    val quantity: Float,
-    val store: String? = null,
-    val category: String? = null
-)
-
+/** UI state data class */
 data class EditUiState(
     val itemList: List<Item> = emptyList(),
     val totalItems: Int = 0,
