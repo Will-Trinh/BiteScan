@@ -12,11 +12,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Calendar
+import com.example.inventory.data.ReceiptsRepositoryImpl
 
 
 
 class ReceiptViewModel(
     private val receiptsRepository: ReceiptsRepository,
+    //private val ReceiptsRepositoryImpl: ReceiptsRepositoryImpl,
     private val itemsRepository: ItemsRepository,
     private val userId: Int
 ) : ViewModel() {
@@ -25,6 +27,7 @@ class ReceiptViewModel(
 
     fun loadReceiptsUser() {
         viewModelScope.launch {
+
             receiptsRepository.getReceiptsForUser(userId)
                 .collect { receipts ->
                     println("Receipts for user $userId: $receipts")
@@ -33,6 +36,16 @@ class ReceiptViewModel(
                 }
         }
     }
+
+    //TODo: when api has done, use the online receipt data to replace the offline receipt data
+//    fun loadReceiptsUser() {
+//        viewModelScope.launch {
+//            // Syncs with online Receipt data
+//            val syncedReceipts = ReceiptsRepositoryImpl.fetchAndSyncReceipts(userId.toString())
+//            _receiptUiState.value = _receiptUiState.value.copy(receiptList = syncedReceipts)
+//            updateDayAndPrice(syncedReceipts)
+//        }
+//    }
 
     fun loadItems(receiptId: Int) {
         viewModelScope.launch {
@@ -108,16 +121,6 @@ class ReceiptViewModel(
     fun calculateTotalItem(items: List<Item>): Int {
         return items.count()
     }
-//    //Function get the list of day and price from the receipt list
-// Inside your ReceiptViewModel class (where your data processing methods are)
-
-    /**
-     * Calculates the total spending per day of the week for the last 7 days.
-     * This method should be called after `loadReceiptsUser` and whenever the receipt list changes.
-     */
-
-
-
 
 }
 

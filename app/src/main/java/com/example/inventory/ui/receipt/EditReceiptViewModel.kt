@@ -12,13 +12,19 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.sql.Date
 
-
+//Todo: This Screen must be changed to load only one draft upcoming receipt from the screen instead of the receipt in database
 class EditReceiptViewModel(
     private val itemsRepository: ItemsRepository,
     private val receiptsRepository: ReceiptsRepository,
 ) : ViewModel() {
     private val _editUiState = MutableStateFlow(EditUiState())
     val editUiState: StateFlow<EditUiState> = _editUiState.asStateFlow()
+
+    //load receipt from api: http://abcxyz.com/api/draftcode/2
+    
+
+
+
 
     fun loadItems(receiptId: Int) {
         viewModelScope.launch {
