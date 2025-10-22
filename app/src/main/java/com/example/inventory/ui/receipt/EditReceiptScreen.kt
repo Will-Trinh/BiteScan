@@ -68,8 +68,9 @@ fun EditReceiptScreen(
     }
 
     LaunchedEffect(receiptId) {
-        actualViewModel.loadItems(receiptId)
-        actualViewModel.loadReceipt(receiptId)
+//        actualViewModel.loadItems(receiptId)
+//        actualViewModel.loadReceipt(receiptId)
+        actualViewModel.loadDraftFromApi("2")
     }
     val editUiState by actualViewModel.editUiState.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
@@ -156,7 +157,7 @@ fun EditReceiptScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = actualViewModel.receiveDate(receiptId),
+                                text = actualViewModel.receiveDate(),
                                 fontSize = 14.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -261,8 +262,9 @@ fun EditReceiptScreen(
                             receiptId = receiptId
                         )
                         actualViewModel.viewModelScope.launch {
-                            actualViewModel.addItem(receiptId,newItem)
-                            actualViewModel.loadItems(receiptId) // Refresh item list
+//                            actualViewModel.addItem(receiptId, newItem)
+//                            actualViewModel.addItem(receiptId,newItem)
+                            actualViewModel.addItem(newItem)
                         }
                         showAddDialog = false
                     }
@@ -394,8 +396,9 @@ fun EditReceiptScreenPreview() {
         itemsRepository = FakeItemsRepository(),
         receiptsRepository = FakeReceiptsRepository()
     )
-    fakeViewModel.loadItems(1)
-    fakeViewModel.loadReceipt(1)
+//    fakeViewModel.loadItems(1)
+//    fakeViewModel.loadReceipt(1)
+    fakeViewModel.loadDraftFromApi("2")
     CookingAssistantTheme {
         EditReceiptScreen(
             receiptId = 1,
