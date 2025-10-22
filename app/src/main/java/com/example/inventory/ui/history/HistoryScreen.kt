@@ -42,9 +42,6 @@ import java.util.concurrent.TimeUnit
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.graphics.drawscope.Fill
-import android.graphics.Paint
-
 
 private val PrimaryGreen = Color(0xFF4CAF50)
 private val LightGreen = Color(0xFFE8F5E9)

@@ -37,7 +37,10 @@ class AppDataContainer(private val context: Context) : AppContainer {
     }
 
     override val receiptsRepository: ReceiptsRepository by lazy {
-        OfflineReceiptsRepository(InventoryDatabase.getDatabase(context).receiptDao())
+        ReceiptsRepositoryImpl(
+            OfflineReceiptsRepository(InventoryDatabase.getDatabase(context).receiptDao()),
+            OnlineReceiptsRepository.create()
+        )
     }
 
     override val recipesRepository: RecipesRepository by lazy {
