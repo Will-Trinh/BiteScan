@@ -92,13 +92,6 @@ fun EditReceiptScreen(
                 )
             },
 
-
-            //change to text button
-//            floatingActionButton = {
-//                FloatingActionButton(onClick = { actualViewModel.addItem(receiptId) }) {
-//                    Icon(Icons.Default.Add, contentDescription = "Add Item")
-//                }
-//            },
             bottomBar = { BottomNavigationBar(navController) }
         ) { paddingValues ->
             Column(
@@ -191,7 +184,7 @@ fun EditReceiptScreen(
                     }
                 }
                 //Todo: When user swipe left on the item card, it will be deleted
-                // .... Under Construction - delay to 01/10
+                // .... Under Construction - delay to next sprint
 
 
                 //Todo: "Bottom buttons"
@@ -232,7 +225,7 @@ fun EditReceiptScreen(
                                         receipt.copy(status = "Completed")
                                     )
                                 }
-                                navController.navigate("receipt/$userId") {
+                                navController.navigate("history/$userId") {
                                     popUpTo(navController.graph.startDestinationId) {
                                         inclusive = false
                                     }
@@ -367,7 +360,7 @@ fun ItemCard(
                 modifier = Modifier.weight(1f)
             )
         }
-        //editable fields
+        //Todo: editable fields
 //        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
 //            OutlinedTextField(
 //                value = name,
