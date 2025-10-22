@@ -6,13 +6,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Diamond
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Handshake
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Kitchen
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.*
@@ -35,19 +32,11 @@ import com.example.inventory.InventoryApplication
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.LaunchedEffect
 import com.example.inventory.data.OfflineUsersRepository
-import android.content.Intent
-import android.net.Uri
-import android.content.ActivityNotFoundException
-import androidx.compose.material.icons.filled.AccountBox
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.launch
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.BorderStroke
 
 
@@ -290,7 +279,7 @@ fun SettingScreen(
                             color = Color.Transparent,
                         )
 
-                        // My Receipt
+                        // My History
                         Button(
                             onClick = { navController.navigate("history/$userId") },
                             modifier = Modifier
@@ -314,7 +303,7 @@ fun SettingScreen(
                                         modifier = Modifier.size(24.dp)
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text("My Receipt", fontSize = 16.sp)
+                                    Text("History", fontSize = 16.sp)
                                 }
                                 Icon(
                                     imageVector = Icons.Filled.ArrowForward,
