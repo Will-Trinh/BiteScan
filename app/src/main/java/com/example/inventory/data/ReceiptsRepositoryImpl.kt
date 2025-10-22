@@ -38,6 +38,6 @@ class ReceiptsRepositoryImpl(
     private fun isNetworkAvailable(): Boolean {
         //check the connection on device and return true or false
 
-        return true
+        return false
     }
 }

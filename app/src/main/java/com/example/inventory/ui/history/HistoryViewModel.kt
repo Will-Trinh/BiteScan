@@ -18,34 +18,40 @@ import com.example.inventory.data.ReceiptsRepositoryImpl
 
 class ReceiptViewModel(
     private val receiptsRepository: ReceiptsRepository,
-    //private val ReceiptsRepositoryImpl: ReceiptsRepositoryImpl,
     private val itemsRepository: ItemsRepository,
     private val userId: Int
 ) : ViewModel() {
     private val _receiptUiState = MutableStateFlow(ReceiptUiState())
     val receiptUiState: StateFlow<ReceiptUiState> = _receiptUiState.asStateFlow()
 
-    fun loadReceiptsUser() {
-        viewModelScope.launch {
-
-            receiptsRepository.getReceiptsForUser(userId)
-                .collect { receipts ->
-                    println("Receipts for user $userId: $receipts")
-                    _receiptUiState.value = ReceiptUiState(receiptList = receipts)
-                    updateDayAndPrice(receipts)
-                }
-        }
-    }
-
-    //TODo: when api has done, use the online receipt data to replace the offline receipt data
 //    fun loadReceiptsUser() {
 //        viewModelScope.launch {
-//            // Syncs with online Receipt data
-//            val syncedReceipts = ReceiptsRepositoryImpl.fetchAndSyncReceipts(userId.toString())
-//            _receiptUiState.value = _receiptUiState.value.copy(receiptList = syncedReceipts)
-//            updateDayAndPrice(syncedReceipts)
+//
+//            receiptsRepository.getReceiptsForUser(userId)
+//                .collect { receipts ->
+//                    println("Receipts for user $userId: $receipts")
+//                    _receiptUiState.value = ReceiptUiState(receiptList = receipts)
+//                    updateDayAndPrice(receipts)
+//                }
+//
 //        }
 //    }
+
+    //TODo: when api has done, use the online receipt data to replace the offline receipt data
+    fun loadReceiptsUser() {
+        viewModelScope.launch {
+            // Syncs with online Receipt data
+            try {
+                val syncedReceipts = (receiptsRepository as? ReceiptsRepositoryImpl)?.fetchAndSyncReceipts(userId.toString())
+                    ?: receiptsRepository.getReceiptsForUser(userId).first()
+                _receiptUiState.value = _receiptUiState.value.copy(receiptList = syncedReceipts)
+                updateDayAndPrice(syncedReceipts)
+            } catch (e: Exception) {
+                println("Error loading receipts: $e")
+                _receiptUiState.value = _receiptUiState.value.copy(receiptList = emptyList())
+            }
+        }
+    }
 
     fun loadItems(receiptId: Int) {
         viewModelScope.launch {
