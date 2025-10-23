@@ -117,6 +117,18 @@ class EditReceiptViewModel(
         )
     }
 
+    // ToDo: Delete existing item
+    fun deleteItem(index: Int) {
+        val currentItems = _editUiState.value.itemList.toMutableList()
+        if (index in currentItems.indices) {
+            currentItems.removeAt(index)
+            _editUiState.value = _editUiState.value.copy(
+                itemList = currentItems.sortedBy { it.id },
+                totalItems = calculateTotalItem(currentItems),
+                totalPrice = calculateTotalPrice(currentItems)
+            )
+        }
+    }
     /** Get receipt date as string */
     fun receiveDate(): String {
         val currentReceipt = _editUiState.value.receipt
