@@ -23,6 +23,9 @@ import java.io.ByteArrayOutputStream
 import java.sql.Date
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.TimeoutCancellationException
+import java.util.concurrent.TimeUnit
 
 data class ReceiptData(
     val merchant_name: String? = null,
@@ -47,6 +50,7 @@ sealed class OcrState {
     data class Error(val message: String) : OcrState()
 }
 
+
 class UploadViewModel(
     private val receiptsRepository: ReceiptsRepository,
     private val itemsRepository: ItemsRepository
@@ -63,16 +67,22 @@ class UploadViewModel(
     // For physical device (replace with your IP)
 //    private val ocrApiUrl = "http://192.168.1.100:5000/ocr"
 
+
     fun processReceiptImage(bitmap: Bitmap) {
         viewModelScope.launch {
             _isProcessing.value = true
             _ocrState.value = OcrState.Loading
             try {
-                val base64Image = withContext(Dispatchers.Default) { convertBitmapToBase64(bitmap) }
-                val receiptData = withContext(Dispatchers.IO) { callPythonOcrApi(base64Image) }
-                _ocrState.value = OcrState.Success(receiptData)
+                withTimeout(300000L) {  // 30s timeout to prevent ANR
+                    val base64Image = withContext(Dispatchers.Default) { convertBitmapToBase64(bitmap) }
+                    val receiptData = withContext(Dispatchers.IO) { callPythonOcrApi(base64Image) }
+                    _ocrState.value = OcrState.Success(receiptData)
+                }
+            } catch (e: TimeoutCancellationException) {
+                Log.e("UploadViewModel", "OCR timed out after 30s")
+                _ocrState.value = OcrState.Error("Processing timed out. Try a smaller image.")
             } catch (e: Exception) {
-                Log.e("UploadViewModel", "OCR failed: ${e.message}")
+                Log.e("UploadViewModel", "OCR failed: ${e.message}", e)  // Log stack trace
                 _ocrState.value = OcrState.Error(e.message ?: "Unknown error")
             } finally {
                 _isProcessing.value = false
@@ -127,27 +137,36 @@ class UploadViewModel(
 
 
     private suspend fun callPythonOcrApi(base64Image: String): ReceiptData {
-        val client = OkHttpClient()
+        Log.d("UploadViewModel", "Starting API call to $ocrApiUrl")
+        Log.d("UploadViewModel", "Base64 preview: ${base64Image.take(50)}... (length: ${base64Image.length})")
+
+        val client = OkHttpClient.Builder()
+            .connectTimeout(10, TimeUnit.SECONDS)  // Short timeout for connect
+            .readTimeout(30, TimeUnit.SECONDS)  // Read timeout
+            .writeTimeout(10, TimeUnit.SECONDS)  // Write timeout
+            .build()
+
         val json = JSONObject().apply { put("image", base64Image) }
         val body = json.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
         val request = Request.Builder()
             .url(ocrApiUrl)
             .post(body)
+            .addHeader("User-Agent", "AndroidApp/1.0")  // Helps with some servers
             .build()
 
-        Log.d("UploadViewModel", "Request URL: $ocrApiUrl")
-        Log.d("UploadViewModel", "Request Body (first 100 chars): ${json.toString().take(100)}...")  // Log JSON snippet
-        Log.d("UploadViewModel", "Base64 length: ${base64Image.length}")
+        Log.d("UploadViewModel", "Request built, executing...")
 
         val response = client.newCall(request).execute()
-        Log.d("UploadViewModel", "Response code: ${response.code}, message: ${response.message}")
+        Log.d("UploadViewModel", "Execute complete - Code: ${response.code}, Message: ${response.message}")
         Log.d("UploadViewModel", "Response headers: ${response.headers}")
 
         val responseBody = response.body?.string() ?: "{}"
-        Log.d("UploadViewModel", "Full Response Body: $responseBody")  // Log full JSON/error
+        Log.d("UploadViewModel", "Full Response Body: $responseBody")
 
         try {
-            if (!response.isSuccessful) throw Exception("API error: ${response.code} - ${response.message}. Body: $responseBody")
+            if (!response.isSuccessful) {
+                throw Exception("API error: ${response.code} - ${response.message}. Body: $responseBody")
+            }
             val responseJson = JSONObject(responseBody)
             return ReceiptData(
                 merchant_name = responseJson.optString("merchant_name"),
@@ -169,7 +188,4 @@ class UploadViewModel(
             response.close()
         }
     }
-
-
-
 }
