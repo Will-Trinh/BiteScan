@@ -68,9 +68,7 @@ fun EditReceiptScreen(
     }
 
     LaunchedEffect(receiptId) {
-        actualViewModel.loadItems(receiptId)
-        actualViewModel.loadReceipt(receiptId)
-//        actualViewModel.loadDraftFromApi("2")
+        actualViewModel.loadDraftFromApi("2")
     }
     val editUiState by actualViewModel.editUiState.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
@@ -198,7 +196,9 @@ fun EditReceiptScreen(
                     //Todo: "Missing Item"
                     OutlinedButton(
                         onClick = { showAddDialog = true },
-                        modifier = Modifier.padding(horizontal = 1.dp).fillMaxWidth(),
+                        modifier = Modifier
+                            .padding(horizontal = 1.dp)
+                            .fillMaxWidth(),
                         colors = ButtonDefaults.outlinedButtonColors(
                             contentColor = Color(0xFF4CAF50)
                         ),
@@ -234,7 +234,9 @@ fun EditReceiptScreen(
                                 }
                             }
                         },
-                        modifier = Modifier.padding(horizontal = 1.dp).fillMaxWidth(),
+                        modifier = Modifier
+                            .padding(horizontal = 1.dp)
+                            .fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF4CAF50), // Green color for the button
                             contentColor = Color.White
@@ -262,8 +264,6 @@ fun EditReceiptScreen(
                             receiptId = receiptId
                         )
                         actualViewModel.viewModelScope.launch {
-//                            actualViewModel.addItem(receiptId, newItem)
-//                            actualViewModel.addItem(receiptId,newItem)
                             actualViewModel.addItem(newItem)
                         }
                         showAddDialog = false
@@ -396,8 +396,6 @@ fun EditReceiptScreenPreview() {
         itemsRepository = FakeItemsRepository(),
         receiptsRepository = FakeReceiptsRepository()
     )
-//    fakeViewModel.loadItems(1)
-//    fakeViewModel.loadReceipt(1)
     fakeViewModel.loadDraftFromApi("2")
     CookingAssistantTheme {
         EditReceiptScreen(
@@ -429,7 +427,6 @@ fun ItemCardPreview() {
         )
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable
