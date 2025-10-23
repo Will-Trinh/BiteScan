@@ -68,9 +68,9 @@ fun EditReceiptScreen(
     }
 
     LaunchedEffect(receiptId) {
-//        actualViewModel.loadItems(receiptId)
-//        actualViewModel.loadReceipt(receiptId)
-        actualViewModel.loadDraftFromApi("2")
+        actualViewModel.loadItems(receiptId)
+        actualViewModel.loadReceipt(receiptId)
+//        actualViewModel.loadDraftFromApi("2")
     }
     val editUiState by actualViewModel.editUiState.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
