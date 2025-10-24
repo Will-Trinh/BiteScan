@@ -1,6 +1,3 @@
-# sms (queue) -> run lambda function
-# this current file will otherwise run 24/7 on ec2
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager

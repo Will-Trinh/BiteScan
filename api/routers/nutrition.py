@@ -8,7 +8,7 @@ from schemas.natural_response import NaturalResponse
 from constants import NX_BASE, NX_HEADERS
 
 # deal with logging later if ever
-logger = Logger() 
+logger = Logger("file") 
 
 router = APIRouter(
     prefix="/nutrition",

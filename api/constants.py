@@ -17,8 +17,18 @@ NX_HEADERS = {
 
 #endregion
 
-#region db
+__USDA_API_KEY = getenv("USDA_API_KEY")
+USDA_HEADERS = {
+    "X-Api-Key": __USDA_API_KEY
+}
 
-DATABASE_CONNECTION_STRING = ""
+#region USDA
 
 #endregion
+
+#region db
+
+DATABASE_CONNECTION_STRING = getenv("DATABASE_CONNECTION_STRING")
+
+#endregion
+
