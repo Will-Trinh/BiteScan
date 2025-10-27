@@ -1,6 +1,9 @@
-from pydantic import BaseModel
+# deprecated prob
 
-class ItemNutrition(BaseModel):
+from pydantic import BaseModel
+from item import Item
+
+class ItemNutrition(BaseModel, Item):
     name: str
     protein: float
     carbs: float

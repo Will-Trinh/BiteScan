@@ -103,20 +103,23 @@ class DashboardViewModel(
 
             val totalSpend = userItems.sumOf { it.price * it.quantity.toDouble() }
             val totalItemsCount = userItems.size
-            val estimatedCalories = estimateCalories(userItems)
-            val estimatedProtein = estimateProtein(userItems)
+            val calories =  userItems.sumOf { it.calories ?: 0.0 }.toInt()
+            val fats =  userItems.sumOf { it.fats ?: 0.0 }.toInt()
+            val carbs =  userItems.sumOf { it.carbs ?: 0.0 }.toInt()
+            val protein = userItems.sumOf { it.protein ?: 0.0 }.toInt()
             _metrics.value = DashboardMetrics(
-                calories = estimatedCalories,
-                protein = estimatedProtein,
+                calories = calories,
+                protein = protein,
                 spend = totalSpend,
                 items = totalItemsCount
             )
 
             val categoryMacros = userItems.groupBy { it.category }
+            val totalGrams = (fats + carbs + protein).coerceAtLeast(1)
             _macroBreakdown.value = MacroBreakdown(
-                proteinPercent = estimateMacroPercent(categoryMacros, "Protein"),
-                carbsPercent = estimateMacroPercent(categoryMacros, "Carbs"),
-                fatsPercent = estimateMacroPercent(categoryMacros, "Fats")
+                proteinPercent = (protein / totalGrams * 100).toString() + "%",
+                carbsPercent = (fats / totalGrams * 100).toString() + "%",
+                fatsPercent = (carbs / totalGrams * 100).toString() + "%",
             )
 
             val categorySpend = userItems.groupBy { it.category }.mapValues { entry ->

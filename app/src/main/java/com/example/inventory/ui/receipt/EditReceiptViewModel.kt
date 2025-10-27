@@ -31,7 +31,9 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
+import kotlin.collections.forEach
 
 data class NutritionData(
     val name: String? = null,
@@ -271,6 +273,12 @@ class EditReceiptViewModel(
         // TODO: Implement API call to save receipt
     }
 
+    suspend fun saveItems( nutritionData: MutableList<Item>) {
+        nutritionData.forEach { item ->
+            itemsRepository.updateItem(item)
+        }
+    }
+
     fun processItems() {
         viewModelScope.launch {
             try {
@@ -285,7 +293,7 @@ class EditReceiptViewModel(
         }
     }
 
-    private suspend fun _processItems(): NutritionData {
+    private suspend fun _processItems(): MutableList<Item> {
         // TODO:
         // this url needs to be dynamic so we dont gotta change it everywhere, put in config
         Log.d("UploadViewModel", "Starting API call to $nutritionApiUrl")
@@ -296,9 +304,27 @@ class EditReceiptViewModel(
             .writeTimeout(20, TimeUnit.SECONDS)  // Write timeout
             .build()
 
-        val items = editUiState.value.itemList.map { it.name }
-        val json = JSONArray(items)
-        val body = json.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
+        val items = editUiState.value.itemList
+        val jsonArray = JSONArray()
+
+        items.forEach { item ->
+            val itemJson = JSONObject().apply {
+                put("id", item.id)
+                put("receiptId", item.receiptId)
+                put("name", item.name)
+                put("protein", item.protein)
+                put("carbs", item.carbs)
+                put("fats", item.fats)
+                put("calories", item.calories)
+                put("price", item.price)
+                put("quantity", item.quantity)
+                put("store", item.store)
+                put("date", SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(item.date))
+                put("category", item.category)
+            }
+            jsonArray.put(itemJson)
+        }
+        val body = jsonArray.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
         val request = Request.Builder()
             .url(nutritionApiUrl)
             .post(body)
@@ -318,14 +344,29 @@ class EditReceiptViewModel(
             if (!response.isSuccessful) {
                 throw Exception("API error: ${response.code} - ${response.message}. Body: $responseBody")
             }
-            val responseJson = JSONObject(responseBody)
-            return NutritionData(
-                name = responseJson.optString("name"),
-                protein = responseJson.optDouble("protein"),
-                carbs = responseJson.optDouble("carbs"),
-                fats = responseJson.optDouble("fats"),
-                calories = responseJson.optDouble("calories"),
-            )
+            val responseJson = JSONArray(responseBody)
+            val nutritionList = mutableListOf<Item>()
+            for (i in 0 until responseJson.length()) {
+                val itemJson = responseJson.getJSONObject(i)
+                val dateString = itemJson.optString("date")
+                val date = java.sql.Date(SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(dateString).time)
+                nutritionList.add(Item(
+                    id = itemJson.optInt("id"),
+                    receiptId = itemJson.optInt("receiptId"),
+                    name = itemJson.optString("name"),
+                    protein = itemJson.optDouble("protein"),
+                    carbs = itemJson.optDouble("carbs"),
+                    fats = itemJson.optDouble("fats"),
+                    calories = itemJson.optDouble("calories"),
+                    price = itemJson.optDouble("price"),
+                    quantity = itemJson.optDouble("quantity").toFloat(),
+                    store = itemJson.optString("store"),
+                    date = date,
+                    category = itemJson.optString("category")
+                ))
+            }
+            saveItems(nutritionList)
+            return nutritionList
         } finally {
             response.close()
         }

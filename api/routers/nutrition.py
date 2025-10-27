@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, status
 from avocavo import IngredientResult
 from avocavo_client import client
 
-from schemas.item_nutrition import ItemNutrition
+from schemas.item import Item
 
 router = APIRouter(
     prefix="/nutrition",
@@ -11,7 +11,7 @@ router = APIRouter(
 )
 
 @router.post("/items", status_code=200)
-async def get_nutrition(items: list[str]):
+async def get_nutrition(items: list[Item]):
     if not items:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="items missing")
 
@@ -32,14 +32,12 @@ async def get_nutrition(items: list[str]):
         print(result)
         break
     """
-    
-    resp: list[ItemNutrition] = []
-    for i in items:
-        result: IngredientResult = client.analyze_ingredient(i)
-        resp.append(ItemNutrition(name=result.ingredient, 
-                                  protein=result.nutrition.protein_total, 
-                                  fats=result.nutrition.total_fat_total,
-                                  carbs=result.nutrition.carbohydrates_total,
-                                  calories=result.nutrition.calories_total))
 
-    return resp
+    for i in items:
+        result: IngredientResult = client.analyze_ingredient(i.name)
+        i.calories = result.nutrition.calories
+        i.carbs = result.nutrition.carbohydrates_total
+        i.fats = result.nutrition.total_fat_total
+        i.protein = result.nutrition.protein_total
+
+    return items

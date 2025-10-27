@@ -221,20 +221,18 @@ fun EditReceiptScreen(
                         onClick = {
                             val receipt = editUiState.receipt
                             if (receipt != null) {
-                                val nutritionData = actualViewModel.processItems()
-                                /*
+                                actualViewModel.processItems()
                                 actualViewModel.viewModelScope.launch {
                                     actualViewModel.saveReceipt(
                                         receipt.copy(status = "Completed")
                                     )
                                 }
-                                navController.navigate("history/$userId") {
+                                navController.navigate("dashboard/$userId") {
                                     popUpTo(navController.graph.startDestinationId) {
                                         inclusive = false
                                     }
                                     launchSingleTop = true
                                 }
-                                 */
                             }
                         },
                         modifier = Modifier.padding(horizontal = 1.dp).fillMaxWidth(),
