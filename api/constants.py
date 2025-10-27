@@ -4,7 +4,7 @@ from os import getenv
 load_dotenv()
 
 #region NutritionX
-
+"""
 APP_ID = getenv("NUTRITIONIX_APP_ID")
 APP_KEY = getenv("NUTRITIONIX_APP_KEY")
 
@@ -14,11 +14,17 @@ NX_HEADERS = {
     "x-app-key": APP_KEY,
     "Content-Type": "application/json"
 }
-
+"""
 #endregion
 
 #region db
 
-DATABASE_CONNECTION_STRING = ""
+DATABASE_CONNECTION_STRING = getenv("DATABASE_CONNECTION_STRING")
+
+#endregion
+
+#region avocavo
+
+AVO_KEY = getenv("AVO_KEY")
 
 #endregion

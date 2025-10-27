@@ -80,7 +80,7 @@ fun EditReceiptScreen(
                 TopAppBar(
                     title = {
                         Text(
-                            text = "Review & Edit Items &&&&& $receiptId",
+                            text = "Review & Edit Items", //&&&&& $receiptId",
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold
                         )
