@@ -221,6 +221,8 @@ fun EditReceiptScreen(
                         onClick = {
                             val receipt = editUiState.receipt
                             if (receipt != null) {
+                                val nutritionData = actualViewModel.processItems()
+                                /*
                                 actualViewModel.viewModelScope.launch {
                                     actualViewModel.saveReceipt(
                                         receipt.copy(status = "Completed")
@@ -232,6 +234,7 @@ fun EditReceiptScreen(
                                     }
                                     launchSingleTop = true
                                 }
+                                 */
                             }
                         },
                         modifier = Modifier.padding(horizontal = 1.dp).fillMaxWidth(),

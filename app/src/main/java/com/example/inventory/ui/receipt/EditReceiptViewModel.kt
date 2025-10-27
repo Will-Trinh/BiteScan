@@ -20,9 +20,26 @@ import java.net.URL
 import android.util.Log
 import com.example.inventory.ui.upload.ReceiptData  // Import from upload package
 import com.example.inventory.ui.upload.LineItem
+import org.json.JSONArray
+import kotlinx.coroutines.TimeoutCancellationException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeout
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
+import java.util.concurrent.TimeUnit
+
+data class NutritionData(
+    val name: String? = null,
+    val protein: Double? = null,
+    val carbs: Double? = null,
+    val fats: Double? = null,
+    val calories: Double? = null,
+)
 
 class EditReceiptViewModel(
     private val itemsRepository: ItemsRepository,
@@ -30,6 +47,7 @@ class EditReceiptViewModel(
 ) : ViewModel() {
 
     private val _editUiState = MutableStateFlow(EditUiState())
+    private val nutritionApiUrl = "http://10.0.2.2:8000/nutrition/items"
     val editUiState: StateFlow<EditUiState> = _editUiState.asStateFlow()
 
     /**
@@ -251,6 +269,66 @@ class EditReceiptViewModel(
     /** Save receipt (placeholder for API POST) */
     suspend fun saveReceipt(receipt: Receipt) {
         // TODO: Implement API call to save receipt
+    }
+
+    fun processItems() {
+        viewModelScope.launch {
+            try {
+                withTimeout(300000L) {  // 30s timeout to prevent ANR
+                    val nutritionData = withContext(Dispatchers.IO) { _processItems() }
+                }
+            } catch (e: TimeoutCancellationException) {
+                Log.e("UploadViewModel", "nutrition timed out")
+            } catch (e: Exception) {
+                Log.e("UploadViewModel", "nutrition failed: ${e.message}", e)  // Log stack trace
+            }
+        }
+    }
+
+    private suspend fun _processItems(): NutritionData {
+        // TODO:
+        // this url needs to be dynamic so we dont gotta change it everywhere, put in config
+        Log.d("UploadViewModel", "Starting API call to $nutritionApiUrl")
+
+        val client = OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)  // Short timeout for connect
+            .readTimeout(180, TimeUnit.SECONDS)  // Read timeout
+            .writeTimeout(20, TimeUnit.SECONDS)  // Write timeout
+            .build()
+
+        val items = editUiState.value.itemList.map { it.name }
+        val json = JSONArray(items)
+        val body = json.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
+        val request = Request.Builder()
+            .url(nutritionApiUrl)
+            .post(body)
+            .addHeader("User-Agent", "AndroidApp/1.0")  // Helps with some servers
+            .build()
+
+        Log.d("UploadViewModel", "Request built, executing...")
+
+        val response = client.newCall(request).execute()
+        Log.d("UploadViewModel", "Execute complete - Code: ${response.code}, Message: ${response.message}")
+        Log.d("UploadViewModel", "Response headers: ${response.headers}")
+
+        val responseBody = response.body?.string() ?: "{}"
+        Log.d("UploadViewModel", "Full Response Body: $responseBody")
+
+        try {
+            if (!response.isSuccessful) {
+                throw Exception("API error: ${response.code} - ${response.message}. Body: $responseBody")
+            }
+            val responseJson = JSONObject(responseBody)
+            return NutritionData(
+                name = responseJson.optString("name"),
+                protein = responseJson.optDouble("protein"),
+                carbs = responseJson.optDouble("carbs"),
+                fats = responseJson.optDouble("fats"),
+                calories = responseJson.optDouble("calories"),
+            )
+        } finally {
+            response.close()
+        }
     }
 }
 
