@@ -82,7 +82,7 @@ fun EditReceiptScreen(
                 TopAppBar(
                     title = {
                         Text(
-                            text = "Review & Edit Items &&&&& $receiptId",
+                            text = "Review & Edit Items", //&&&&& $receiptId",
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -234,12 +234,13 @@ fun EditReceiptScreen(
                         onClick = {
                             val receipt = editUiState.receipt
                             if (receipt != null) {
+                                actualViewModel.processItems()
                                 actualViewModel.viewModelScope.launch {
                                     actualViewModel.saveReceipt(
                                         receipt.copy(status = "Completed")
                                     )
                                 }
-                                navController.navigate("history/$userId") {
+                                navController.navigate("dashboard/$userId") {
                                     popUpTo(navController.graph.startDestinationId) {
                                         inclusive = false
                                     }

@@ -141,9 +141,9 @@ class UploadViewModel(
         Log.d("UploadViewModel", "Base64 preview: ${base64Image.take(50)}... (length: ${base64Image.length})")
 
         val client = OkHttpClient.Builder()
-            .connectTimeout(10, TimeUnit.SECONDS)  // Short timeout for connect
-            .readTimeout(30, TimeUnit.SECONDS)  // Read timeout
-            .writeTimeout(10, TimeUnit.SECONDS)  // Write timeout
+            .connectTimeout(15, TimeUnit.SECONDS)  // Short timeout for connect
+            .readTimeout(90, TimeUnit.SECONDS)  // Read timeout
+            .writeTimeout(20, TimeUnit.SECONDS)  // Write timeout
             .build()
 
         val json = JSONObject().apply { put("image", base64Image) }
