@@ -70,6 +70,7 @@ fun EditReceiptScreen(
     LaunchedEffect(receiptId) {
         actualViewModel.loadItems(receiptId)
         actualViewModel.loadReceipt(receiptId)
+//        actualViewModel.loadDraftFromApi("2")
     }
     val editUiState by actualViewModel.editUiState.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
@@ -92,13 +93,6 @@ fun EditReceiptScreen(
                 )
             },
 
-
-            //change to text button
-//            floatingActionButton = {
-//                FloatingActionButton(onClick = { actualViewModel.addItem(receiptId) }) {
-//                    Icon(Icons.Default.Add, contentDescription = "Add Item")
-//                }
-//            },
             bottomBar = { BottomNavigationBar(navController) }
         ) { paddingValues ->
             Column(
@@ -163,7 +157,7 @@ fun EditReceiptScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = actualViewModel.receiveDate(receiptId),
+                                text = actualViewModel.receiveDate(),
                                 fontSize = 14.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -191,7 +185,7 @@ fun EditReceiptScreen(
                     }
                 }
                 //Todo: When user swipe left on the item card, it will be deleted
-                // .... Under Construction - delay to 01/10
+                // .... Under Construction - delay to next sprint
 
 
                 //Todo: "Bottom buttons"
@@ -232,7 +226,7 @@ fun EditReceiptScreen(
                                         receipt.copy(status = "Completed")
                                     )
                                 }
-                                navController.navigate("receipt/$userId") {
+                                navController.navigate("history/$userId") {
                                     popUpTo(navController.graph.startDestinationId) {
                                         inclusive = false
                                     }
@@ -268,8 +262,9 @@ fun EditReceiptScreen(
                             receiptId = receiptId
                         )
                         actualViewModel.viewModelScope.launch {
-                            actualViewModel.addItem(receiptId,newItem)
-                            actualViewModel.loadItems(receiptId) // Refresh item list
+//                            actualViewModel.addItem(receiptId, newItem)
+//                            actualViewModel.addItem(receiptId,newItem)
+                            actualViewModel.addItem(newItem)
                         }
                         showAddDialog = false
                     }
@@ -367,7 +362,7 @@ fun ItemCard(
                 modifier = Modifier.weight(1f)
             )
         }
-        //editable fields
+        //Todo: editable fields
 //        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
 //            OutlinedTextField(
 //                value = name,
@@ -401,8 +396,9 @@ fun EditReceiptScreenPreview() {
         itemsRepository = FakeItemsRepository(),
         receiptsRepository = FakeReceiptsRepository()
     )
-    fakeViewModel.loadItems(1)
-    fakeViewModel.loadReceipt(1)
+//    fakeViewModel.loadItems(1)
+//    fakeViewModel.loadReceipt(1)
+    fakeViewModel.loadDraftFromApi("2")
     CookingAssistantTheme {
         EditReceiptScreen(
             receiptId = 1,

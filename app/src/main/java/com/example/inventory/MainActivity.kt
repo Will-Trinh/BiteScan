@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import com.example.inventory.ui.theme.InventoryTheme
 import androidx.navigation.compose.rememberNavController
@@ -23,8 +24,10 @@ import com.example.inventory.data.User
 import com.example.inventory.data.OfflineUsersRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.example.inventory.BuildConfig
 import com.example.inventory.ui.navigation.*
 import com.example.inventory.ui.history.HistoryDestination
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,6 +44,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val navController = rememberNavController()
+
             // Add listener to handle invalid routes and redirect to 404
             navController.addOnDestinationChangedListener { _, destination, _ ->
                 val validRoutes = listOf(
@@ -66,6 +70,7 @@ class MainActivity : ComponentActivity() {
 
             InventoryTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
+//                    Text(text = "API Key: ${BuildConfig.apikeysafe}")
                     InventoryNavHost(navController = navController)
                 }
             }
