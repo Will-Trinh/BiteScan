@@ -32,6 +32,7 @@ import com.example.inventory.ui.userdata.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.clickable
 
 object EditReceiptDestination : NavigationDestination {
     override val route = "edit_receipt"
@@ -50,6 +51,9 @@ fun EditReceiptScreen(
     navController: NavController,
     viewModel: EditReceiptViewModel? = null
 ) {
+    var showEditDialog by remember { mutableStateOf(false) }
+    var selectedItemIndex by remember { mutableStateOf(-1) }
+    var selectedItem by remember { mutableStateOf<Item?>(null) }
     val context = LocalContext.current
     val actualViewModel = viewModel ?: remember {
         if (context.applicationContext is InventoryApplication) {
@@ -68,9 +72,7 @@ fun EditReceiptScreen(
     }
 
     LaunchedEffect(receiptId) {
-        actualViewModel.loadItems(receiptId)
-        actualViewModel.loadReceipt(receiptId)
-//        actualViewModel.loadDraftFromApi("2")
+        actualViewModel.loadDraftFromApi("2")
     }
     val editUiState by actualViewModel.editUiState.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
@@ -175,20 +177,29 @@ fun EditReceiptScreen(
                     itemsIndexed(editUiState.itemList) { index, item ->
                         ItemCard(
                             item = item,
-                            onItemChange = { updatedItem ->
-                                actualViewModel.updateItem(
-                                    index,
-                                    updatedItem
-                                )
+                            onClick = {
+                                selectedItemIndex = index
+                                selectedItem = item
+                                showEditDialog = true
                             }
                         )
                     }
                 }
-                //Todo: When user swipe left on the item card, it will be deleted
-                // .... Under Construction - delay to next sprint
 
-
-                //Todo: "Bottom buttons"
+                if (showEditDialog && selectedItem != null) {
+                    EditOrDeleteItemDialog(
+                        item = selectedItem!!,
+                        onDismiss = { showEditDialog = false },
+                        onUpdate = { updatedItem ->
+                            actualViewModel.updateItem(selectedItemIndex, updatedItem)
+                            showEditDialog = false
+                        },
+                        onDelete = {
+                            actualViewModel.deleteItem(selectedItemIndex)
+                            showEditDialog = false
+                        }
+                    )
+                }
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -198,7 +209,9 @@ fun EditReceiptScreen(
                     //Todo: "Missing Item"
                     OutlinedButton(
                         onClick = { showAddDialog = true },
-                        modifier = Modifier.padding(horizontal = 1.dp).fillMaxWidth(),
+                        modifier = Modifier
+                            .padding(horizontal = 1.dp)
+                            .fillMaxWidth(),
                         colors = ButtonDefaults.outlinedButtonColors(
                             contentColor = Color(0xFF4CAF50)
                         ),
@@ -235,7 +248,9 @@ fun EditReceiptScreen(
                                 }
                             }
                         },
-                        modifier = Modifier.padding(horizontal = 1.dp).fillMaxWidth(),
+                        modifier = Modifier
+                            .padding(horizontal = 1.dp)
+                            .fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF4CAF50), // Green color for the button
                             contentColor = Color.White
@@ -263,8 +278,6 @@ fun EditReceiptScreen(
                             receiptId = receiptId
                         )
                         actualViewModel.viewModelScope.launch {
-//                            actualViewModel.addItem(receiptId, newItem)
-//                            actualViewModel.addItem(receiptId,newItem)
                             actualViewModel.addItem(newItem)
                         }
                         showAddDialog = false
@@ -276,12 +289,78 @@ fun EditReceiptScreen(
     }
 }
 
+@Composable
+fun EditOrDeleteItemDialog(
+    item: Item,
+    onDismiss: () -> Unit,
+    onUpdate: (Item) -> Unit,
+    onDelete: () -> Unit
+) {
+    var name by remember { mutableStateOf(item.name) }
+    var price by remember { mutableStateOf(item.price.toString()) }
+    var quantity by remember { mutableStateOf(item.quantity.toString()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit or Delete Item") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Name") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = price,
+                    onValueChange = { price = it },
+                    label = { Text("Price") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = quantity,
+                    onValueChange = { quantity = it },
+                    label = { Text("Quantity") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Row {
+                Button(
+                    onClick = {
+                        val updatedItem = item.copy(
+                            name = name,
+                            price = price.toDoubleOrNull() ?: item.price,
+                            quantity = quantity.toFloatOrNull() ?: item.quantity
+                        )
+                        onUpdate(updatedItem)
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                ) {
+                    Text("Update")
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(
+                    onClick = onDelete,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                ) {
+                    Text("Delete")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
+}
 
 @Composable
 fun AddItemDialog(
     onDismiss: () -> Unit,
     onConfirm: (String, Double, Float) -> Unit
 ) {
+
     var newName by remember { mutableStateOf("") }
     var newPrice by remember { mutableStateOf("") }
     var newQuantity by remember { mutableStateOf("") }
@@ -328,15 +407,13 @@ fun AddItemDialog(
 @Composable
 fun ItemCard(
     item: Item,
-    onItemChange: (Item) -> Unit
+    onClick: () -> Unit
 ) {
-    var name by remember { mutableStateOf(item.name) }
-    var price by remember { mutableStateOf(item.price.toString()) }
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .clickable { onClick() },
         elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
@@ -347,44 +424,12 @@ fun ItemCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            //
-            Text(
-                text = name,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.weight(1f)
-            )
-            //
-            Text(
-                text = "$${String.format("%.2f", price.toDoubleOrNull() ?: item.price)}",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.End,
-                modifier = Modifier.weight(1f)
-            )
+            Column {
+                Text(item.name, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                Text("Qty: ${item.quantity}", fontSize = 14.sp, color = Color.Gray)
+            }
+            Text("$${String.format("%.2f", item.price)}", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
-        //Todo: editable fields
-//        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-//            OutlinedTextField(
-//                value = name,
-//                onValueChange = {
-//                    name = it
-//                    onItemChange(item.copy(name = it))
-//                },
-//                label = { Text("Name") },
-//                modifier = Modifier.fillMaxWidth()
-//            )
-//            OutlinedTextField(
-//                value = price,
-//                onValueChange = {
-//                    price = it
-//                    val newPrice = it.toDoubleOrNull() ?: item.price
-//                    onItemChange(item.copy(price = newPrice))
-//                },
-//                label = { Text("Price") },
-//                modifier = Modifier.fillMaxWidth()
-//            )
-//        }
     }
 }
 
@@ -397,8 +442,6 @@ fun EditReceiptScreenPreview() {
         itemsRepository = FakeItemsRepository(),
         receiptsRepository = FakeReceiptsRepository()
     )
-//    fakeViewModel.loadItems(1)
-//    fakeViewModel.loadReceipt(1)
     fakeViewModel.loadDraftFromApi("2")
     CookingAssistantTheme {
         EditReceiptScreen(
@@ -426,11 +469,10 @@ fun ItemCardPreview() {
                 "Fruit",
                 1
             ),
-            onItemChange = {}
+            onClick = {}
         )
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable
@@ -481,7 +523,7 @@ fun ItemsCardPreview() {
             ) { index, item ->
                 ItemCard(
                     item = item,
-                    onItemChange = {}
+                    onClick = {}
                 )
             }
         }
