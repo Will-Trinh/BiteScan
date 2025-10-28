@@ -13,13 +13,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.sql.Date
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import java.net.HttpURLConnection
-import java.net.URL
 import android.util.Log
 import com.example.inventory.ui.upload.ReceiptData  // Import from upload package
-import com.example.inventory.ui.upload.LineItem
 import org.json.JSONArray
 import kotlinx.coroutines.TimeoutCancellationException
 import java.text.SimpleDateFormat
@@ -31,7 +26,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
-import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import kotlin.collections.forEach
 
@@ -51,67 +45,13 @@ class EditReceiptViewModel(
     private val _editUiState = MutableStateFlow(EditUiState())
     private val nutritionApiUrl = "http://10.0.2.2:8000/nutrition/items"
     val editUiState: StateFlow<EditUiState> = _editUiState.asStateFlow()
+    var deleteItems: List<Item> = emptyList()
+
 
     /**
      * Load draft receipt from API.
      * Run network call in IO dispatcher to avoid blocking UI.
      */
-    fun loadDraftFromApi(draftCode: String) {
-        viewModelScope.launch {
-            try {
-                val jsonString = withContext(Dispatchers.IO) {
-                    val url = URL("https://drive.google.com/uc?export=download&id=1Ic7t-FeXSnvUhKpkZOe5j_tCU-pGK7Vs")
-                    val connection = url.openConnection() as HttpURLConnection
-                    connection.requestMethod = "GET"
-                    connection.inputStream.bufferedReader().use { it.readText() }
-                }
-
-                // Log for debugging
-                Log.d("API_TEST", "Draft JSON: $jsonString")
-
-                // Parse JSON
-                val json = Json { ignoreUnknownKeys = true } // ignores extra fields
-                val draftData = json.decodeFromString<DraftResponse>(jsonString)
-
-                // Convert to Receipt and Items
-                val receipt = Receipt(
-                    receiptId = 0,
-                    userId = 0,
-                    source = draftData.source ?: "",
-                    date = Date(draftData.date),
-                    status = draftData.status
-                )
-                val items = draftData.items.map { item ->
-                    Item(
-                        id = item.id,
-                        name = item.name,
-                        price = item.price,
-                        quantity = item.quantity,
-                        date = Date(System.currentTimeMillis()),
-                        store = item.store ?: "",
-                        category = item.category ?: "",
-                        receiptId = 0
-                    )
-                }
-
-                // Update UI state
-                _editUiState.value = _editUiState.value.copy(
-                    receipt = receipt,
-                    itemList = items.sortedBy { it.id },
-                    totalItems = calculateTotalItem(items),
-                    totalPrice = calculateTotalPrice(items)
-                )
-            } catch (e: Exception) {
-                Log.e("EditReceiptVM", "Error loading draft: ${e.message}")
-                _editUiState.value = _editUiState.value.copy(
-                    receipt = null,
-                    itemList = emptyList(),
-                    totalItems = 0,
-                    totalPrice = 0.0
-                )
-            }
-        }
-    }
 
     // New: Load from OCR ReceiptData (called after OCR success in UploadScreen)
     // Add this function to your EditReceiptViewModel class (after loadDraftFromApi)
@@ -121,7 +61,9 @@ class EditReceiptViewModel(
                 // Parse transaction_date to java.sql.Date (assume "YYYY-MM-DD" format)
                 val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
                 val parsedDate = if (receiptData.transaction_date != null) {
-                    Date(sdf.parse(receiptData.transaction_date)?.time ?: System.currentTimeMillis())
+                    Date(
+                        sdf.parse(receiptData.transaction_date)?.time ?: System.currentTimeMillis()
+                    )
                 } else Date(System.currentTimeMillis())
 
                 // Convert to Receipt (match your data class)
@@ -155,7 +97,10 @@ class EditReceiptViewModel(
                     totalPrice = calculateTotalPrice(items)
                 )
 
-                Log.d("EditReceiptVM", "Loaded OCR data: ${items.size} items from '${receipt.source}', date ${receipt.date}")
+                Log.d(
+                    "EditReceiptVM",
+                    "Loaded OCR data: ${items.size} items from '${receipt.source}', date ${receipt.date}"
+                )
             } catch (e: Exception) {
                 Log.e("EditReceiptVM", "OCR data load error: ${e.message}", e)
                 _editUiState.value = _editUiState.value.copy(
@@ -167,8 +112,20 @@ class EditReceiptViewModel(
             }
         }
     }
-
-    // Add these functions to your EditReceiptViewModel class (after loadDraftFromApi)
+//deleteItem and update listItem in EditReceiptScreen
+    fun deleteItem(selectedItemIndex: Int) {
+        try{
+        val currentItems = _editUiState.value.itemList.toMutableList()
+        //get item to delete
+        deleteItems = deleteItems + currentItems[selectedItemIndex]
+        currentItems.removeAt(selectedItemIndex)
+        _editUiState.value = _editUiState.value.copy(
+            itemList = currentItems.sortedBy { it.id },
+            totalItems = calculateTotalItem(currentItems),
+            totalPrice = calculateTotalPrice(currentItems)
+        )}catch (e: Exception) {
+            Log.e("EditReceiptVM", "Error deleting item: ${e.message}")}
+    }
 
     fun loadReceipt(receiptId: Int) {
         viewModelScope.launch {
@@ -189,7 +146,8 @@ class EditReceiptViewModel(
         viewModelScope.launch {
             try {
                 val items = withContext(Dispatchers.IO) {
-                    itemsRepository.getItemsForReceipt(receiptId).first()  // Assume ItemsRepository.getItemsForReceipt(id: Int): Flow<List<Item>>
+                    itemsRepository.getItemsForReceipt(receiptId)
+                        .first()  // Assume ItemsRepository.getItemsForReceipt(id: Int): Flow<List<Item>>
                 }
                 val totalItems = calculateTotalItem(items)
                 val totalPrice = calculateTotalPrice(items)
@@ -249,16 +207,16 @@ class EditReceiptViewModel(
     }
 
     /** Add new item */
-    fun addItem(item: Item) {
+    fun addItem(item: Item, receiptId: Int) {
         val newItem = Item(
-            id = (_editUiState.value.itemList.maxOfOrNull { it.id } ?: 0) + 1,
+            id = item.id  + 1,
             name = item.name,
             price = item.price,
             quantity = item.quantity,
             date = Date(System.currentTimeMillis()),
             store = item.store,
             category = item.category,
-            receiptId = 0
+            receiptId = receiptId
         )
         val updatedItems = _editUiState.value.itemList + newItem
         _editUiState.value = _editUiState.value.copy(
@@ -268,12 +226,44 @@ class EditReceiptViewModel(
         )
     }
 
-    /** Save receipt (placeholder for API POST) */
-    suspend fun saveReceipt(receipt: Receipt) {
-        // TODO: Implement API call to save receipt
+    //save updated list item to database with the receipt id
+    fun saveUpdatedItems(receipt: Receipt) {
+        viewModelScope.launch {
+            try {
+                //delete items
+                deleteItems.forEach { item ->
+                    itemsRepository.deleteItem(item)
+                }
+                //update receipt
+                receiptsRepository.updateReceipt(receipt)
+                //check if item is in receipt, update item in receipt, if item is new add, insert it in to the receipt.
+                val updatedItems = _editUiState.value.itemList.map { it.copy(receiptId = receipt.receiptId) }
+                updatedItems.forEach { item ->
+                    if (item.id >= 999) {
+                        itemsRepository.insertItem(item.copy(receiptId = receipt.receiptId))
+                    } else {
+                        itemsRepository.updateItem(item.copy(receiptId = receipt.receiptId))
+                    }
+                }
+                _editUiState.value = _editUiState.value.copy(
+                    receipt = receipt,
+                    itemList = updatedItems
+                )
+                Log.d("EditReceiptVM", "Items saved successfully")
+
+            } catch (e: Exception) {
+                android.util.Log.e("EditReceiptVM", " Error saving items: ${e.message}")
+            }
+        }
+    }
+    /** Delete receipt (placeholder for API DELETE) */
+    suspend fun deleteReceipt(receipt: Receipt) {
+        receiptsRepository.deleteReceipt(receipt)
     }
 
-    suspend fun saveItems( nutritionData: MutableList<Item>) {
+
+
+    suspend fun saveItems(nutritionData: MutableList<Item>) {
         nutritionData.forEach { item ->
             itemsRepository.updateItem(item)
         }
@@ -324,7 +314,8 @@ class EditReceiptViewModel(
             }
             jsonArray.put(itemJson)
         }
-        val body = jsonArray.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
+        val body =
+            jsonArray.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
         val request = Request.Builder()
             .url(nutritionApiUrl)
             .post(body)
@@ -334,7 +325,10 @@ class EditReceiptViewModel(
         Log.d("UploadViewModel", "Request built, executing...")
 
         val response = client.newCall(request).execute()
-        Log.d("UploadViewModel", "Execute complete - Code: ${response.code}, Message: ${response.message}")
+        Log.d(
+            "UploadViewModel",
+            "Execute complete - Code: ${response.code}, Message: ${response.message}"
+        )
         Log.d("UploadViewModel", "Response headers: ${response.headers}")
 
         val responseBody = response.body?.string() ?: "{}"
@@ -349,21 +343,25 @@ class EditReceiptViewModel(
             for (i in 0 until responseJson.length()) {
                 val itemJson = responseJson.getJSONObject(i)
                 val dateString = itemJson.optString("date")
-                val date = java.sql.Date(SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(dateString).time)
-                nutritionList.add(Item(
-                    id = itemJson.optInt("id"),
-                    receiptId = itemJson.optInt("receiptId"),
-                    name = itemJson.optString("name"),
-                    protein = itemJson.optDouble("protein"),
-                    carbs = itemJson.optDouble("carbs"),
-                    fats = itemJson.optDouble("fats"),
-                    calories = itemJson.optDouble("calories"),
-                    price = itemJson.optDouble("price"),
-                    quantity = itemJson.optDouble("quantity").toFloat(),
-                    store = itemJson.optString("store"),
-                    date = date,
-                    category = itemJson.optString("category")
-                ))
+                val date = java.sql.Date(
+                    SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(dateString).time
+                )
+                nutritionList.add(
+                    Item(
+                        id = itemJson.optInt("id"),
+                        receiptId = itemJson.optInt("receiptId"),
+                        name = itemJson.optString("name"),
+                        protein = itemJson.optDouble("protein"),
+                        carbs = itemJson.optDouble("carbs"),
+                        fats = itemJson.optDouble("fats"),
+                        calories = itemJson.optDouble("calories"),
+                        price = itemJson.optDouble("price"),
+                        quantity = itemJson.optDouble("quantity").toFloat(),
+                        store = itemJson.optString("store"),
+                        date = date,
+                        category = itemJson.optString("category")
+                    )
+                )
             }
             saveItems(nutritionList)
             return nutritionList
@@ -374,7 +372,6 @@ class EditReceiptViewModel(
 }
 
 // Data classes to parse JSON
-@Serializable
 data class DraftResponse(
     val draftCode: String,
     val source: String? = null,
@@ -383,7 +380,6 @@ data class DraftResponse(
     val items: List<DraftItem>
 )
 
-@Serializable
 data class DraftItem(
     val id: Int,
     val name: String,
@@ -397,5 +393,5 @@ data class EditUiState(
     val itemList: List<Item> = emptyList(),
     val totalItems: Int = 0,
     val totalPrice: Double = 0.0,
-    val receipt: Receipt? = null
+    val receipt: Receipt? = null,
 )
