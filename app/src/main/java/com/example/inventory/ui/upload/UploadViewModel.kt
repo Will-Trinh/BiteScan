@@ -74,7 +74,8 @@ class UploadViewModel(
             _ocrState.value = OcrState.Loading
             try {
                 withTimeout(300000L) {  // 30s timeout to prevent ANR
-                    val base64Image = withContext(Dispatchers.Default) { convertBitmapToBase64(bitmap) }
+                    val base64Image =
+                        withContext(Dispatchers.Default) { convertBitmapToBase64(bitmap) }
                     val receiptData = withContext(Dispatchers.IO) { callPythonOcrApi(base64Image) }
                     _ocrState.value = OcrState.Success(receiptData)
                 }
@@ -94,7 +95,10 @@ class UploadViewModel(
         return withContext(Dispatchers.IO) {
             try {
                 val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-                val parsedDate = Date(sdf.parse(receiptData.transaction_date ?: "")?.time ?: System.currentTimeMillis())
+                val parsedDate = Date(
+                    sdf.parse(receiptData.transaction_date ?: "")?.time
+                        ?: System.currentTimeMillis()
+                )
 
                 val newReceipt = Receipt(
                     receiptId = 0,
@@ -136,56 +140,100 @@ class UploadViewModel(
     }
 
 
+    //    private suspend fun callPythonOcrApi(base64Image: String): ReceiptData {
+//        Log.d("UploadViewModel", "Starting API call to $ocrApiUrl")
+//        Log.d("UploadViewModel", "Base64 preview: ${base64Image.take(50)}... (length: ${base64Image.length})")
+//
+//        val client = OkHttpClient.Builder()
+//            .connectTimeout(15, TimeUnit.SECONDS)  // Short timeout for connect
+//            .readTimeout(90, TimeUnit.SECONDS)  // Read timeout
+//            .writeTimeout(20, TimeUnit.SECONDS)  // Write timeout
+//            .build()
+//
+//        val json = JSONObject().apply { put("image", base64Image) }
+//        val body = json.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
+//        val request = Request.Builder()
+//            .url(ocrApiUrl)
+//            .post(body)
+//            .addHeader("User-Agent", "AndroidApp/1.0")  // Helps with some servers
+//            .build()
+//
+//        Log.d("UploadViewModel", "Request built, executing...")
+//
+//        val response = client.newCall(request).execute()
+//        Log.d("UploadViewModel", "Execute complete - Code: ${response.code}, Message: ${response.message}")
+//        Log.d("UploadViewModel", "Response headers: ${response.headers}")
+//
+//        val responseBody = response.body?.string() ?: "{}"
+//        Log.d("UploadViewModel", "Full Response Body: $responseBody")
+//
+//        try {
+//            if (!response.isSuccessful) {
+//                throw Exception("API error: ${response.code} - ${response.message}. Body: $responseBody")
+//            }
+//            val responseJson = JSONObject(responseBody)
+//            return ReceiptData(
+//                merchant_name = responseJson.optString("merchant_name"),
+//                merchant_address = responseJson.optString("merchant_address"),
+//                transaction_date = responseJson.optString("transaction_date"),
+//                transaction_time = responseJson.optString("transaction_time"),
+//                total_amount = responseJson.optDouble("total_amount"),
+//                line_items = (0 until (responseJson.optJSONArray("line_items")?.length() ?: 0)).map { i ->
+//                    val itemJson = responseJson.optJSONArray("line_items")?.getJSONObject(i)
+//                    LineItem(
+//                        item_name = itemJson?.optString("item_name"),
+//                        item_quantity = itemJson?.optInt("item_quantity"),
+//                        item_price = itemJson?.optDouble("item_price"),
+//                        item_total = itemJson?.optDouble("item_total")
+//                    )
+//                }
+//            )
+//        } finally {
+//            response.close()
+//        }
     private suspend fun callPythonOcrApi(base64Image: String): ReceiptData {
-        Log.d("UploadViewModel", "Starting API call to $ocrApiUrl")
-        Log.d("UploadViewModel", "Base64 preview: ${base64Image.take(50)}... (length: ${base64Image.length})")
+        Log.d("UploadViewModel", "Starting API call to testing only")
 
-        val client = OkHttpClient.Builder()
-            .connectTimeout(15, TimeUnit.SECONDS)  // Short timeout for connect
-            .readTimeout(90, TimeUnit.SECONDS)  // Read timeout
-            .writeTimeout(20, TimeUnit.SECONDS)  // Write timeout
-            .build()
+        // Mẫu JSON testing (String)
+        val responseBody = """
+        {
+            "merchant_name": "Walmart",
+            "merchant_address": "123 ABC Avenue, Long Beach, CA 92801",
+            "transaction_date": "2025-10-23",
+            "transaction_time": "17:58:00",
+            "total_amount": 49.2,
+            "line_items": [
+                { "item_name": "Banana", "item_quantity": 1, "item_price": 1.49, "item_total": 1.49 },
+                { "item_name": "Potato", "item_quantity": 1, "item_price": 0.99, "item_total": 0.99 },
+                { "item_name": "Granola & Fruit", "item_quantity": 1, "item_price": 3.99, "item_total": 3.99 },
+                { "item_name": "Strawberry", "item_quantity": 1, "item_price": 5.99, "item_total": 5.99 },
+                { "item_name": "Avocado", "item_quantity": 1, "item_price": 3.99, "item_total": 3.99 },
+                { "item_name": "Chicken breast", "item_quantity": 1, "item_price": 10.98, "item_total": 10.98 },
+                { "item_name": "Meatball", "item_quantity": 1, "item_price": 8.99, "item_total": 8.99 },
+                { "item_name": "Ground beef", "item_quantity": 1, "item_price": 12.80, "item_total": 12.80 }
+            ]
+        }
+    """.trimIndent()
 
-        val json = JSONObject().apply { put("image", base64Image) }
-        val body = json.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
-        val request = Request.Builder()
-            .url(ocrApiUrl)
-            .post(body)
-            .addHeader("User-Agent", "AndroidApp/1.0")  // Helps with some servers
-            .build()
-
-        Log.d("UploadViewModel", "Request built, executing...")
-
-        val response = client.newCall(request).execute()
-        Log.d("UploadViewModel", "Execute complete - Code: ${response.code}, Message: ${response.message}")
-        Log.d("UploadViewModel", "Response headers: ${response.headers}")
-
-        val responseBody = response.body?.string() ?: "{}"
         Log.d("UploadViewModel", "Full Response Body: $responseBody")
 
-        try {
-            if (!response.isSuccessful) {
-                throw Exception("API error: ${response.code} - ${response.message}. Body: $responseBody")
+        val responseJson = JSONObject(responseBody)
+        return ReceiptData(
+            merchant_name = responseJson.optString("merchant_name"),
+            merchant_address = responseJson.optString("merchant_address"),
+            transaction_date = responseJson.optString("transaction_date"),
+            transaction_time = responseJson.optString("transaction_time"),
+            total_amount = responseJson.optDouble("total_amount"),
+            line_items = (0 until (responseJson.optJSONArray("line_items")?.length()
+                ?: 0)).map { i ->
+                val itemJson = responseJson.optJSONArray("line_items")?.getJSONObject(i)
+                LineItem(
+                    item_name = itemJson?.optString("item_name"),
+                    item_quantity = itemJson?.optInt("item_quantity"),
+                    item_price = itemJson?.optDouble("item_price"),
+                    item_total = itemJson?.optDouble("item_total")
+                )
             }
-            val responseJson = JSONObject(responseBody)
-            return ReceiptData(
-                merchant_name = responseJson.optString("merchant_name"),
-                merchant_address = responseJson.optString("merchant_address"),
-                transaction_date = responseJson.optString("transaction_date"),
-                transaction_time = responseJson.optString("transaction_time"),
-                total_amount = responseJson.optDouble("total_amount"),
-                line_items = (0 until (responseJson.optJSONArray("line_items")?.length() ?: 0)).map { i ->
-                    val itemJson = responseJson.optJSONArray("line_items")?.getJSONObject(i)
-                    LineItem(
-                        item_name = itemJson?.optString("item_name"),
-                        item_quantity = itemJson?.optInt("item_quantity"),
-                        item_price = itemJson?.optDouble("item_price"),
-                        item_total = itemJson?.optDouble("item_total")
-                    )
-                }
-            )
-        } finally {
-            response.close()
-        }
+        )
     }
 }

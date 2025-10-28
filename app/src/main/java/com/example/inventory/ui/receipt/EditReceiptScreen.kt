@@ -51,6 +51,7 @@ fun EditReceiptScreen(
     navController: NavController,
     viewModel: EditReceiptViewModel? = null
 ) {
+    var deleteItemList by remember { mutableStateOf<List<Item>?>(null) }
     var showEditDialog by remember { mutableStateOf(false) }
     var selectedItemIndex by remember { mutableStateOf(-1) }
     var selectedItem by remember { mutableStateOf<Item?>(null) }
@@ -72,7 +73,8 @@ fun EditReceiptScreen(
     }
 
     LaunchedEffect(receiptId) {
-        actualViewModel.loadDraftFromApi("2")
+        actualViewModel.loadReceipt(receiptId)
+        actualViewModel.loadItems(receiptId)
     }
     val editUiState by actualViewModel.editUiState.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
@@ -229,6 +231,37 @@ fun EditReceiptScreen(
                     // Spacer
                     Spacer(modifier = Modifier.width(8.dp))
 
+                    //Todo: Add delete button for receipt
+                    Button(
+                        onClick = {
+                            val receipt = editUiState.receipt
+                            if (receipt != null) {
+                                actualViewModel.processItems()
+                                actualViewModel.viewModelScope.launch {
+                                    actualViewModel.deleteReceipt(
+                                        receipt.copy(status = "Completed")
+                                    )
+                                }
+                                navController.navigate("dashboard/$userId") {
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        inclusive = false
+                                    }
+                                    launchSingleTop = true
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .padding(horizontal = 1.dp)
+                            .fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF4CAF50), // Green color for the button
+                            contentColor = Color.White
+                        ),
+                        enabled = editUiState.receipt != null
+                    ) {
+                        Text("Delete Receipt")
+                    }
+
                     //Todo: "Confirm & Analyze Nutrition"
                     Button(
                         onClick = {
@@ -236,11 +269,11 @@ fun EditReceiptScreen(
                             if (receipt != null) {
                                 actualViewModel.processItems()
                                 actualViewModel.viewModelScope.launch {
-                                    actualViewModel.saveReceipt(
+                                    actualViewModel.saveUpdatedItems(
                                         receipt.copy(status = "Completed")
                                     )
                                 }
-                                navController.navigate("dashboard/$userId") {
+                                navController.navigate("history/$userId") {
                                     popUpTo(navController.graph.startDestinationId) {
                                         inclusive = false
                                     }
@@ -268,7 +301,7 @@ fun EditReceiptScreen(
                     onDismiss = { showAddDialog = false },
                     onConfirm = { newName, newPrice, newQuantity ->
                         val newItem = Item(
-                            id = 0,
+                            id = 1000,
                             name = newName,
                             price = newPrice,
                             quantity = newQuantity,
@@ -278,7 +311,7 @@ fun EditReceiptScreen(
                             receiptId = receiptId
                         )
                         actualViewModel.viewModelScope.launch {
-                            actualViewModel.addItem(newItem)
+                            actualViewModel.addItem(newItem, receiptId)
                         }
                         showAddDialog = false
                     }
@@ -428,7 +461,11 @@ fun ItemCard(
                 Text(item.name, fontSize = 16.sp, fontWeight = FontWeight.Medium)
                 Text("Qty: ${item.quantity}", fontSize = 14.sp, color = Color.Gray)
             }
-            Text("$${String.format("%.2f", item.price)}", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text(
+                "$${String.format("%.2f", item.price)}",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }
@@ -442,7 +479,8 @@ fun EditReceiptScreenPreview() {
         itemsRepository = FakeItemsRepository(),
         receiptsRepository = FakeReceiptsRepository()
     )
-    fakeViewModel.loadDraftFromApi("2")
+    fakeViewModel.loadReceipt(1)
+    fakeViewModel.loadItems(1)
     CookingAssistantTheme {
         EditReceiptScreen(
             receiptId = 1,
