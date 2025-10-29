@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 APP_ID = os.getenv("NUTRITIONIX_APP_ID")
 APP_KEY = os.getenv("NUTRITIONIX_APP_KEY")
 if not APP_ID or not APP_KEY:
-    raise RuntimeError("Set NUTRITIONIX_APP_ID and NUTRITIONIX_APP_KEY env vars")
+    raise RuntimeError("Set NUTRITIONIX_APP_ID and NUTRITIONIX_APP_KEY .env vars")
 
 NX_BASE = "https://trackapi.nutritionix.com/v2"
 HEADERS = {
