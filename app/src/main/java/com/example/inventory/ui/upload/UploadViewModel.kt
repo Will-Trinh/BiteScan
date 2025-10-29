@@ -139,6 +139,11 @@ class UploadViewModel(
         return Base64.encodeToString(byteArray, Base64.DEFAULT or Base64.NO_WRAP)
     }
 
+    fun resetState() {
+        _isProcessing.value = false
+        _ocrState.value = OcrState.Idle  // Or _extractedItems.value = emptyList() if you have it
+    }
+
 
     //    private suspend fun callPythonOcrApi(base64Image: String): ReceiptData {
 //        Log.d("UploadViewModel", "Starting API call to $ocrApiUrl")

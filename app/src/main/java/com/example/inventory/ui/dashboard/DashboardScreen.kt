@@ -48,6 +48,8 @@ fun DashboardScreen(
             itemsRepository = appContainer.itemsRepository as ItemsRepository
         )
     }
+
+
     LaunchedEffect(userId) {
         viewModel.setCurrentUserId(userId)
     }
