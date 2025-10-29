@@ -36,6 +36,7 @@ import com.example.inventory.data.ItemsRepository
 import com.example.inventory.ui.loading.LoadingScreen
 import android.util.Log
 import com.example.inventory.ui.theme.md_theme_light_primary
+import com.example.inventory.ui.navigation.UploadDestination
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,6 +55,19 @@ fun UploadScreen(
     )
     val ocrState by viewModel.ocrState.collectAsState()
     val isProcessing by viewModel.isProcessing.collectAsState()
+
+    // Add this to UploadScreen.kt (inside the Composable, after viewModel declaration)
+    DisposableEffect(navController) {
+        val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
+            if (destination.route == UploadDestination.route) {
+                viewModel.resetState()  // Reset processing and OCR state
+            }
+        }
+        navController.addOnDestinationChangedListener(listener)
+        onDispose {
+            navController.removeOnDestinationChangedListener(listener)
+        }
+    }
 
     // Register gallery launcher
     val galleryLauncher = rememberLauncherForActivityResult(

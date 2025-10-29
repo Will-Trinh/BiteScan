@@ -188,20 +188,20 @@ fun EditReceiptScreen(
                     }
                 }
 
-                if (showEditDialog && selectedItem != null) {
-                    EditOrDeleteItemDialog(
-                        item = selectedItem!!,
-                        onDismiss = { showEditDialog = false },
-                        onUpdate = { updatedItem ->
-                            actualViewModel.updateItem(selectedItemIndex, updatedItem)
-                            showEditDialog = false
-                        },
-                        onDelete = {
-                            actualViewModel.deleteItem(selectedItemIndex)
-                            showEditDialog = false
-                        }
-                    )
-                }
+//                if (showEditDialog && selectedItem != null) {
+//                    EditOrDeleteItemDialog(
+//                        item = selectedItem!!,
+//                        onDismiss = { showEditDialog = false },
+//                        onUpdate = { updatedItem ->
+//                            actualViewModel.updateItem(selectedItemIndex, updatedItem)
+//                            showEditDialog = false
+//                        },
+//                        onDelete = {
+//                            actualViewModel.deleteItem(selectedItemIndex)
+//                            showEditDialog = false
+//                        }
+//                    )
+//                }
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
