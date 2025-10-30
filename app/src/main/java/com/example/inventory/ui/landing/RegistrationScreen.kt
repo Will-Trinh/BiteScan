@@ -211,7 +211,7 @@ fun CreateAccountScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
                 ) {
-                    Text("Login", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text("Sign Up", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 }
                 Spacer(modifier = Modifier.height(32.dp))
 
@@ -231,5 +231,6 @@ fun CreateAccountScreen(
 @Preview(showBackground = true)
 @Composable
 fun CreateAccountScreenPreview() {
+
     CreateAccountScreen()
 }

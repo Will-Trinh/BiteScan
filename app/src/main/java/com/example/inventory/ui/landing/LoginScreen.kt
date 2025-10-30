@@ -32,13 +32,19 @@ import com.example.inventory.ui.theme.CookingAssistantTheme
 import com.example.inventory.ui.theme.md_theme_light_primary
 import com.example.inventory.ui.theme.*
 import com.example.inventory.ui.userdata.FakeUsersRepository
+import androidx.navigation.NavController
+import com.example.inventory.ui.navigation.NavigationDestination
+import androidx.navigation.compose.rememberNavController
 
+
+// --- Login Screen Composable ---
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
     onLoginClick: () -> Unit = {},
     onCreateAccountClick: () -> Unit = {},
     onBackClick: () -> Unit = {},
+    navController: NavController,
     viewModel: LoginScreenViewModel? = null
 ) {
     val context = LocalContext.current
@@ -130,7 +136,9 @@ fun LoginScreen(
                     ToggleButton(
                         text = "Create Account",
                         isSelected = !isLoginSelected,
-                        onClick = { isLoginSelected = false; onCreateAccountClick() },
+                        onClick = { navController.navigate("registration") {
+                            popUpTo(navController.graph.startDestinationId) { inclusive = false }
+                            launchSingleTop = true}},
                         primaryColor = primaryColor
                     )
                 }
@@ -401,7 +409,8 @@ fun LoginScreenPreview() {
 
     CookingAssistantTheme {
         LoginScreen(
-            viewModel = fakeViewModel
+            viewModel = fakeViewModel,
+            navController = rememberNavController()
         )
     }
 }
