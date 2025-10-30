@@ -92,8 +92,8 @@ class DatabaseSeeder {
                 User(
                     userId = 0,
                     username = "testuser",
-                    password = "hashed_password",
-                    phone = "1234567890"
+                    phone = "1234567890",
+                    email = "TranXinhDep@gmail.com",
                 )
             )
             if (userId <= 0) {

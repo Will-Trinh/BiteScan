@@ -24,9 +24,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import com.example.inventory.R
-
+import com.example.inventory.ui.theme.PrimaryGreen
 // Define a color for the primary green, consistent with your settings screen
-val PrimaryGreen = Color(0xFF4CAF50)
 
 @Composable
 fun LandingScreen(
