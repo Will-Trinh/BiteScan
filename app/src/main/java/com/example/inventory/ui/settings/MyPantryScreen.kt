@@ -46,12 +46,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.example.inventory.ui.AppViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyPantryScreen(
     navController: NavController,
     userId: Int,
+    appViewModel: AppViewModel,
     modifier: Modifier = Modifier
 ) {
     // Custom ViewModel factory to provide dependencies
@@ -308,7 +310,8 @@ fun MyPantryScreenPreview() {
         MyPantryScreen(
             navController = navController,
             userId = 1,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
+            appViewModel= AppViewModel(),
         )
     }
 }

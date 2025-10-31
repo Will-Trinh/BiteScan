@@ -33,7 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.clickable
-
+import com.example.inventory.ui.AppViewModel
 object EditReceiptDestination : NavigationDestination {
     override val route = "edit_receipt"
     const val receiptIdArg = "receiptId"
@@ -49,6 +49,7 @@ fun EditReceiptScreen(
     userId: Int,
     navigateUp: () -> Unit,
     navController: NavController,
+    appViewModel: AppViewModel,
     viewModel: EditReceiptViewModel? = null
 ) {
     var deleteItemList by remember { mutableStateOf<List<Item>?>(null) }
@@ -97,7 +98,7 @@ fun EditReceiptScreen(
                 )
             },
 
-            bottomBar = { BottomNavigationBar(navController) }
+            bottomBar = { BottomNavigationBar(navController, appViewModel) }
         ) { paddingValues ->
             Column(
                 modifier = Modifier
@@ -487,7 +488,8 @@ fun EditReceiptScreenPreview() {
             userId = fakeUIuser.userId,
             navigateUp = {},
             navController = navController,
-            viewModel = fakeViewModel
+            viewModel = fakeViewModel,
+            appViewModel = AppViewModel()
         )
     }
 }

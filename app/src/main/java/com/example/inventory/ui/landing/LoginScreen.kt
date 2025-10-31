@@ -33,20 +33,21 @@ import com.example.inventory.ui.theme.md_theme_light_primary
 import com.example.inventory.ui.theme.*
 import com.example.inventory.ui.userdata.FakeUsersRepository
 import androidx.navigation.NavController
-import com.example.inventory.ui.navigation.NavigationDestination
 import androidx.navigation.compose.rememberNavController
-
+import com.example.inventory.ui.AppViewModel
 
 // --- Login Screen Composable ---
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    onLoginClick: () -> Unit = {},
+    onLoginClick: (Int) -> Unit = {},
     onCreateAccountClick: () -> Unit = {},
     onBackClick: () -> Unit = {},
+    appViewModel: AppViewModel,
     navController: NavController,
     viewModel: LoginScreenViewModel? = null
 ) {
+
     val context = LocalContext.current
     val actualViewModel = viewModel ?: remember {
         if (context.applicationContext is InventoryApplication) {
@@ -255,7 +256,11 @@ fun LoginScreen(
                 Toast.LENGTH_LONG
             ).show()
             if (result.success) {
-                onLoginClick()
+                //save userId to navController
+                navController.currentBackStackEntry?.savedStateHandle?.set("userId", result.uid)
+                appViewModel.setUserId(result.uid)
+                // onLoginClick -> userId
+                onLoginClick(result.uid)
             }
         }
     }
@@ -410,7 +415,11 @@ fun LoginScreenPreview() {
     CookingAssistantTheme {
         LoginScreen(
             viewModel = fakeViewModel,
-            navController = rememberNavController()
+            navController = rememberNavController(),
+            onLoginClick = {},
+            onCreateAccountClick = {},
+            onBackClick = {},
+            appViewModel = AppViewModel()
         )
     }
 }

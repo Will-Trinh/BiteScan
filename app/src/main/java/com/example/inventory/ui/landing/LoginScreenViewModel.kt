@@ -29,13 +29,19 @@ class LoginScreenViewModel(
 
     fun checkLogin(username: String, password: String) {
         _isLoading.value = true
-        _loginResult.value = null
+        //_loginResult.value = null real time api run only
+        //for testing purpose
+        _loginResult.value = LoginResult(success = true, uid = 1)
+
 
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
                 try {
                     val apiUrl = URL("https://abc.com/api/login")
                     val conn = apiUrl.openConnection() as HttpURLConnection
+                    //Set timeout (10s connect, 15s response)
+                    conn.connectTimeout = 10_000
+                    conn.readTimeout = 15_000
                     conn.requestMethod = "POST"
                     conn.setRequestProperty("Content-Type", "application/json")
                     conn.doOutput = true
@@ -75,9 +81,9 @@ class LoginScreenViewModel(
                     LoginResult(success = false, errorMessage = "Connect failed: ${e.message}")
                 }
             }
-
-            _loginResult.value = result
-            _isLoading.value = false
+            //change when api available
+            //_loginResult.value = result
+            //_isLoading.value = false
         }
     }
 }
