@@ -31,6 +31,7 @@ import com.example.inventory.data.ItemsRepository
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.text.style.TextAlign
+import com.example.inventory.ui.AppViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -38,7 +39,8 @@ import androidx.compose.ui.text.style.TextAlign
 fun DashboardScreen(
     navController: NavController,
     userId: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    appViewModel: AppViewModel
 ) {
     val context = LocalContext.current
     val appContainer = (context.applicationContext as InventoryApplication).container
@@ -82,7 +84,7 @@ fun DashboardScreen(
                     )
                 )
             },
-            bottomBar = { BottomNavigationBar(navController) }
+            bottomBar = { BottomNavigationBar(navController,appViewModel)}
         ) { paddingValues ->
             if (isLoading) {
                 Box(
@@ -511,6 +513,6 @@ fun RecipeItem(title: String, details: String, iconResId: Int) {
 fun DashboardScreenPreview() {
     val navController = rememberNavController()
     CookingAssistantTheme {
-        DashboardScreen(navController = navController, userId = 1)
+        DashboardScreen(navController = navController, userId = 1, appViewModel = AppViewModel())
     }
 }

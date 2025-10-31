@@ -1,13 +1,12 @@
 package com.example.inventory.ui.theme
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 // Define your custom colors here (reusable across the app)
-private val PrimaryGreen = Color(0xFF4CAF50) // Used for total spent, bars, main accents
+
 private val LightGreen = Color(0xFFE8F5E9) // Used for insight backgrounds
 private val CardBackground = Color.White
 

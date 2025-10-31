@@ -12,9 +12,15 @@ interface NavigationDestination {
 
 object UploadDestination : NavigationDestination {
     override val route = "upload"
-    override val titleRes = R.string.upload
-}
+    override val titleRes = R.string.upload_title
+    const val userIdArg = "userId"
+    // Add this property
+    val routeWithArgs = "$route/{$userIdArg}"}
 
+object LoginDestination : NavigationDestination {
+    override val route = "login"
+    override val titleRes = R.string.login_title
+}
 object UpdateInformationDestination : NavigationDestination {
     override val route = "update_information"
     const val userIdArg = "userId"

@@ -15,10 +15,10 @@ import com.example.inventory.ui.theme.CookingAssistantTheme
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.material.icons.filled.ArrowBack
-
+import com.example.inventory.ui.AppViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LegalScreen(navController: NavController, userId: Int, modifier: Modifier = Modifier) {
+fun LegalScreen(navController: NavController, appViewModel: AppViewModel, userId: Int, modifier: Modifier = Modifier, ) {
     CookingAssistantTheme {
         Scaffold(
             topBar = {
@@ -153,6 +153,6 @@ fun LegalScreen(navController: NavController, userId: Int, modifier: Modifier = 
 fun LegalScreenPreview() {
     val navController = rememberNavController()
     CookingAssistantTheme {
-        LegalScreen(navController = navController, userId = 1)
+        LegalScreen(navController = navController, userId = 1, appViewModel = AppViewModel())
     }
 }

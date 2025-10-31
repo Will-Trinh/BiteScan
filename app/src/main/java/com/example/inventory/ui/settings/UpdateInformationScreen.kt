@@ -31,11 +31,12 @@ import com.example.inventory.InventoryApplication
 import androidx.compose.ui.platform.LocalContext
 import com.example.inventory.data.OfflineUsersRepository
 import androidx.compose.runtime.LaunchedEffect
-
+import com.example.inventory.ui.AppViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UpdateInformationScreen(
     navController: NavController,
+    appViewModel: AppViewModel,
     userId: Int,
     modifier: Modifier = Modifier
 ) {
@@ -73,7 +74,7 @@ fun UpdateInformationScreen(
                     }
                 )
             },
-            bottomBar = { BottomNavigationBar(navController) }
+            bottomBar = { BottomNavigationBar(navController,appViewModel) }
         ) { paddingValues ->
             Column(
                 modifier = Modifier
@@ -165,6 +166,6 @@ fun UpdateInformationScreen(
 fun UpdateInformationScreenPreview() {
     val navController = rememberNavController()
     CookingAssistantTheme {
-        UpdateInformationScreen(navController = navController, userId = 1)
+        UpdateInformationScreen(navController = navController, userId = 1, appViewModel = AppViewModel())
     }
 }

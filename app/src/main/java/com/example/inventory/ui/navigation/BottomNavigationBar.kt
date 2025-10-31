@@ -21,35 +21,49 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.inventory.ui.history.HistoryDestination
+import com.example.inventory.ui.AppViewModel
 
 @Composable
-fun BottomNavigationBar(navController: NavController) {
+fun BottomNavigationBar(navController: NavController,
+                        appViewModel: AppViewModel) {
     NavigationBar(
         modifier = Modifier.fillMaxWidth(),
         containerColor = MaterialTheme.colorScheme.surface,
-        contentColor = MaterialTheme.colorScheme.onSurface
+        contentColor = MaterialTheme.colorScheme.onSurface,
+
     ) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = navBackStackEntry?.destination
-
+        val userId by appViewModel.userId
         val items = listOf(
             DashboardDestination to Icons.Default.Dashboard,
             UploadDestination to Icons.Default.CameraAlt,
             HistoryDestination to Icons.Default.History,
             SettingsDestination to Icons.Default.Settings
         )
-
         items.forEach { (destination, icon) ->
             NavigationBarItem(
                 icon = { Icon(icon, contentDescription = destination.route) },
-                label = { Text(destination.route.replaceFirstChar { it.uppercase() }, fontSize = 12.sp) },
+                label = {
+                    Text(
+                        destination.route.replaceFirstChar { it.uppercase() },
+                        fontSize = 12.sp
+                    )
+                },
                 selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true,
                 onClick = {
+                    if (userId == 0) {
+                        navController.navigate(LoginDestination.route) {
+                            popUpTo(0) { inclusive = true } // back to login if lost data
+                            launchSingleTop = true
+                        }
+                        return@NavigationBarItem
+                    }
                     val route = when (destination) {
-                        UploadDestination -> UploadDestination.route
-                        DashboardDestination -> "${DashboardDestination.route}/1" // Default userId = 1 for Dashboard
-                        HistoryDestination -> "${destination.route}/1" // Default userId = 1 for Receipt
-                        SettingsDestination -> "${SettingsDestination.route}/1" // Default userId = 1 for Settings
+                        UploadDestination -> "${UploadDestination.route}/$userId"
+                        DashboardDestination -> "${DashboardDestination.route}/$userId"
+                        HistoryDestination -> "${destination.route}/$userId"
+                        SettingsDestination -> "${SettingsDestination.route}/$userId"
                         else -> destination.route
                     }
                     navController.navigate(route) {
@@ -69,5 +83,5 @@ fun BottomNavigationBar(navController: NavController) {
 @Composable
 fun BottomNavigationBarPreview() {
     val navController = rememberNavController() // Mock NavController
-    BottomNavigationBar(navController)
+    BottomNavigationBar(navController, AppViewModel())
 }

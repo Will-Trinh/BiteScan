@@ -17,37 +17,57 @@ import com.example.inventory.ui.settings.UpdateInformationScreen
 import com.example.inventory.ui.settings.MyPantryScreen
 import com.example.inventory.ui.settings.AboutScreen
 import com.example.inventory.ui.NotFoundScreen
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.ui.unit.dp
 import com.example.inventory.ui.settings.LegalScreen
 import com.example.inventory.ui.dashboard.DashboardScreen
-
+import com.example.inventory.ui.landing.LoginScreen
+import com.example.inventory.ui.AppViewModel
 @Composable
 fun InventoryNavHost(
     navController: NavHostController,
+    appViewModel: AppViewModel,
     modifier: Modifier = Modifier,
 ) {
     NavHost(
         navController = navController,
-        startDestination = UploadDestination.route,
+        startDestination = LoginDestination.route,
         modifier = modifier
     ) {
-        composable(route = UploadDestination.route) {
+        composable(route = LoginDestination.route) {
+            LoginScreen(
+                navController = navController,
+                appViewModel = appViewModel,
+                onLoginClick = { userId ->
+                    navController.navigate("upload/$userId") {
+                        popUpTo(LoginDestination.route) { inclusive = true }
+                    }
+                },
+                onCreateAccountClick = {
+                    //Todo: Create account
+                },
+            )
+        }
+        composable(
+            route = UploadDestination.routeWithArgs,
+            arguments = listOf(navArgument(UploadDestination.userIdArg) { type = NavType.IntType })
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getInt(UploadDestination.userIdArg) ?: 0
             UploadScreen(
-                paddingValues = PaddingValues(0.dp),
-                navController = navController
+                navController = navController,
+                appViewModel= appViewModel,
+                userId = userId
             )
         }
         composable(
             route = DashboardDestination.routeWithArgs,
-            arguments = listOf(navArgument(DashboardDestination.userIdArg) { type = NavType.IntType })
+            arguments = listOf(navArgument(DashboardDestination.userIdArg) {
+                type = NavType.IntType
+            })
         ) { backStackEntry ->
             val userId = backStackEntry.arguments?.getInt(DashboardDestination.userIdArg) ?: 0
-            // Share userId via savedStateHandle for bottom nav
-            backStackEntry.savedStateHandle.set("userId", userId)
             DashboardScreen(
                 navController = navController,
-                userId = userId
+                userId = userId,
+                appViewModel= appViewModel
             )
         }
 
@@ -58,7 +78,8 @@ fun InventoryNavHost(
             if (userId != 0) {
                 DashboardScreen(
                     navController = navController,
-                    userId = userId
+                    userId = userId,
+                    appViewModel= appViewModel
                 )
             } else {
                 NotFoundScreen(navController = navController)
@@ -77,6 +98,7 @@ fun InventoryNavHost(
                 canNavigateBack = navController.previousBackStackEntry != null,
                 navController = navController,
                 userId = userId,
+                appViewModel= appViewModel
             )
         }
 
@@ -87,7 +109,8 @@ fun InventoryNavHost(
                 navArgument("userId") { type = NavType.IntType }
             )
         ) { backStackEntry ->
-            val receiptId = backStackEntry.arguments?.getInt(EditReceiptDestination.receiptIdArg) ?: 0
+            val receiptId =
+                backStackEntry.arguments?.getInt(EditReceiptDestination.receiptIdArg) ?: 0
             val userId = backStackEntry.arguments?.getInt("userId") ?: 0
             EditReceiptScreen(
                 receiptId = receiptId,
@@ -98,39 +121,50 @@ fun InventoryNavHost(
                         launchSingleTop = true
                     }
                 },
-                navController = navController
+                navController = navController,
+                appViewModel= appViewModel
             )
         }
 
         composable(
             route = SettingsDestination.routeWithArgs,
-            arguments = listOf(navArgument(SettingsDestination.userIdArg) { type = NavType.IntType })
+            arguments = listOf(navArgument(SettingsDestination.userIdArg) {
+                type = NavType.IntType
+            })
         ) { backStackEntry ->
             val userId = backStackEntry.arguments?.getInt(SettingsDestination.userIdArg) ?: 0
             SettingScreen(
                 navController = navController,
-                userId = userId
+                userId = userId,
+                appViewModel= appViewModel
             )
         }
 
         composable(
             route = UpdateInformationDestination.routeWithArgs,
-            arguments = listOf(navArgument(UpdateInformationDestination.userIdArg) { type = NavType.IntType })
+            arguments = listOf(navArgument(UpdateInformationDestination.userIdArg) {
+                type = NavType.IntType
+            })
         ) { backStackEntry ->
-            val userId = backStackEntry.arguments?.getInt(UpdateInformationDestination.userIdArg) ?: 0
+            val userId =
+                backStackEntry.arguments?.getInt(UpdateInformationDestination.userIdArg) ?: 0
             UpdateInformationScreen(
                 navController = navController,
+                appViewModel= appViewModel,
                 userId = userId
             )
         }
 
         composable(
             route = MyPantryDestination.routeWithArgs,
-            arguments = listOf(navArgument(MyPantryDestination.userIdArg) { type = NavType.IntType })
+            arguments = listOf(navArgument(MyPantryDestination.userIdArg) {
+                type = NavType.IntType
+            })
         ) { backStackEntry ->
             val userId = backStackEntry.arguments?.getInt(MyPantryDestination.userIdArg) ?: 0
             MyPantryScreen(
                 navController = navController,
+                appViewModel= appViewModel,
                 userId = userId
             )
         }
@@ -143,6 +177,7 @@ fun InventoryNavHost(
             if (userId != null) {
                 LegalScreen(
                     navController = navController,
+                    appViewModel= appViewModel,
                     userId = userId
                 )
             } else {
@@ -158,6 +193,7 @@ fun InventoryNavHost(
             val userId = backStackEntry.arguments?.getInt(AboutDestination.userIdArg) ?: 0
             AboutScreen(
                 navController = navController,
+                appViewModel= appViewModel,
                 userId = userId
             )
         }
