@@ -284,20 +284,6 @@ fun ErrorSection(message: String) {
     }
 }
 
-// Previews (keep existing)
-// Preview cho HomeScreen
-@Preview(showBackground = true)
-@Composable
-fun UploadScreenPreview() {
-    val navController = rememberNavController() // Mock NavController
-    CookingAssistantTheme {
-        Scaffold(
-            bottomBar = { BottomNavigationBar(navController, AppViewModel()) }
-        ) { paddingValues ->
-            UploadScreen(paddingValues, navController, AppViewModel(), 1)
-        }
-    }
-}
 
 // Preview cho UploadArea
 @Preview(showBackground = true)
