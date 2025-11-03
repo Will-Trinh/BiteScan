@@ -20,20 +20,26 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.inventory.ui.theme.CookingAssistantTheme
 import com.example.inventory.ui.theme.md_theme_light_primary
+import com.example.inventory.ui.AppViewModel
+
+
 
 // Define secondary colors
 val OutlineGray = Color(0xFFE0E0E0) // Lighter gray for outlines
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateAccountScreen(
-    onLoginClick: () -> Unit = {},
-    onCreateAccountClick: () -> Unit = {},
-    onBackClick: () -> Unit = {}
+fun RegistrationScreen(
+    navController: NavController,
+    onBackClick: () -> Unit = {} ,
+    viewModel: RegistrationViewModel? = null
 ) {
     var email by remember { mutableStateOf("") }
+    var userName by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") } // New state for confirmation
     var isLoginSelected by remember { mutableStateOf(false) } // Default to 'Create Account' selected
@@ -102,7 +108,7 @@ fun CreateAccountScreen(
                         ToggleButton(
                             text = "Login",
                             isSelected = isLoginSelected,
-                            onClick = { isLoginSelected = true; onLoginClick() },
+                            onClick = { isLoginSelected = true;},
                             primaryColor = primaryColor
                         )
                         ToggleButton(
@@ -114,7 +120,33 @@ fun CreateAccountScreen(
                     }
                 )
                 Spacer(modifier = Modifier.height(32.dp))
-
+                // User name input
+                Text(
+                    text = "User Name",
+                    modifier = Modifier.fillMaxWidth(0.9f),
+                    textAlign = TextAlign.Start,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.DarkGray,
+                    fontSize = 16.sp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = userName,
+                    onValueChange = { userName = it },
+                    placeholder = { Text("Enter your User Name") },
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .height(56.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = primaryColor,
+                        unfocusedBorderColor = OutlineGray,
+                        unfocusedContainerColor = Color.White,
+                        focusedContainerColor = Color.White
+                    ),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
                 // Email Input
                 Text(
                     text = "Email",
@@ -201,9 +233,15 @@ fun CreateAccountScreen(
                 )
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Create Account Button (Text "Login" to match the screenshot)
+                // Create Account Button (Text "Sign Up" to match the screenshot)
                 Button(
-                    onClick = onCreateAccountClick,
+                    onClick = {
+                        if (userName.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank()) return@Button
+                        if (password != confirmPassword) return@Button
+                        if (password.length < 6) return@Button
+
+                        viewModel?.checkSignUp(userName, email, password)
+                    },
                     modifier = Modifier
                         .fillMaxWidth(0.9f)
                         .height(56.dp)
@@ -232,5 +270,5 @@ fun CreateAccountScreen(
 @Composable
 fun CreateAccountScreenPreview() {
 
-    CreateAccountScreen()
+    RegistrationScreen(navController = rememberNavController())
 }

@@ -54,7 +54,7 @@ class MainActivity : ComponentActivity() {
             navController.addOnDestinationChangedListener { _, destination, _ ->
                 val validRoutes = listOf(
                     LoginDestination.route,
-                    //RegisterDestination.route,
+                    RegisterDestination.route,
                     DashboardDestination.routeWithArgs,
                     UploadDestination.routeWithArgs,
                     HistoryDestination.routeWithArgs,
