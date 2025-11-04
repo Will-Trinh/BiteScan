@@ -1,5 +1,6 @@
 package com.example.inventory.ui.landing
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,8 +25,8 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.inventory.ui.theme.CookingAssistantTheme
 import com.example.inventory.ui.theme.md_theme_light_primary
-import com.example.inventory.ui.AppViewModel
-
+import androidx.compose.ui.platform.LocalContext
+import com.example.inventory.InventoryApplication
 
 
 // Define secondary colors
@@ -38,12 +39,27 @@ fun RegistrationScreen(
     onBackClick: () -> Unit = {} ,
     viewModel: RegistrationViewModel? = null
 ) {
+
     var email by remember { mutableStateOf("") }
     var userName by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") } // New state for confirmation
     var isLoginSelected by remember { mutableStateOf(false) } // Default to 'Create Account' selected
     val primaryColor = md_theme_light_primary
+
+    val context = LocalContext.current
+    val actualViewModel = viewModel ?: remember {
+        if (context.applicationContext is InventoryApplication) {
+            RegistrationViewModel()
+        } else {
+            throw IllegalStateException("Application context is not an instance of InventoryApplication")
+        }
+    }
+
+    val signUpResult = actualViewModel.signUpResult.collectAsState().value
+    val isLoading = actualViewModel.isLoading.collectAsState().value
+
+
 
     CookingAssistantTheme {
         Surface(
@@ -237,10 +253,11 @@ fun RegistrationScreen(
                 Button(
                     onClick = {
                         if (userName.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank()) return@Button
-                        if (password != confirmPassword) return@Button
+                        if (password != confirmPassword)
                         if (password.length < 6) return@Button
 
-                        viewModel?.checkSignUp(userName, email, password)
+                        actualViewModel?.checkSignUp (email, password)
+
                     },
                     modifier = Modifier
                         .fillMaxWidth(0.9f)
@@ -252,7 +269,6 @@ fun RegistrationScreen(
                     Text("Sign Up", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 }
                 Spacer(modifier = Modifier.height(32.dp))
-
                 // Terms & Privacy Policy
                 Text(
                     text = "By continuing, you agree to BiteScan's Terms & \nPrivacy Policy.",
@@ -260,6 +276,20 @@ fun RegistrationScreen(
                     fontSize = 13.sp,
                     textAlign = TextAlign.Center
                 )
+            }
+        }
+    }
+    //Added: Show login result as Toast
+    LaunchedEffect(signUpResult) {
+        signUpResult?.let { result ->
+            Toast.makeText(
+                context,
+                if (result.success) "Sign up successful" else "Sign Up failed: ${result.signupMessage}",
+                Toast.LENGTH_LONG
+            ).show()
+            if (result.success) {
+                navController.navigate("login")
+
             }
         }
     }

@@ -259,7 +259,6 @@ fun LoginScreen(
                 //save userId to navController
                 navController.currentBackStackEntry?.savedStateHandle?.set("userId", result.uid)
                 appViewModel.setUserId(result.uid)
-                // onLoginClick -> userId
                 onLoginClick(result.uid)
             }
         }

@@ -26,12 +26,11 @@ class RegistrationViewModel(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    fun checkSignUp(username: String, password: String, email: String) {
+    fun checkSignUp(email: String, password: String) {
         _isLoading.value = true
-        //_loginResult.value = null real time api run only
+        _signUpResult.value = SignUpResult(success = false, signupMessage = "")
         //for testing purpose
-        //_signUpResult.value = SignUpResult(success = false, signupMessage = "")
-        _signUpResult.value = SignUpResult(success = true, signupMessage = "Sign Up successful")
+        //_signUpResult.value = SignUpResult(success = true, signupMessage = "Sign Up successful")
 
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
@@ -46,9 +45,7 @@ class RegistrationViewModel(
                     conn.doOutput = true
 
                     val json = JSONObject().apply {
-                        put("username", username)
                         put("email", email)
-                        put("password", password)
                         put("password", password)
 
                     }
@@ -77,8 +74,8 @@ class RegistrationViewModel(
                 }
             }
             //change when api available
-            //_signUpResult.value = result
-            //_isLoading.value = false
+            _signUpResult.value = result
+            _isLoading.value = false
         }
     }
 }
