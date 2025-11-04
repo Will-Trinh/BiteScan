@@ -124,7 +124,7 @@ fun RegistrationScreen(
                         ToggleButton(
                             text = "Login",
                             isSelected = isLoginSelected,
-                            onClick = { isLoginSelected = true;},
+                            onClick = { navController.navigate("login")},
                             primaryColor = primaryColor
                         )
                         ToggleButton(

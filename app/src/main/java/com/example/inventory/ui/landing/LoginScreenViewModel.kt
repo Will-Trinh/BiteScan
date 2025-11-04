@@ -31,7 +31,7 @@ class LoginScreenViewModel(
         _isLoading.value = true
         _loginResult.value = null
         //for testing purpose
-        //_loginResult.value = LoginResult(success = true, uid = 1)
+        _loginResult.value = LoginResult(success = true, uid = 1)
 
 
         viewModelScope.launch {
@@ -82,8 +82,8 @@ class LoginScreenViewModel(
                 }
             }
             //change when api available
-            _loginResult.value = result
-            _isLoading.value = false
+            //_loginResult.value = result
+            //_isLoading.value = false
         }
     }
 }

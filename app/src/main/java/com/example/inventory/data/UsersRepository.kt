@@ -14,4 +14,7 @@ interface UsersRepository {
     suspend fun deleteUser(user: User)
     suspend fun updateUser(user: User)
     fun getReceiptsForUser(userId: Int): Flow<List<Receipt>>
+
+    suspend fun deleteAllData()
+
 }

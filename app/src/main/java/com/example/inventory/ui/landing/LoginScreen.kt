@@ -132,13 +132,13 @@ fun LoginScreen(
                         text = "Login",
                         isSelected = isLoginSelected,
                         onClick = { isLoginSelected = true },
+
                         primaryColor = primaryColor
                     )
                     ToggleButton(
                         text = "Create Account",
                         isSelected = !isLoginSelected,
                         onClick = { navController.navigate("register") {
-                            popUpTo(navController.graph.startDestinationId) { inclusive = false }
                             launchSingleTop = true}},
                         primaryColor = primaryColor
                     )

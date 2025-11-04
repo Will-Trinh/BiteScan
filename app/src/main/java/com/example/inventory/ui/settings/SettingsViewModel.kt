@@ -2,27 +2,38 @@ package com.example.inventory.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.inventory.data.OfflineUsersRepository
-import com.example.inventory.data.User
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import com.example.inventory.ui.AppViewModel
+import com.example.inventory.data.UsersRepository
 
 
-class SettingsViewModel(private val repository: OfflineUsersRepository) : ViewModel() {
+class SettingsViewModel(
+    private val repository: UsersRepository,
+    private val appViewModel: AppViewModel
+) : ViewModel() {
     private val _userId = MutableStateFlow<String?>(null)
     val userId: StateFlow<String?> = _userId
+    private val _logoutCompleted = MutableStateFlow(false)
+    val logoutCompleted: StateFlow<Boolean> = _logoutCompleted
 
     init {
-        // Fetch the first user's ID as a default (replace with actual current user ID logic)
+        // Load the user ID when the ViewModel is created
         viewModelScope.launch {
-            repository.getAllUsersStream().collect { users ->
-                if (users.isNotEmpty()) {
-                    _userId.value = users[0].userId.toString() // Default to first user
-                }
+            val userId = appViewModel.userId
+            if (userId != null) {
+                _userId.value = userId.toString()
+            } else {
+                _userId.value = null
+                _logoutCompleted.value = true
+                android.util.Log.d("SettingsViewModel", "fail to get UID")
+
             }
         }
     }
@@ -30,10 +41,26 @@ class SettingsViewModel(private val repository: OfflineUsersRepository) : ViewMo
     // Method to update user ID if current user changes
     fun setCurrentUserId(userId: Int) {
         viewModelScope.launch {
-            val user = repository.getUser(userId).collect { it }
-            _userId.value = user.toString()
+            val user = appViewModel.userId
+            if (user != null) {
+                _userId.value = user.toString()
+            }
         }
     }
+
+    fun logout() {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                appViewModel.clearUserId()
+                //print the log
+                android.util.Log.d("SettingsViewModel", "Cleared UID")
+                repository.deleteAllData()
+                android.util.Log.d("SettingsViewModel", "Cleared DB")
+                _logoutCompleted.value = true
+            }
+        }
+    }
+
 
     fun launchUrl(context: Context, url: String) {
         viewModelScope.launch {

@@ -10,4 +10,5 @@ class OfflineRecipesRepository(private val recipeDao: RecipeDao) : RecipesReposi
     override suspend fun insertRecipe(recipe: Recipe) = recipeDao.insertRecipe(recipe)
     override suspend fun deleteRecipe(recipe: Recipe) = recipeDao.deleteRecipe(recipe)
     override suspend fun updateRecipe(recipe: Recipe) = recipeDao.updateRecipe(recipe)
+
 }

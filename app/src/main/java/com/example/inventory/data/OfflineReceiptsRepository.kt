@@ -9,4 +9,5 @@ class OfflineReceiptsRepository(private val receiptDao: ReceiptDao) : ReceiptsRe
     override suspend fun insertReceipt(receipt: Receipt): Long = receiptDao.insertReceipt(receipt)
     override suspend fun deleteReceipt(receipt: Receipt) = receiptDao.deleteReceipt(receipt)
     override suspend fun updateReceipt(receipt: Receipt) = receiptDao.updateReceipt(receipt)
+
 }

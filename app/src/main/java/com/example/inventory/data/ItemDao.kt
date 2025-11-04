@@ -48,12 +48,13 @@ interface ItemDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(item: Item): Long
 
+    @Query("DELETE FROM items")
+    suspend fun deleteAllItems()
     @Update
     suspend fun update(item: Item)
 
     @Delete
     suspend fun delete(item: Item)
-
 
     /**
      * Retrieve items for a specific user (joined via receipts.userId).

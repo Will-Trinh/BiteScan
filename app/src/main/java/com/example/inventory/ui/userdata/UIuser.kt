@@ -40,7 +40,7 @@ class FakeReceiptsRepository : ReceiptsRepository {
     override suspend fun deleteReceipt(receipt: Receipt) {
         fakeReceipts.removeIf { it.receiptId == receipt.receiptId }
     }
-
+    fun clear() = fakeReceipts.clear()
     override suspend fun updateReceipt(receipt: Receipt) {
         val index = fakeReceipts.indexOfFirst { it.receiptId == receipt.receiptId }
         if (index != -1) {
@@ -72,7 +72,7 @@ class FakeItemsRepository : ItemsRepository {
     override fun searchItems(query: String): Flow<List<Item>> = flowOf(
         fakeItems.filter { it.name.contains(query, ignoreCase = true) }
     )
-
+    fun clear() = fakeItems.clear()
     override suspend fun insertItem(item: Item): Item {
         val newItem = item.copy(id = idCounter.incrementAndGet())
         fakeItems.add(newItem)
@@ -104,7 +104,8 @@ class FakeItemsRepository : ItemsRepository {
 }
 
 class FakeUsersRepository : UsersRepository {
-
+    private val fakeReceiptsRepo = FakeReceiptsRepository()
+    private val fakeItemsRepo = FakeItemsRepository()
     // 1. insertUser
     override suspend fun insertUser(user: User): Long {
         return 1L
@@ -126,6 +127,10 @@ class FakeUsersRepository : UsersRepository {
     // 7. getReceiptsForUser – QUAN TRỌNG NHẤT!
     override fun getReceiptsForUser(userId: Int): Flow<List<Receipt>> {
         return FakeReceiptsRepository().getReceiptsForUser(userId)
+    }
+    override suspend fun deleteAllData(){
+        fakeReceiptsRepo.clear()
+        fakeItemsRepo.clear()
     }
 }
 
