@@ -39,7 +39,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val db = InventoryDatabase.getDatabase(this)
-        val usersRepo = OfflineUsersRepository(db.userDao())
+        val usersRepo = OfflineUsersRepository(db.userDao(), db.receiptDao(), db.itemDao(), db.recipeDao())
         val receiptsRepo = OfflineReceiptsRepository(db.receiptDao())
         val itemsRepo = OfflineItemsRepository(db.itemDao())
         lifecycleScope.launch(Dispatchers.IO) {
@@ -54,7 +54,7 @@ class MainActivity : ComponentActivity() {
             navController.addOnDestinationChangedListener { _, destination, _ ->
                 val validRoutes = listOf(
                     LoginDestination.route,
-                    //RegisterDestination.route,
+                    RegisterDestination.route,
                     DashboardDestination.routeWithArgs,
                     UploadDestination.routeWithArgs,
                     HistoryDestination.routeWithArgs,

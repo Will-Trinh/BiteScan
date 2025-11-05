@@ -69,7 +69,7 @@
     <string name="about_title">About</string>
     <string name="login_title">Login Page</string>
     <string name="upload_title">Upload</string>
-
+    <string name="register_title">Register</string>
     <string name="upload">Upload</string>
     <string name="history">History</string>
     <string name="dashboard">Dashboard</string>

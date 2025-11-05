@@ -1,5 +1,6 @@
 package com.example.inventory.ui.landing
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,24 +21,45 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.inventory.ui.theme.CookingAssistantTheme
 import com.example.inventory.ui.theme.md_theme_light_primary
+import androidx.compose.ui.platform.LocalContext
+import com.example.inventory.InventoryApplication
+
 
 // Define secondary colors
 val OutlineGray = Color(0xFFE0E0E0) // Lighter gray for outlines
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateAccountScreen(
-    onLoginClick: () -> Unit = {},
-    onCreateAccountClick: () -> Unit = {},
-    onBackClick: () -> Unit = {}
+fun RegistrationScreen(
+    navController: NavController,
+    onBackClick: () -> Unit = {} ,
+    viewModel: RegistrationViewModel? = null
 ) {
+
     var email by remember { mutableStateOf("") }
+    var userName by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") } // New state for confirmation
     var isLoginSelected by remember { mutableStateOf(false) } // Default to 'Create Account' selected
     val primaryColor = md_theme_light_primary
+
+    val context = LocalContext.current
+    val actualViewModel = viewModel ?: remember {
+        if (context.applicationContext is InventoryApplication) {
+            RegistrationViewModel()
+        } else {
+            throw IllegalStateException("Application context is not an instance of InventoryApplication")
+        }
+    }
+
+    val signUpResult = actualViewModel.signUpResult.collectAsState().value
+    val isLoading = actualViewModel.isLoading.collectAsState().value
+
+
 
     CookingAssistantTheme {
         Surface(
@@ -102,7 +124,7 @@ fun CreateAccountScreen(
                         ToggleButton(
                             text = "Login",
                             isSelected = isLoginSelected,
-                            onClick = { isLoginSelected = true; onLoginClick() },
+                            onClick = { navController.navigate("login")},
                             primaryColor = primaryColor
                         )
                         ToggleButton(
@@ -114,7 +136,33 @@ fun CreateAccountScreen(
                     }
                 )
                 Spacer(modifier = Modifier.height(32.dp))
-
+                // User name input
+                Text(
+                    text = "User Name",
+                    modifier = Modifier.fillMaxWidth(0.9f),
+                    textAlign = TextAlign.Start,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.DarkGray,
+                    fontSize = 16.sp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = userName,
+                    onValueChange = { userName = it },
+                    placeholder = { Text("Enter your User Name") },
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .height(56.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = primaryColor,
+                        unfocusedBorderColor = OutlineGray,
+                        unfocusedContainerColor = Color.White,
+                        focusedContainerColor = Color.White
+                    ),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
                 // Email Input
                 Text(
                     text = "Email",
@@ -201,9 +249,16 @@ fun CreateAccountScreen(
                 )
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Create Account Button (Text "Login" to match the screenshot)
+                // Create Account Button (Text "Sign Up" to match the screenshot)
                 Button(
-                    onClick = onCreateAccountClick,
+                    onClick = {
+                        if (userName.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank()) return@Button
+                        if (password != confirmPassword)
+                        if (password.length < 6) return@Button
+
+                        actualViewModel?.checkSignUp (email, password)
+
+                    },
                     modifier = Modifier
                         .fillMaxWidth(0.9f)
                         .height(56.dp)
@@ -214,7 +269,6 @@ fun CreateAccountScreen(
                     Text("Sign Up", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 }
                 Spacer(modifier = Modifier.height(32.dp))
-
                 // Terms & Privacy Policy
                 Text(
                     text = "By continuing, you agree to BiteScan's Terms & \nPrivacy Policy.",
@@ -225,6 +279,20 @@ fun CreateAccountScreen(
             }
         }
     }
+    //Added: Show login result as Toast
+    LaunchedEffect(signUpResult) {
+        signUpResult?.let { result ->
+            Toast.makeText(
+                context,
+                if (result.success) "Sign up successful" else "Sign Up failed: ${result.signupMessage}",
+                Toast.LENGTH_LONG
+            ).show()
+            if (result.success) {
+                navController.navigate("login")
+
+            }
+        }
+    }
 }
 
 
@@ -232,5 +300,5 @@ fun CreateAccountScreen(
 @Composable
 fun CreateAccountScreenPreview() {
 
-    CreateAccountScreen()
+    RegistrationScreen(navController = rememberNavController())
 }

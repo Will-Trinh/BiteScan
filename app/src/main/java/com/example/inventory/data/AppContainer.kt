@@ -32,6 +32,9 @@ interface AppContainer {
  * [AppContainer] implementation that provides instances of offline repositories
  */
 class AppDataContainer(private val context: Context) : AppContainer {
+    private val database: InventoryDatabase by lazy {
+        InventoryDatabase.getDatabase(context)
+    }
     override val itemsRepository: ItemsRepository by lazy {
         OfflineItemsRepository(InventoryDatabase.getDatabase(context).itemDao())
     }
@@ -48,8 +51,11 @@ class AppDataContainer(private val context: Context) : AppContainer {
     }
 
     override val usersRepository: UsersRepository by lazy {
-        OfflineUsersRepository(InventoryDatabase.getDatabase(context).userDao())
+        OfflineUsersRepository(
+            userDao = database.userDao(),
+            itemDao = database.itemDao(),
+            receiptDao = database.receiptDao(),
+            recipeDao = database.recipeDao()
+        )
     }
-
-
 }
