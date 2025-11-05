@@ -132,13 +132,13 @@ fun LoginScreen(
                         text = "Login",
                         isSelected = isLoginSelected,
                         onClick = { isLoginSelected = true },
+
                         primaryColor = primaryColor
                     )
                     ToggleButton(
                         text = "Create Account",
                         isSelected = !isLoginSelected,
-                        onClick = { navController.navigate("registration") {
-                            popUpTo(navController.graph.startDestinationId) { inclusive = false }
+                        onClick = { navController.navigate("register") {
                             launchSingleTop = true}},
                         primaryColor = primaryColor
                     )
@@ -259,7 +259,6 @@ fun LoginScreen(
                 //save userId to navController
                 navController.currentBackStackEntry?.savedStateHandle?.set("userId", result.uid)
                 appViewModel.setUserId(result.uid)
-                // onLoginClick -> userId
                 onLoginClick(result.uid)
             }
         }

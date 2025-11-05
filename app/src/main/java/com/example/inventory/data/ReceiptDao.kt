@@ -50,4 +50,7 @@ interface ReceiptDao {
 
     @Delete
     suspend fun deleteReceipt(receipt: Receipt)
+
+    @Query("DELETE FROM receipts")
+    suspend fun deleteAllReceipts()
 }

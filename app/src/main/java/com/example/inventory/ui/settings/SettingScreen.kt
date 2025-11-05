@@ -1,5 +1,6 @@
 package com.example.inventory.ui.settings
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,7 +32,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.inventory.InventoryApplication
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.LaunchedEffect
-import com.example.inventory.data.OfflineUsersRepository
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -50,12 +50,19 @@ fun SettingScreen(
     appViewModel: AppViewModel
 ) {
     val context = LocalContext.current
-    val appContainer = (context.applicationContext as InventoryApplication).container
+    val appContainer = if (context.applicationContext is InventoryApplication) {
+        (context.applicationContext as InventoryApplication).container
+    } else {
+        null // Preview mode
+    }
     val viewModel = remember {
         SettingsViewModel(
-            repository = appContainer.usersRepository as OfflineUsersRepository
+            repository = appContainer?.usersRepository!!,
+            appViewModel = appViewModel
         )
     }
+
+    val isLoggedOut by viewModel.logoutCompleted.collectAsState()
     LaunchedEffect(userId) {
         viewModel.setCurrentUserId(userId)
     }
@@ -68,6 +75,17 @@ fun SettingScreen(
     var lowCarb by remember { mutableStateOf(false) }
     var pushNotifications by remember { mutableStateOf(true) }
 
+    //check if logged out
+    LaunchedEffect(isLoggedOut) {
+        if (isLoggedOut) {
+            navController.navigate("login") {
+                popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                launchSingleTop = true
+                android.util.Log.d("Log Out", "Logged out successfully")
+                Toast.makeText(context, "Logged out successfully", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
     CookingAssistantTheme {
         Scaffold(
             topBar = {
@@ -538,7 +556,10 @@ fun SettingScreen(
                             )
                         }
                         Button(
-                            onClick = { /* TODO: Sign Out */ },
+                            onClick = {
+                            /* TODO: Sign Out */
+                                viewModel.logout()
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(48.dp)

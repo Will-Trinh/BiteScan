@@ -17,27 +17,25 @@ import com.example.inventory.data.UsersRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-class LoginScreenViewModel(
-    private val usersRepository: UsersRepository
+class RegistrationViewModel(
 ) : ViewModel() {
 
-    private val _loginResult = MutableStateFlow<LoginResult?>(null)
-    val loginResult: StateFlow<LoginResult?> = _loginResult
+    private val _signUpResult = MutableStateFlow<SignUpResult?>(null)
+    val signUpResult: StateFlow<SignUpResult?> = _signUpResult
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    fun checkLogin(username: String, password: String) {
+    fun checkSignUp(email: String, password: String) {
         _isLoading.value = true
-        _loginResult.value = null
+        _signUpResult.value = SignUpResult(success = false, signupMessage = "")
         //for testing purpose
-        _loginResult.value = LoginResult(success = true, uid = 1)
-
+        //_signUpResult.value = SignUpResult(success = true, signupMessage = "Sign Up successful")
 
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
                 try {
-                    val apiUrl = URL("https://abc.com/api/login")
+                    val apiUrl = URL("https://abc.com/api/signup")
                     val conn = apiUrl.openConnection() as HttpURLConnection
                     //Set timeout (10s connect, 15s response)
                     conn.connectTimeout = 10_000
@@ -47,8 +45,9 @@ class LoginScreenViewModel(
                     conn.doOutput = true
 
                     val json = JSONObject().apply {
-                        put("username", username)
+                        put("email", email)
                         put("password", password)
+
                     }
                     OutputStreamWriter(conn.outputStream).use { it.write(json.toString()) }
 
@@ -61,35 +60,27 @@ class LoginScreenViewModel(
                         val success = jsonResponse.getBoolean("success") // Dùng getBoolean
 
                         if (success) {
-                            val uid = jsonResponse.getInt("uid")
-                            val phone = jsonResponse.getString("phone")
-                            val email = jsonResponse.getString("email")
-
-                            val user = User(userId = uid, username = username, email = email, phone = phone)
-                            usersRepository.insertUser(user)
-
-                            LoginResult(success = true, uid = uid)
+                            SignUpResult(success = true, signupMessage = "Sign Up successful")
                         } else {
-                            val msg = jsonResponse.optString("message", "login failed")
-                            LoginResult(success = false, errorMessage = msg)
+                            val msg = jsonResponse.optString("message", "SignUp failed")
+                            SignUpResult(success = false, signupMessage = msg)
                         }
                     } else {
-                        LoginResult(success = false, errorMessage = "Connect failed with response code: $responseCode")
+                        SignUpResult(success = false, signupMessage = "Connect failed with response code: $responseCode")
                     }
                 } catch (e: Exception) {
                     Log.e("LoginVM", "Error during login: ${e.message}", e)
-                    LoginResult(success = false, errorMessage = "Connect failed: ${e.message}")
+                    SignUpResult(success = false, signupMessage = "Connect failed: ${e.message}")
                 }
             }
             //change when api available
-            //_loginResult.value = result
-            //_isLoading.value = false
+            _signUpResult.value = result
+            _isLoading.value = false
         }
     }
 }
 
-data class LoginResult(
+data class SignUpResult(
     val success: Boolean,
-    val errorMessage: String? = null,
-    val uid: Int = 0
+    val signupMessage: String? = null,
 )

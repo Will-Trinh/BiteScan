@@ -20,7 +20,9 @@ import com.example.inventory.ui.NotFoundScreen
 import com.example.inventory.ui.settings.LegalScreen
 import com.example.inventory.ui.dashboard.DashboardScreen
 import com.example.inventory.ui.landing.LoginScreen
+import com.example.inventory.ui.landing.RegistrationScreen
 import com.example.inventory.ui.AppViewModel
+
 @Composable
 fun InventoryNavHost(
     navController: NavHostController,
@@ -46,6 +48,11 @@ fun InventoryNavHost(
                 },
             )
         }
+        //register route
+        composable(route = RegisterDestination.route) {
+            RegistrationScreen(navController = navController)
+        }
+
         composable(
             route = UploadDestination.routeWithArgs,
             arguments = listOf(navArgument(UploadDestination.userIdArg) { type = NavType.IntType })
@@ -53,7 +60,7 @@ fun InventoryNavHost(
             val userId = backStackEntry.arguments?.getInt(UploadDestination.userIdArg) ?: 0
             UploadScreen(
                 navController = navController,
-                appViewModel= appViewModel,
+                appViewModel = appViewModel,
                 userId = userId
             )
         }
@@ -67,7 +74,7 @@ fun InventoryNavHost(
             DashboardScreen(
                 navController = navController,
                 userId = userId,
-                appViewModel= appViewModel
+                appViewModel = appViewModel
             )
         }
 
@@ -79,7 +86,7 @@ fun InventoryNavHost(
                 DashboardScreen(
                     navController = navController,
                     userId = userId,
-                    appViewModel= appViewModel
+                    appViewModel = appViewModel
                 )
             } else {
                 NotFoundScreen(navController = navController)
@@ -98,7 +105,7 @@ fun InventoryNavHost(
                 canNavigateBack = navController.previousBackStackEntry != null,
                 navController = navController,
                 userId = userId,
-                appViewModel= appViewModel
+                appViewModel = appViewModel
             )
         }
 
@@ -122,7 +129,7 @@ fun InventoryNavHost(
                     }
                 },
                 navController = navController,
-                appViewModel= appViewModel
+                appViewModel = appViewModel
             )
         }
 
@@ -136,7 +143,7 @@ fun InventoryNavHost(
             SettingScreen(
                 navController = navController,
                 userId = userId,
-                appViewModel= appViewModel
+                appViewModel = appViewModel
             )
         }
 
@@ -150,7 +157,7 @@ fun InventoryNavHost(
                 backStackEntry.arguments?.getInt(UpdateInformationDestination.userIdArg) ?: 0
             UpdateInformationScreen(
                 navController = navController,
-                appViewModel= appViewModel,
+                appViewModel = appViewModel,
                 userId = userId
             )
         }
@@ -164,7 +171,7 @@ fun InventoryNavHost(
             val userId = backStackEntry.arguments?.getInt(MyPantryDestination.userIdArg) ?: 0
             MyPantryScreen(
                 navController = navController,
-                appViewModel= appViewModel,
+                appViewModel = appViewModel,
                 userId = userId
             )
         }
@@ -177,7 +184,7 @@ fun InventoryNavHost(
             if (userId != null) {
                 LegalScreen(
                     navController = navController,
-                    appViewModel= appViewModel,
+                    appViewModel = appViewModel,
                     userId = userId
                 )
             } else {
@@ -193,7 +200,7 @@ fun InventoryNavHost(
             val userId = backStackEntry.arguments?.getInt(AboutDestination.userIdArg) ?: 0
             AboutScreen(
                 navController = navController,
-                appViewModel= appViewModel,
+                appViewModel = appViewModel,
                 userId = userId
             )
         }

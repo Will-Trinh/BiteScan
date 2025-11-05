@@ -21,6 +21,12 @@ object LoginDestination : NavigationDestination {
     override val route = "login"
     override val titleRes = R.string.login_title
 }
+
+object RegisterDestination : NavigationDestination {
+    override val route = "register"
+    override val titleRes = R.string.register_title
+}
+
 object UpdateInformationDestination : NavigationDestination {
     override val route = "update_information"
     const val userIdArg = "userId"
