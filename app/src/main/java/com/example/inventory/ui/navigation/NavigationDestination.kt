@@ -17,6 +17,11 @@ object UploadDestination : NavigationDestination {
     // Add this property
     val routeWithArgs = "$route/{$userIdArg}"}
 
+object LandingDestination : NavigationDestination {
+    override val route = "landing"
+    override val titleRes = R.string.landing
+}
+
 object LoginDestination : NavigationDestination {
     override val route = "login"
     override val titleRes = R.string.login_title

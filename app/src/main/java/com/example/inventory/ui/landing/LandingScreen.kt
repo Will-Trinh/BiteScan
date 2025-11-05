@@ -25,12 +25,15 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import com.example.inventory.R
 import com.example.inventory.ui.theme.PrimaryGreen
-// Define a color for the primary green, consistent with your settings screen
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import com.example.inventory.ui.navigation.LoginDestination
 
 @Composable
 fun LandingScreen(
     onGetStartedClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    navController: NavController
 ) {
     // Mimic the overall gray background and the rounded-corner content area
     Surface(
@@ -49,23 +52,20 @@ fun LandingScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            // BiteScan Logo Section
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
+
+            // Logo and Welcome Text
+            Row (verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(top=80.dp)
-            ) {
-                // Leaf Icon (Replace with your actual Image/Logo)
+                modifier = Modifier.padding(top=80.dp)) {
                 Icon(
-                    imageVector = Icons.Default.Eco, // Placeholder leaf icon
+                    imageVector = Icons.Default.Eco,
                     contentDescription = "BiteScan Logo",
                     tint = PrimaryGreen,
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(50.dp)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "BiteScan",
-                    fontSize = 30.sp,
+                    fontSize = 40.sp,
                     fontWeight = FontWeight.Bold,
                     color = PrimaryGreen
                 )
@@ -115,7 +115,7 @@ fun LandingScreen(
 
             // Get Started Button
             Button(
-                onClick = onGetStartedClick,
+                onClick = { onGetStartedClick() },
                 modifier = Modifier
                     .fillMaxWidth(0.8f) // Controls the button width
                     .height(40.dp)
@@ -153,6 +153,6 @@ fun LandingScreen(
 @Composable
 fun LandingScreenPreview() {
     CookingAssistantTheme {
-        LandingScreen(onGetStartedClick = { /* Do nothing for preview */ })
+        LandingScreen(onGetStartedClick = { /* Do nothing for preview */ }, navController = rememberNavController())
     }
 }
