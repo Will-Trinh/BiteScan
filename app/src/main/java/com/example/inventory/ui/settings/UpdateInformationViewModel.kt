@@ -39,8 +39,7 @@ class UpdateInformationViewModel(private val repository: OfflineUsersRepository)
             if (currentUser != null) {
                 // Temporarily bypass password verification until login is implemented
                 val updatedUser = currentUser.copy(
-                    username = userName,
-                    password = if (newPassword.isNotEmpty() && newPassword == retypePassword) newPassword else currentUser.password
+                    username = userName
                 )
                 repository.updateUser(updatedUser)
                 _uiState.value = _uiState.value.copy(

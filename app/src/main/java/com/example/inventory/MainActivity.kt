@@ -27,9 +27,13 @@ import kotlinx.coroutines.launch
 import com.example.inventory.BuildConfig
 import com.example.inventory.ui.navigation.*
 import com.example.inventory.ui.history.HistoryDestination
+import com.example.inventory.ui.AppViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+
 
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
@@ -44,13 +48,15 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val navController = rememberNavController()
+            val appViewModel: AppViewModel = viewModel()
 
             // Add listener to handle invalid routes and redirect to 404
             navController.addOnDestinationChangedListener { _, destination, _ ->
                 val validRoutes = listOf(
-                    DashboardDestination.route,
+                    LoginDestination.route,
+                    //RegisterDestination.route,
                     DashboardDestination.routeWithArgs,
-                    UploadDestination.route,
+                    UploadDestination.routeWithArgs,
                     HistoryDestination.routeWithArgs,
                     "edit_receipt/{receiptId}/{userId}",
                     SettingsDestination.routeWithArgs,
@@ -71,7 +77,7 @@ class MainActivity : ComponentActivity() {
             InventoryTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
 //                    Text(text = "API Key: ${BuildConfig.apikeysafe}")
-                    InventoryNavHost(navController = navController)
+                    InventoryNavHost(navController = navController, appViewModel = appViewModel)
                 }
             }
         }
@@ -92,8 +98,8 @@ class DatabaseSeeder {
                 User(
                     userId = 0,
                     username = "testuser",
-                    password = "hashed_password",
-                    phone = "1234567890"
+                    phone = "1234567890",
+                    email = "TranXinhDep@gmail.com",
                 )
             )
             if (userId <= 0) {

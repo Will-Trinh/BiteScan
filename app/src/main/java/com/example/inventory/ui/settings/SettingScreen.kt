@@ -38,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.BorderStroke
+import com.example.inventory.ui.AppViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,7 +46,8 @@ import androidx.compose.foundation.BorderStroke
 fun SettingScreen(
     navController: NavController,
     userId: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    appViewModel: AppViewModel
 ) {
     val context = LocalContext.current
     val appContainer = (context.applicationContext as InventoryApplication).container
@@ -88,7 +90,7 @@ fun SettingScreen(
                     }
                 )
             },
-            bottomBar = { BottomNavigationBar(navController) }
+            bottomBar = { BottomNavigationBar(navController,appViewModel) }
         ) { paddingValues ->
             Column(
                 modifier = Modifier
@@ -591,6 +593,6 @@ fun CheckboxWithLabel(
 fun SettingScreenPreview() {
     val navController = rememberNavController()
     CookingAssistantTheme {
-        SettingScreen(navController = navController, userId = 1)
+        SettingScreen(navController = navController, userId = 1, appViewModel = AppViewModel())
     }
 }

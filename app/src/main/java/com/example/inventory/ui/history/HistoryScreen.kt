@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.nativeCanvas
-
+import com.example.inventory.ui.AppViewModel
 private val PrimaryGreen = Color(0xFF4CAF50)
 private val LightGreen = Color(0xFFE8F5E9)
 
@@ -62,7 +62,8 @@ fun ReceiptScreen(
     canNavigateBack: Boolean = false,
     navController: NavController,
     modifier: Modifier = Modifier,
-    viewModel: ReceiptViewModel? = null
+    viewModel: ReceiptViewModel? = null,
+    appViewModel: AppViewModel
 ) {
     val context = LocalContext.current
     val actualViewModel = viewModel ?: remember {
@@ -121,7 +122,7 @@ fun ReceiptScreen(
                     )
                 )
             },
-            bottomBar = { BottomNavigationBar(navController) }
+            bottomBar = { BottomNavigationBar(navController, appViewModel) }
         ) { innerPadding ->
             Column(
                 modifier = Modifier
@@ -518,6 +519,7 @@ fun HistoryScreenPreview() {
                 viewModel = fakeViewModel,
                 userId = fakeUIuser.userId,
                 canNavigateBack = true,
+                appViewModel = AppViewModel()
             )
         }
     }
@@ -621,6 +623,7 @@ fun ReceiptScreenPreview() {
             viewModel = fakeViewModel,
             userId = fakeUIuser.userId,
             canNavigateBack = true,
+            appViewModel = AppViewModel()
         )
     }
 }

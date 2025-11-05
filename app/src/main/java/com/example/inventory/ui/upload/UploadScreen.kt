@@ -31,19 +31,18 @@ import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalContext
 import com.example.inventory.InventoryApplication
-import com.example.inventory.data.ReceiptsRepository
-import com.example.inventory.data.ItemsRepository
 import com.example.inventory.ui.loading.LoadingScreen
 import android.util.Log
 import com.example.inventory.ui.theme.md_theme_light_primary
 import com.example.inventory.ui.navigation.UploadDestination
-
+import com.example.inventory.ui.AppViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UploadScreen(
     paddingValues: PaddingValues = PaddingValues(0.dp),
     navController: NavController,
-    userId: Int = 1  // From auth/nav args
+    appViewModel: AppViewModel,
+    userId: Int// From auth/nav args
 ) {
     val context = LocalContext.current
     val appContainer = (context.applicationContext as InventoryApplication).container
@@ -130,7 +129,7 @@ fun UploadScreen(
                     }
                 )
             },
-            bottomBar = { BottomNavigationBar(navController) }
+            bottomBar = { BottomNavigationBar(navController, appViewModel) }
         ) { scaffoldPadding ->
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(
@@ -285,20 +284,6 @@ fun ErrorSection(message: String) {
     }
 }
 
-// Previews (keep existing)
-// Preview cho HomeScreen
-@Preview(showBackground = true)
-@Composable
-fun UploadScreenPreview() {
-    val navController = rememberNavController() // Mock NavController
-    CookingAssistantTheme {
-        Scaffold(
-            bottomBar = { BottomNavigationBar(navController) }
-        ) { paddingValues ->
-            UploadScreen(paddingValues, navController)
-        }
-    }
-}
 
 // Preview cho UploadArea
 @Preview(showBackground = true)

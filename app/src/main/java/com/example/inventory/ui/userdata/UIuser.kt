@@ -5,6 +5,7 @@ import com.example.inventory.data.ItemsRepository
 import com.example.inventory.data.Receipt
 import com.example.inventory.data.ReceiptsRepository
 import com.example.inventory.data.User
+import com.example.inventory.data.UsersRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import java.sql.Date
@@ -102,5 +103,31 @@ class FakeItemsRepository : ItemsRepository {
     }
 }
 
+class FakeUsersRepository : UsersRepository {
+
+    // 1. insertUser
+    override suspend fun insertUser(user: User): Long {
+        return 1L
+    }
+    // 2. getAllUsersStream
+    override fun getAllUsersStream(): Flow<List<User>> = flowOf(listOf(fakeUIuser))
+
+    // 3. getUser
+    override fun getUser(id: Int): Flow<User?> = flowOf(if (id == 1) fakeUIuser else null)
+
+    // 4. searchUsers
+    override fun searchUsers(query: String): Flow<List<User>> = flowOf(
+        if (fakeUIuser.username.contains(query, true)) listOf(fakeUIuser) else emptyList()
+    )
+    // 5. deleteUser
+    override suspend fun deleteUser(user: User) {  }
+    // 6. updateUser
+    override suspend fun updateUser(user: User) {  }
+    // 7. getReceiptsForUser – QUAN TRỌNG NHẤT!
+    override fun getReceiptsForUser(userId: Int): Flow<List<Receipt>> {
+        return FakeReceiptsRepository().getReceiptsForUser(userId)
+    }
+}
+
 // Fake UI user (updated to userId = 1 for consistency)
-val fakeUIuser = User(userId = 1, username = "previewUser", password = "hashedPass", phone = "1234567890")
+val fakeUIuser = User(userId = 1, username = "previewUser", email = "TranXinhDep@gmail.com", phone = "1234567890")
