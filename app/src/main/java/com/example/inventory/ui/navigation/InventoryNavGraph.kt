@@ -22,6 +22,7 @@ import com.example.inventory.ui.dashboard.DashboardScreen
 import com.example.inventory.ui.landing.LoginScreen
 import com.example.inventory.ui.landing.RegistrationScreen
 import com.example.inventory.ui.AppViewModel
+import com.example.inventory.ui.landing.LandingScreen
 
 @Composable
 fun InventoryNavHost(
@@ -31,9 +32,12 @@ fun InventoryNavHost(
 ) {
     NavHost(
         navController = navController,
-        startDestination = LoginDestination.route,
+        startDestination = LandingDestination.route,
         modifier = modifier
     ) {
+        composable(route = LandingDestination.route) {
+            LandingScreen(navController = navController, onGetStartedClick = { navController.navigate(LoginDestination.route)})
+        }
         composable(route = LoginDestination.route) {
             LoginScreen(
                 navController = navController,
