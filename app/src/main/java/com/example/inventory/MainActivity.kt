@@ -53,6 +53,7 @@ class MainActivity : ComponentActivity() {
             // Add listener to handle invalid routes and redirect to 404
             navController.addOnDestinationChangedListener { _, destination, _ ->
                 val validRoutes = listOf(
+                    LandingDestination.route,
                     LoginDestination.route,
                     RegisterDestination.route,
                     DashboardDestination.routeWithArgs,
@@ -62,7 +63,7 @@ class MainActivity : ComponentActivity() {
                     SettingsDestination.routeWithArgs,
                     UpdateInformationDestination.routeWithArgs,
                     MyPantryDestination.routeWithArgs,
-                    LegalDestination.routeWithArgs, // Add this line
+                    LegalDestination.routeWithArgs,
                     AboutDestination.routeWithArgs,
                     NotFoundDestination.routeWithArgs
                 )
