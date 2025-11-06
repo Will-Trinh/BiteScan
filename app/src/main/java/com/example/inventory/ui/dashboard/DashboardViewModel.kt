@@ -95,7 +95,6 @@ class DashboardViewModel(
                     RecipeSuggestion(
                         title = "Sample Recipe",
                         details = "Uses 0 of 0 items • 10 min",
-                        iconResId = R.drawable.spanish_chicken_soup_recipe
                     )
                 )
                 return@launch
@@ -200,12 +199,10 @@ class DashboardViewModel(
             RecipeSuggestion(
                 title = "${topCategory} Power Bowl",
                 details = "Uses ${items.size} of ${items.size + 2} items • 25 min",
-                iconResId = R.drawable.spanish_chicken_soup_recipe
             ),
             RecipeSuggestion(
                 title = "Quick $topItem Salad",
                 details = "Uses ${min(items.size, 5)} of 8 items • 10 min",
-                iconResId = R.drawable.spanish_chicken_soup_recipe
             )
         )
     }

@@ -63,7 +63,8 @@ class UploadViewModel(
 
     // For emulator
 //    private val ocrApiUrl = "http://10.0.2.2:8000/ocr"  // Changed port
-    private val ocrApiUrl = "http://129.146.23.142:8080/ocr"
+
+    private val ocrApiUrl = "http://10.0.2.2:8000/ocr"
 
     // For physical device (replace with your IP)
 //    private val ocrApiUrl = "http://192.168.1.100:5000/ocr"
@@ -96,12 +97,13 @@ class UploadViewModel(
     suspend fun saveReceiptAndItems(receiptData: ReceiptData, userId: Int): Int {
         return withContext(Dispatchers.IO) {
             try {
+                Log.d("UploadViewModel", "Saving receipt with userId=$userId")
                 val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
                 val parsedDate = Date(
                     sdf.parse(receiptData.transaction_date ?: "")?.time
                         ?: System.currentTimeMillis()
                 )
-
+                if (userId <= 0) throw IllegalArgumentException("Invalid userId: $userId. Please log in first.")
                 val newReceipt = Receipt(
                     receiptId = 0,
                     userId = userId,
@@ -109,8 +111,9 @@ class UploadViewModel(
                     date = parsedDate,
                     status = "Pending"
                 )
-                val newReceiptId = receiptsRepository.insertReceipt(newReceipt).toInt()
 
+                val newReceiptId = receiptsRepository.insertReceipt(newReceipt).toInt()
+                Log.d("UploadViewModel", "Inserted receipt ID: $newReceiptId")
                 receiptData.line_items.forEach { lineItem ->
                     val newItem = Item(
                         id = 0,

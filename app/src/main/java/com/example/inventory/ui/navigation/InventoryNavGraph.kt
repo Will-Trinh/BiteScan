@@ -66,7 +66,6 @@ fun InventoryNavHost(
             UploadScreen(
                 navController = navController,
                 appViewModel = appViewModel,
-                userId = userId
             )
         }
         composable(

@@ -27,12 +27,14 @@ class LoginScreenViewModel(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    fun checkLogin(username: String, password: String) {
+    fun checkLogin(email: String, password: String) {
         _isLoading.value = true
         _loginResult.value = null
         //for testing purpose
         _loginResult.value = LoginResult(success = true, uid = 1)
-
+        val user = User(userId = 1, username = "Tran", email = "Tran@gmail.com", phone = "123456789")
+        viewModelScope.launch { usersRepository.insertUser(user)}
+        //end testing
 
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
@@ -47,7 +49,7 @@ class LoginScreenViewModel(
                     conn.doOutput = true
 
                     val json = JSONObject().apply {
-                        put("username", username)
+                        put("email", email)
                         put("password", password)
                     }
                     OutputStreamWriter(conn.outputStream).use { it.write(json.toString()) }
@@ -64,6 +66,8 @@ class LoginScreenViewModel(
                             val uid = jsonResponse.getInt("uid")
                             val phone = jsonResponse.getString("phone")
                             val email = jsonResponse.getString("email")
+                            val username = jsonResponse.getString("username")
+
 
                             val user = User(userId = uid, username = username, email = email, phone = phone)
                             usersRepository.insertUser(user)
