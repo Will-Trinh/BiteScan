@@ -80,3 +80,10 @@ object DashboardDestination : NavigationDestination {
     val routeWithArgs = "$route/{userId}"
 }
 
+object RecipeDestination : NavigationDestination {
+    override val route = "recipe_recommendations"
+    const val userIdArg = "userId"
+    override val titleRes = R.string.recipe_recommendations_title
+    val routeWithArgs = "$route/{userId}"
+}
+

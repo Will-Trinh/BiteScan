@@ -156,19 +156,6 @@ fun ReceiptBody(
     LaunchedEffect(dayAndPrice) {
         println("dayAndPrice: $dayAndPrice")
     }
-    // We use LazyColumn for the receipts, but the top elements (Chart, Button)
-    // must be in a standard Column outside the LazyColumn, or use a LazyColumn with items
-    // and items(header). To allow all elements to scroll together, we'll wrap everything
-    // in a LazyColumn, using the chart and button as header items.
-
-    // We use a Column here and rely on the receipts list to use LazyColumn
-    // Since the receiptList component itself uses a LazyColumn, we need to restructure
-    // this to use a standard Column for the top elements and let the list scroll.
-    // Given the screenshot, it looks like a standard list structure, so let's stick
-    // to wrapping the entire body in a scrollable column.
-
-    // Since we can't nest LazyColumn inside LazyColumn, and we want the Chart/Button
-    // to scroll with the list, we'll use a single LazyColumn and define the top elements as items.
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = 8.dp),

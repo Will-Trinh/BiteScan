@@ -47,6 +47,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.inventory.ui.AppViewModel
+import com.example.inventory.ui.theme.PrimaryGreen
+import androidx.compose.foundation.shape.CircleShape
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -107,7 +109,10 @@ fun MyPantryScreen(
                 )
             },
             floatingActionButton = {
-                FloatingActionButton(onClick = { selectedItem = PantryItem(0, "", "", "", SimpleDateFormat("MM/dd/yyyy", Locale.US).format(Date()), "", "", "", "", 0) }) {
+                FloatingActionButton(onClick = { selectedItem = PantryItem(0, "", "", "", SimpleDateFormat("MM/dd/yyyy", Locale.US).format(Date()), "", "", "", "", 0) },
+                    containerColor = PrimaryGreen,  // Green background
+                    contentColor = Color.White,  // White content (overrides tint for consistency)
+                    shape = CircleShape) {
                     Icon(Icons.Default.Add, contentDescription = "Add", tint = Color.White)
                 }
             }

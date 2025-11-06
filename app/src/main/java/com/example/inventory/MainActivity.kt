@@ -65,7 +65,8 @@ class MainActivity : ComponentActivity() {
                     MyPantryDestination.routeWithArgs,
                     LegalDestination.routeWithArgs,
                     AboutDestination.routeWithArgs,
-                    NotFoundDestination.routeWithArgs
+                    NotFoundDestination.routeWithArgs,
+                    RecipeDestination.routeWithArgs
                 )
                 if (!validRoutes.any { it == destination.route }) {
                     navController.navigate(NotFoundDestination.route) {
