@@ -63,6 +63,7 @@ class UploadViewModel(
 
     // For emulator
 //    private val ocrApiUrl = "http://10.0.2.2:8000/ocr"  // Changed port
+
     private val ocrApiUrl = "http://10.0.2.2:8000/ocr"
 
     // For physical device (replace with your IP)

@@ -23,6 +23,7 @@ import com.example.inventory.ui.landing.LoginScreen
 import com.example.inventory.ui.landing.RegistrationScreen
 import com.example.inventory.ui.AppViewModel
 import com.example.inventory.ui.landing.LandingScreen
+import com.example.inventory.ui.recipe.RecipeRecommendationScreen
 
 @Composable
 fun InventoryNavHost(
@@ -211,6 +212,18 @@ fun InventoryNavHost(
         composable(route = NotFoundDestination.routeWithArgs) {
             NotFoundScreen(
                 navController = navController
+            )
+        }
+
+        composable(
+            route = RecipeDestination.routeWithArgs,  // e.g., "recipe_recommendations/{userId}"
+            arguments = listOf(navArgument(RecipeDestination.userIdArg) { type = NavType.IntType })
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getInt(RecipeDestination.userIdArg) ?: 0
+            RecipeRecommendationScreen(
+                navController = navController,
+                userId = userId,
+                appViewModel = appViewModel  // Pass if needed
             )
         }
     }
