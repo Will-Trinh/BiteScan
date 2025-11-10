@@ -169,7 +169,7 @@ class DatabaseSeeder {
             )
             items.forEach {
                 val itemId = itemsRepo.insertItem(it)
-                if (itemId.id <= 0) {
+                if (itemId<= 0) {
                     println("error: can not add new Item: ${it.name}")
                 }
             }

@@ -41,7 +41,7 @@ interface ItemsRepository{
     /**
      * Insert item in the data source and return the inserted item with generated ID.
      */
-    suspend fun insertItem(item: Item): Item
+    suspend fun insertItem(item: Item): Long
 
 
     /**
