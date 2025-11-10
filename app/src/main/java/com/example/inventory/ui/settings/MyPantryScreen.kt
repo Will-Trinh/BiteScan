@@ -5,8 +5,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -21,7 +19,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.inventory.ui.theme.CookingAssistantTheme
 import androidx.navigation.compose.rememberNavController
-import com.example.inventory.ui.navigation.BottomNavigationBar
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.LaunchedEffect
 import com.example.inventory.InventoryApplication
@@ -33,13 +30,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import com.example.inventory.ui.userdata.FakeItemsRepository
 import com.example.inventory.ui.userdata.FakeReceiptsRepository
-import com.example.inventory.ui.userdata.fakeUIuser
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.setValue
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.foundation.background
 import androidx.compose.foundation.lazy.items
@@ -58,24 +51,26 @@ fun MyPantryScreen(
     appViewModel: AppViewModel,
     modifier: Modifier = Modifier
 ) {
-    // Custom ViewModel factory to provide dependencies
+    val context = LocalContext.current
+    val appContainer = (context.applicationContext as InventoryApplication).container
+
     val viewModel: MyPantryViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 if (modelClass.isAssignableFrom(MyPantryViewModel::class.java)) {
                     @Suppress("UNCHECKED_CAST")
                     return MyPantryViewModel(
-                        itemsRepository = FakeItemsRepository(),
-                        receiptsRepository = FakeReceiptsRepository()
+                        itemsRepository = appContainer.itemsRepository,
+                        receiptsRepository = appContainer.receiptsRepository
                     ) as T
                 }
                 throw IllegalArgumentException("Unknown ViewModel class")
             }
         }
     )
-    LaunchedEffect(userId) {
-        viewModel.setUserId(userId)
-    }
+
+    LaunchedEffect(userId) { viewModel.setUserId(userId) }
+
     val uiState by viewModel.uiState.collectAsState()
     val pantryItems = uiState.pantryItems
 
@@ -158,7 +153,7 @@ fun MyPantryScreen(
                     }
                 }
             }
-
+            val categories = viewModel.PANTRY_CATEGORIES
             selectedItem?.let { item ->
                 AlertDialog(
                     onDismissRequest = { selectedItem = null },
@@ -196,12 +191,52 @@ fun MyPantryScreen(
                                 label = { Text("Store") },
                                 modifier = Modifier.fillMaxWidth()
                             )
-                            OutlinedTextField(
-                                value = item.category,
-                                onValueChange = { selectedItem = item.copy(category = it) },
-                                label = { Text("Category") },
-                                modifier = Modifier.fillMaxWidth()
-                            )
+
+                            var expanded by remember { mutableStateOf(false) }
+                            ExposedDropdownMenuBox(
+                                expanded = expanded,
+                                onExpandedChange = { expanded = !expanded }
+                            ) {
+                                OutlinedTextField(
+                                    value = item.category,
+                                    onValueChange = {  },
+                                    readOnly = true,
+                                    label = { Text("Category") },
+                                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                                    modifier = Modifier
+                                        .menuAnchor()
+                                        .fillMaxWidth()
+                                )
+                                ExposedDropdownMenu(
+                                    expanded = expanded,
+                                    onDismissRequest = { expanded = false }
+                                ) {
+                                    viewModel.PANTRY_CATEGORIES.forEach { option ->
+                                        val daysInfo = viewModel.categoryExpiryInfo[option] ?: ""
+                                        DropdownMenuItem(
+                                            text = {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                                ) {
+                                                    Text(option, fontWeight = FontWeight.Medium)
+                                                    if (daysInfo.isNotEmpty()) {
+                                                        Text(
+                                                            daysInfo,
+                                                            fontSize = 12.sp,
+                                                            color = Color.Gray
+                                                        )
+                                                    }
+                                                }
+                                            },
+                                            onClick = {
+                                                selectedItem = item.copy(category = option)
+                                                expanded = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
                         }
                     },
                     confirmButton = {
