@@ -212,7 +212,7 @@ fun MyPantryScreen(
                                     onDismissRequest = { expanded = false }
                                 ) {
                                     viewModel.PANTRY_CATEGORIES.forEach { option ->
-                                        val daysInfo = viewModel.categoryExpiryInfo[option] ?: ""
+                                        val daysInfo = viewModel.categoryExpiryInfo[option] ?: "Other"
                                         DropdownMenuItem(
                                             text = {
                                                 Row(
@@ -264,7 +264,7 @@ fun PantryItemCard(item: PantryItem, onEdit: () -> Unit, onDelete: () -> Unit) {
         shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = CardDefaults.outlinedCardBorder()
+        border = CardDefaults.outlinedCardBorder(),
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -290,7 +290,8 @@ fun PantryItemCard(item: PantryItem, onEdit: () -> Unit, onDelete: () -> Unit) {
                 }
                 DropdownMenu(
                     expanded = showMenu,
-                    onDismissRequest = { showMenu = false }
+                    onDismissRequest = { showMenu = false },
+                    containerColor = PrimaryGreen,
                 ) {
                     DropdownMenuItem(
                         text = { Text("Edit") },
