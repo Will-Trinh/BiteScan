@@ -26,7 +26,7 @@ class RegistrationViewModel(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    fun checkSignUp(email: String, password: String) {
+    fun checkSignUp(userName:String, email: String, password: String) {
         _isLoading.value = true
         _signUpResult.value = SignUpResult(success = false, signupMessage = "")
         //for testing purpose
@@ -45,6 +45,7 @@ class RegistrationViewModel(
                     conn.doOutput = true
 
                     val json = JSONObject().apply {
+                        put("username", userName)
                         put("email", email)
                         put("password", password)
 

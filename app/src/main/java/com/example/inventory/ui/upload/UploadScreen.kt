@@ -42,7 +42,6 @@ fun UploadScreen(
     paddingValues: PaddingValues = PaddingValues(0.dp),
     navController: NavController,
     appViewModel: AppViewModel,
-    userId: Int// From auth/nav args
 ) {
     val context = LocalContext.current
     val appContainer = (context.applicationContext as InventoryApplication).container
@@ -52,6 +51,8 @@ fun UploadScreen(
             itemsRepository = appContainer.itemsRepository
         )
     )
+    val userId = appViewModel.userId.value
+
     val ocrState by viewModel.ocrState.collectAsState()
     val isProcessing by viewModel.isProcessing.collectAsState()
 
@@ -104,7 +105,8 @@ fun UploadScreen(
         val currentState = ocrState  // Extract to local for smart cast
         if (currentState is OcrState.Success) {
             try {
-                val newReceiptId = viewModel.saveReceiptAndItems(currentState.receiptData, userId)
+                Log.d("UploadScreen", "Saving receipt with userId=$userId")
+                val newReceiptId = viewModel.saveReceiptAndItems(currentState.receiptData, userId!!)
                 navController.navigate("edit_receipt/$newReceiptId/$userId") {
                     popUpTo(navController.graph.startDestinationId) { inclusive = false }
                     launchSingleTop = true

@@ -256,7 +256,7 @@ fun RegistrationScreen(
                         if (password != confirmPassword)
                         if (password.length < 6) return@Button
 
-                        actualViewModel?.checkSignUp (email, password)
+                        actualViewModel?.checkSignUp (userName, email, password)
 
                     },
                     modifier = Modifier
@@ -299,6 +299,5 @@ fun RegistrationScreen(
 @Preview(showBackground = true)
 @Composable
 fun CreateAccountScreenPreview() {
-
     RegistrationScreen(navController = rememberNavController())
 }
