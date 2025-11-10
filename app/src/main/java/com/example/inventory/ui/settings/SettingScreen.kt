@@ -39,6 +39,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.BorderStroke
 import com.example.inventory.ui.AppViewModel
+import androidx.compose.ui.window.Dialog
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.ui.text.style.TextAlign
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,6 +73,7 @@ fun SettingScreen(
     val userIdText = viewModel.userId.collectAsState().value
 
     var showExternalLinkDialog by remember { mutableStateOf(false) }
+    var showDeleteAccountDialog by remember { mutableStateOf(false) }
     var vegetarian by remember { mutableStateOf(false) }
     var vegan by remember { mutableStateOf(false) }
     var glutenFree by remember { mutableStateOf(false) }
@@ -537,8 +542,9 @@ fun SettingScreen(
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
+//
                         Button(
-                            onClick = { /* TODO: Delete Account */ },
+                            onClick = { showDeleteAccountDialog = true }, // Set state to true
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(48.dp),
@@ -555,9 +561,21 @@ fun SettingScreen(
                                     .padding(start = 1.dp) // Aligns text to the left
                             )
                         }
+
+                        // REPLACED OLD ALERTDIALOG WITH CUSTOM DIALOG
+                        if (showDeleteAccountDialog) {
+                            DeleteAccountDialog(
+                                onDismiss = { showDeleteAccountDialog = false },
+                                onConfirmDelete = {
+                                    // TODO: Implement actual account deletion logic here
+                                    showDeleteAccountDialog = false
+                                    Toast.makeText(context, "Account deletion initiated (Placeholder)", Toast.LENGTH_LONG).show()
+                                }
+                            )
+                        }
+
                         Button(
                             onClick = {
-                            /* TODO: Sign Out */
                                 viewModel.logout()
                             },
                             modifier = Modifier
@@ -607,7 +625,104 @@ fun CheckboxWithLabel(
     }
 }
 
+@Composable
+fun DeleteAccountDialog(
+    onDismiss: () -> Unit,
+    onConfirmDelete: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(10.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // 1. Icon and Close Button Row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Custom Trash Icon with Red Background
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFFFDE0E0)) // Light Red Background
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete",
+                            tint = Color(0xFFD32F2F), // Darker Red Icon
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
 
+                    // Close (X) button
+                    IconButton(onClick = onDismiss) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = Color.Gray
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // 2. Title and Text
+                Text(
+                    text = "Delete Account",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Are you sure you want to delete this account?\nThis action cannot be undone.",
+                    fontSize = 16.sp,
+                    color = Color.Gray,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // 3. Delete Button (Solid Red)
+                Button(
+                    onClick = onConfirmDelete,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)), // Solid Red
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Delete", fontSize = 16.sp, color = Color.White)
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // 4. Cancel Button (Outlined/Transparent)
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent), // White/Transparent
+                    border = BorderStroke(1.dp, Color.LightGray), // Thin border
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Cancel", fontSize = 16.sp, color = Color.Black)
+                }
+            }
+        }
+    }
+}
 
 @Preview(showBackground = true)
 @Composable

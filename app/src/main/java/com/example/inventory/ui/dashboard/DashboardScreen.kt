@@ -134,7 +134,7 @@ fun DashboardScreen(
                     item {
                         RecipesSection(
                             recipes = recipes,
-                            onSeeAllClick = { /* TODO: Navigate to recipes list with userId */ }
+                            onSeeAllClick = { navController.navigate("recipe_recommendations/$userId") }
                         )
                     }
 
@@ -269,48 +269,49 @@ fun PieChart(
     modifier: Modifier = Modifier
 ) {
     Canvas(modifier = modifier) {
-        val percentages = listOf(
+        val raw = listOf(
             macroBreakdown.proteinPercent.removeSuffix("%").toFloatOrNull() ?: 0f,
             macroBreakdown.carbsPercent.removeSuffix("%").toFloatOrNull() ?: 0f,
             macroBreakdown.fatsPercent.removeSuffix("%").toFloatOrNull() ?: 0f
         )
-        val total = percentages.sum()
-        if (total == 0f) return@Canvas  // Skip if no data
+        // Fallback: if all zero, show an even split so the user still sees a pie.
+        val values = if (raw.all { it <= 0f }) listOf(34f, 33f, 33f) else raw
+        val total = values.sum()
+        if (total <= 0f) return@Canvas
 
         val center = Offset(size.width / 2, size.height / 2)
-        val radius = size.minDimension / 2
+        val radius = size.minDimension / 2f
         var startAngle = 0f
 
-        // Colors for each slice
         val colors = listOf(
-            Color(0xFF2F6C30),      // Protein: Green
-            Color(0xFF757575),                      // Carbs: Gray
-            Color(0xFFF4A142)                       // Fats: Orange
+            Color(0xFF2F6C30), // Protein
+            Color(0xFF711E81), // Carbs (match your legend color)
+            Color(0xFFF4A142)  // Fats
         )
 
-        percentages.forEachIndexed { index, percent ->
-            val sweepAngle = (percent / total) * 360f
+        values.forEachIndexed { index, value ->
+            val sweepAngle = (value / total) * 360f
             drawArc(
                 color = colors[index],
                 startAngle = startAngle,
                 sweepAngle = sweepAngle,
                 useCenter = true,
                 topLeft = Offset(center.x - radius, center.y - radius),
-                size = Size(radius * 2, radius * 2),
-                style = androidx.compose.ui.graphics.drawscope.Fill
+                size = Size(radius * 2, radius * 2)
             )
             startAngle += sweepAngle
         }
 
-        // Optional: White border for clarity
+        // Optional thin ring for definition
         drawCircle(
-            color = Color.White,
-            radius = radius * 0.9f,
+            color = Color.White.copy(alpha = 0.9f),
+            radius = radius,
             center = center,
             style = Stroke(width = 2.dp.toPx())
         )
     }
 }
+
 
 @Composable
 fun MacroLegendItem(color: Color, label: String, percentage: String) {
@@ -459,7 +460,7 @@ fun RecipesSection(recipes: List<RecipeSuggestion>, onSeeAllClick: () -> Unit) {
                         iconResId = recipe.iconResId
                     )
                     if (recipe != recipes.last()) {
-                        Divider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), thickness = 0.5.dp)
+                        HorizontalDivider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), thickness = 0.5.dp)
                     }
                 }
             }

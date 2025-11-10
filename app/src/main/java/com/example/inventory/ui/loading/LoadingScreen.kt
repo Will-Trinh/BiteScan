@@ -1,11 +1,13 @@
 package com.example.inventory.ui.loading
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -17,53 +19,28 @@ import com.example.inventory.ui.theme.CookingAssistantTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlin.math.roundToInt
 
-// Define primary colors
+
+
 private val PrimaryGreen = Color(0xFF4CAF50)
-private val LightGrayBackground = Color(0xFFF5F5F5)
+private val LightGrayBackground = Color(0xFFF5F5E9)
 
-// --- State Management (Now Publicly Accessible) ---
-
-/** * Represents the status of a single step in the processing workflow.
- * Marked public (default) to be used by the public LoadingScreen function.
- */
-enum class StepStatus {
-    COMPLETED,
-    IN_PROGRESS,
-    PENDING
-}
-
-/** * State model to simulate the progression of the loading screen.
- * Marked public (default) to be used by the public LoadingScreen function.
- */
-data class LoadingState(
-    val progress: Float = 0f,
-    val step1: StepStatus = StepStatus.PENDING,
-    val step2: StepStatus = StepStatus.PENDING,
-    val step3: StepStatus = StepStatus.PENDING
-)
-
-// * Static state for preview/initial display
-private val STATIC_LOADING_STATE = LoadingState(
-    progress = 0.8f, // 80% complete
-    step1 = StepStatus.COMPLETED,
-    step2 = StepStatus.COMPLETED,
-    step3 = StepStatus.IN_PROGRESS
-)
-
-// --- Composable UI ---
-
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun LoadingScreen(
-    // Now that LoadingState is public (or internal), it can be used here.
-    loadingState: LoadingState = STATIC_LOADING_STATE
+    viewModel: LoadingViewModel = viewModel()  // Load from ViewModel (dynamic)
 ) {
+    val loadingState by viewModel.loadingState.collectAsState()
+
+    // Hide if not loading
+    if (loadingState.progress == 1f) return
+
     CookingAssistantTheme {
-        // Use Surface for the entire screen background (light gray to match screenshot)
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = Color.White,
-
         ) {
             Column(
                 modifier = Modifier
@@ -71,15 +48,13 @@ fun LoadingScreen(
                     .padding(horizontal = 24.dp, vertical = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
-
-                // Main Content Card
                 Card(
-                    modifier = Modifier.fillMaxWidth().padding(top = 180.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 180.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = LightGrayBackground),
                     elevation = CardDefaults.cardElevation(4.dp),
-
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -87,7 +62,6 @@ fun LoadingScreen(
                             .fillMaxWidth()
                             .padding(24.dp)
                     ) {
-                        // 1. Large Circular Progress Indicator (top spinner)
                         CircularProgressIndicator(
                             modifier = Modifier.size(64.dp).padding(vertical = 8.dp),
                             color = PrimaryGreen,
@@ -95,7 +69,6 @@ fun LoadingScreen(
                         )
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        // 2. Title and Subtitle
                         Text(
                             text = "Processing Receipt...",
                             fontSize = 20.sp,
@@ -111,9 +84,18 @@ fun LoadingScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // 3. Linear Progress Bar and Status Text
+                        // Animated Linear Progress Bar
+                        val infiniteTransition = rememberInfiniteTransition()
+                        val animatedProgress by infiniteTransition.animateFloat(
+                            initialValue = loadingState.progress,
+                            targetValue = loadingState.progress + 0.1f,  // Slight pulse for realism
+                            animationSpec = infiniteRepeatable(
+                                animation = tween(2000),  // 2s loop
+                                repeatMode = RepeatMode.Restart
+                            )
+                        )
                         LinearProgressIndicator(
-                            progress = loadingState.progress,
+                            progress = { animatedProgress.coerceIn(loadingState.progress, 1f) },
                             modifier = Modifier
                                 .fillMaxWidth(0.8f)
                                 .height(6.dp)
@@ -123,27 +105,23 @@ fun LoadingScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "${(loadingState.progress * 100).toInt()}% complete",
+                            text = "${(loadingState.progress * 100).roundToInt()}% complete",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = PrimaryGreen
                         )
                         Spacer(modifier = Modifier.height(32.dp))
 
-                        // 4. Step-by-Step Status Checklist
-                        StepStatusItem(
-                            label = "Image uploaded",
-                            status = loadingState.step1
-                        )
-                        StepStatusItem(
-                            label = "Text extracted",
-                            status = loadingState.step2
-                        )
-                        StepStatusItem(
-                            label = "Analyzing nutrition data",
-                            status = loadingState.step3
-                        )
-                        Spacer(modifier = Modifier.height(18.dp))
+                        // Dynamic Step List
+                        loadingState.steps.forEachIndexed { index, step ->
+                            AnimatedVisibility(
+                                visible = true,
+                                enter = fadeIn() + slideInVertically(),
+                                exit = fadeOut()
+                            ) {
+                                StepStatusItem(label = step.label, status = step.status)
+                            }
+                        }
                     }
                 }
             }
@@ -151,7 +129,7 @@ fun LoadingScreen(
     }
 }
 
-/** Composable for a single checklist item. */
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun StepStatusItem(label: String, status: StepStatus) {
     Row(
@@ -162,51 +140,61 @@ private fun StepStatusItem(label: String, status: StepStatus) {
     ) {
         val iconSize = 18.dp
 
-        when (status) {
+        val icon: @Composable () -> Unit = when (status) {
             StepStatus.COMPLETED -> {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = "Completed",
-                    tint = PrimaryGreen,
-                    modifier = Modifier.size(iconSize)
-                )
+                {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Completed",
+                        tint = PrimaryGreen,
+                        modifier = Modifier.size(iconSize)
+                    )
+                }
             }
             StepStatus.IN_PROGRESS -> {
-                // Use CircularProgressIndicator for the spinning icon
-                CircularProgressIndicator(
-                    modifier = Modifier.size(iconSize),
-                    color = PrimaryGreen,
-                    strokeWidth = 2.dp
-                )
+                {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(iconSize),
+                        color = PrimaryGreen,
+                        strokeWidth = 2.dp
+                    )
+                }
             }
-            StepStatus.PENDING -> {
-                // Simple placeholder dot for pending
-                Box(
-                    modifier = Modifier
-                        .size(iconSize)
-                        .clip(RoundedCornerShape(9.dp))
-                        .background(Color.LightGray)
-                )
+            else -> {
+                {
+                    Box(
+                        modifier = Modifier
+                            .size(iconSize)
+                            .clip(RoundedCornerShape(9.dp))
+                            .background(Color.LightGray)
+                    )
+                }
             }
         }
 
+        icon()
+
         Spacer(modifier = Modifier.width(16.dp))
 
-        // Text style changes based on status
-        val textColor = if (status == StepStatus.IN_PROGRESS) PrimaryGreen else Color.DarkGray
-        val textWeight = if (status == StepStatus.IN_PROGRESS) FontWeight.SemiBold else FontWeight.Normal
+        val textColor by animateColorAsState(
+            targetValue = if (status == StepStatus.IN_PROGRESS) PrimaryGreen else Color.DarkGray,
+            animationSpec = tween(300)
+        )
 
         Text(
             text = label,
             fontSize = 15.sp,
             color = textColor,
-            fontWeight = textWeight
+            fontWeight = FontWeight.SemiBold
         )
     }
 }
 
+
 @Preview
 @Composable
 fun LoadingScreenPreview() {
-    LoadingScreen()
+    CookingAssistantTheme {
+        LoadingScreen()
+    }
 }
