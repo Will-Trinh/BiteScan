@@ -19,10 +19,8 @@ class OfflineItemsRepository (val itemDao: ItemDao) : ItemsRepository {
 
     override fun getItemsForReceipt(receiptId: Int): Flow<List<Item>> = itemDao.getItemsForReceipt(receiptId)
 
-    override suspend fun insertItem(item: Item): Item {
-        val id = itemDao.insert(item)
-        return itemDao.getItemStream(id.toInt()).first()
-            ?: throw IllegalStateException("Item with id $id not found after insertion")
+    override suspend fun insertItem(item: Item): Long {
+        return itemDao.insert(item)
     }
 
     /**

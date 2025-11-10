@@ -121,7 +121,8 @@ class UploadViewModel(
                         category = "Unknown",
                         receiptId = newReceiptId
                     )
-                    itemsRepository.insertItem(newItem)
+                    val itemID = itemsRepository.insertItem(newItem)
+                    Log.d("UploadViewModel", "Inserted item ID: $itemID")
                 }
 
                 Log.d("UploadViewModel", "Saved receipt ID: $newReceiptId")

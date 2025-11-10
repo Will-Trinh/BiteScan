@@ -73,10 +73,10 @@ class FakeItemsRepository : ItemsRepository {
         fakeItems.filter { it.name.contains(query, ignoreCase = true) }
     )
     fun clear() = fakeItems.clear()
-    override suspend fun insertItem(item: Item): Item {
+    override suspend fun insertItem(item: Item): Long {
         val newItem = item.copy(id = idCounter.incrementAndGet())
         fakeItems.add(newItem)
-        return newItem
+        return newItem.id.toLong()
     }
 
     override suspend fun deleteItem(item: Item) {
