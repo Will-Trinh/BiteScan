@@ -1,19 +1,15 @@
 package com.example.inventory.ui.recipe
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.WbSunny
@@ -23,66 +19,72 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.inventory.ui.navigation.BottomNavigationBar
-import com.example.inventory.ui.navigation.NavigationDestination
 import com.example.inventory.ui.AppViewModel
 import androidx.compose.foundation.BorderStroke
-import com.example.inventory.R
 import androidx.compose.foundation.layout.FlowRow
-import com.example.inventory.ui.navigation.MyPantryDestination
+import androidx.compose.material.icons.filled.ArrowForward
 import com.example.inventory.ui.theme.CookingAssistantTheme
 
 private val PrimaryGreen = Color(0xFF4CAF50)
 private val LightGreen = Color(0xFFE8F5E9)
 
-// --- Composable Screen ---
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun RecipeRecommendationScreen(
     navController: NavController,
     userId: Int,
     modifier: Modifier = Modifier,
-    appViewModel: AppViewModel,
-    viewModel: RecipeViewModel = remember { RecipeViewModel(userId) } // Simple ViewModel for demo
+    appViewModel: AppViewModel
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val appContainer = (context.applicationContext as com.example.inventory.InventoryApplication).container
+
+    val viewModel: RecipeViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+        factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                if (modelClass.isAssignableFrom(RecipeViewModel::class.java)) {
+                    @Suppress("UNCHECKED_CAST")
+                    return RecipeViewModel(
+                        userId = userId,
+                        itemsRepository = appContainer.itemsRepository,
+                        receiptsRepository = appContainer.receiptsRepository
+                    ) as T
+                }
+                throw IllegalArgumentException("Unknown ViewModel class")
+            }
+        }
+    )
+
     val uiState by viewModel.uiState.collectAsState()
+
     CookingAssistantTheme {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(end = 48.dp),
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            Text(
-                                "Recipe Recommendations",
-                                fontWeight = FontWeight.Bold,
-                                color = Color.Black
-                            )
-                        }
-                    },
+                title = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(end = 48.dp),
+                        horizontalArrangement = Arrangement.Center
+                    )
+                    { Text( "Recipe Recommendations",
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black )
+                    } },
                     navigationIcon = {
-                        IconButton(onClick = { navController.popBackStack() }) {
+                        IconButton(onClick = { navController.popBackStack() })
+                        {
                             Icon(
                                 imageVector = Icons.Default.ArrowBack,
                                 contentDescription = "Back",
-                                tint = Color.Black
-                            )
-                        }
-                    },
-                )
-            },
+                                tint = Color.Black )
+                        } }, ) },
             bottomBar = { BottomNavigationBar(navController, appViewModel) }
         ) { innerPadding ->
             Column(
@@ -94,26 +96,23 @@ fun RecipeRecommendationScreen(
             ) {
                 RecipeBody(
                     uiState = uiState,
-                    onIngredientRemove = viewModel::removeIngredient,
                     onFilterClick = viewModel::toggleFilter,
-                    navController = navController,  // Pass navController down
-                    userId = userId,  // Pass userId down
-                    modifier = Modifier.fillMaxSize()
+                    navController = navController,
+                    userId = userId,
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
         }
     }
 }
 
-// --- Screen Body ---
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun RecipeBody(
     uiState: RecipeUiState,
-    onIngredientRemove: (String) -> Unit,
     onFilterClick: (String) -> Unit,
-    navController: NavController,  // Add navController param
-    userId: Int,  // Add userId param
+    navController: NavController,
+    userId: Int,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -122,19 +121,19 @@ fun RecipeBody(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            // 1. Available Ingredients Card
             AvailableIngredientsCard(
                 ingredients = uiState.availableIngredients,
-                onRemove = onIngredientRemove,
                 onCardClick = {
-                    navController.navigate(MyPantryDestination.routeWithArgs.replace("{userId}", userId.toString()))
+                    navController.navigate(
+                        com.example.inventory.ui.navigation.MyPantryDestination.routeWithArgs
+                            .replace("{userId}", userId.toString())
+                    )
                 },
                 modifier = Modifier.padding(bottom = 16.dp)
             )
         }
 
         item {
-            // 2. Filters Row
             FiltersRow(
                 selectedFilters = uiState.selectedFilters,
                 allFilters = uiState.allFilters,
@@ -143,19 +142,17 @@ fun RecipeBody(
             )
         }
 
-        // 3. Recipe Cards
         items(uiState.recipes) { recipe ->
             RecipeCard(recipe = recipe)
         }
     }
 }
 
-// --- Ingredient Card ---
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AvailableIngredientsCard(
     ingredients: List<String>,
-    onRemove: (String) -> Unit,
     onCardClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -175,38 +172,33 @@ fun AvailableIngredientsCard(
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
-            // Ingredient Chips
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 ingredients.forEach { ingredient ->
-                    IngredientChip(
-                        label = ingredient,
-                        onRemove = { onRemove(ingredient) }
-                    )
+                    ReadOnlyIngredientChip(label = ingredient)
                 }
             }
 
-            // Add Ingredient Button
             TextButton(
                 onClick = onCardClick,
                 modifier = Modifier.padding(top = 8.dp),
                 contentPadding = PaddingValues(0.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add Ingredient",
-                        tint = PrimaryGreen,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "Add Ingredient",
+                        text = "Go To Pantry",
                         color = PrimaryGreen,
                         fontSize = 14.sp
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        imageVector = Icons.Default.ArrowForward,
+                        contentDescription = "Go To Pantry",
+                        tint = PrimaryGreen,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
@@ -215,7 +207,7 @@ fun AvailableIngredientsCard(
 }
 
 @Composable
-fun IngredientChip(label: String, onRemove: () -> Unit) {
+fun ReadOnlyIngredientChip(label: String) {
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(8.dp))
@@ -223,22 +215,10 @@ fun IngredientChip(label: String, onRemove: () -> Unit) {
             .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = label,
-            fontSize = 14.sp,
-            color = Color.Black
-        )
-        Spacer(modifier = Modifier.width(4.dp))
-        Icon(
-            imageVector = Icons.Default.Close,
-            contentDescription = "Remove $label",
-            tint = Color.Gray,
-            modifier = Modifier
-                .size(16.dp)
-                .clickable(onClick = onRemove)
-        )
+        Text(text = label, fontSize = 14.sp, color = Color.Black)
     }
 }
+
 
 // --- Filters Row ---
 @Composable
