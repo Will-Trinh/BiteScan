@@ -21,15 +21,15 @@ class MyPantryViewModel(
     private val _uiState = MutableStateFlow(PantryUiState())
     val uiState: StateFlow<PantryUiState> = _uiState
 
-    val PANTRY_CATEGORIES = listOf("Grocery", "Fruit", "Veggies", "Meat", "Fish", "Dairy")
+    val PANTRY_CATEGORIES = listOf("Grocery", "Fruit", "Veggies", "Meat", "Fish", "Dairy", "Other")
     private fun expiryDaysForCategory(category: String): Int = when (category.lowercase(Locale.US)) {
+        "grocery" -> 180
         "fruit"   -> 7
         "veggies" -> 10
-        "meat"    -> 4
+        "meat"    -> 5
         "fish"    -> 4
-        "dairy"   -> 10
-        "grocery" -> 180
-        else      -> 21
+        "dairy"   -> 14
+        else   -> 21
     }
 
     val categoryExpiryInfo = mapOf(
