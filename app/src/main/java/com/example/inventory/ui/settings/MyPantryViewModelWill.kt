@@ -21,40 +21,78 @@ class MyPantryViewModel(
     private val _uiState = MutableStateFlow(PantryUiState())
     val uiState: StateFlow<PantryUiState> = _uiState
 
+    val PANTRY_CATEGORIES = listOf("Grocery", "Fruit", "Veggies", "Meat", "Fish", "Dairy")
+    private fun expiryDaysForCategory(category: String): Int = when (category.lowercase(Locale.US)) {
+        "fruit"   -> 7
+        "veggies" -> 10
+        "meat"    -> 4
+        "fish"    -> 4
+        "dairy"   -> 10
+        "grocery" -> 180
+        else      -> 21
+    }
+
+    val categoryExpiryInfo = mapOf(
+        "Grocery" to "≈180 days",
+        "Fruit" to "< 7 days",
+        "Veggies" to "< 10 days",
+        "Meat" to "< 5 days",
+        "Fish" to "< 4 days",
+        "Dairy" to "< 14 days",
+        "Other" to "≈21 days"
+    )
+
     fun loadPantryItems(userId: Int) {
         viewModelScope.launch {
+            // 1) get all receipts for this user, newest first
             val receipts = receiptsRepository.getReceiptsForUser(userId).first()
-            val receiptItems = mutableListOf<Item>()
-            receipts.forEach { receipt ->
-                val items = itemsRepository.getItemsForReceipt(receipt.receiptId).first()
-                receiptItems.addAll(items)
+                .sortedByDescending { it.date.time }
+
+            // 2) flatten items across all receipts (HISTORY)
+            val receiptItems: List<Item> = receipts.flatMap { receipt ->
+                val itemsForThisReceipt = itemsRepository
+                    .getItemsForReceipt(receipt.receiptId)
+                    .first()
+
+                // Prefer the receipt’s metadata (date/store) when mapping for the UI
+                itemsForThisReceipt.map { it.copy(
+                    // keep the DB record as-is, but we’ll prefer receipt info in the UI mapping below
+                    receiptId = receipt.receiptId
+                ) }
             }
-            val allItems = itemsRepository.getAllItemsStream().first()
-            val standalonePantryItems = allItems.filter { it.receiptId == null }
-            val allPantryItems = (receiptItems + standalonePantryItems).distinctBy { it.id }
-            println("Loaded ${allPantryItems.size} pantry items")
+
+            // 3) Map to UI
+            val pantryItemsForUi = receiptItems.map { dbItem ->
+                // Prefer the receipt’s date/store if present on the item, fall back to item fields
+                val receiptForItem = receipts.firstOrNull { it.receiptId == dbItem.receiptId }
+                val purchaseDateSql = (receiptForItem?.date ?: dbItem.date) // java.sql.Date
+                val storeName = receiptForItem?.source ?: dbItem.store
+
+                val expiration = getExpirationDate(purchaseDateSql, dbItem.category)
+                val daysLeft = calculateDaysLeft(expiration)
+                val unit = determineUnit(dbItem.name)
+                val quantity = "${dbItem.quantity} $unit"
+
+                PantryItem(
+                    id = dbItem.id,
+                    name = dbItem.name,
+                    quantity = quantity,
+                    unitPrice = dbItem.price.toString(),
+                    purchaseDate = SimpleDateFormat("MM/dd/yyyy", Locale.US).format(purchaseDateSql),
+                    expiration = expiration,
+                    unit = unit,
+                    store = storeName,
+                    category = dbItem.category,
+                    daysLeft = daysLeft
+                )
+            }
+
             _uiState.value = _uiState.value.copy(
-                pantryItems = allPantryItems.map { item ->
-                    val expiration = getExpirationDate(item.date)
-                    val daysLeft = calculateDaysLeft(expiration)
-                    val unit = determineUnit(item.name)
-                    val quantity = "${item.quantity} $unit"
-                    PantryItem(
-                        id = item.id,
-                        name = item.name,
-                        quantity = quantity,
-                        unitPrice = item.price.toString(),
-                        purchaseDate = SimpleDateFormat("MM/dd/yyyy", Locale.US).format(item.date),
-                        expiration = expiration,
-                        unit = unit,
-                        store = item.store,
-                        category = item.category,
-                        daysLeft = daysLeft
-                    )
-                }
+                pantryItems = pantryItemsForUi.distinctBy { it.id }
             )
         }
     }
+
 
     private fun determineUnit(name: String): String {
         val lowerName = name.lowercase()
@@ -81,36 +119,54 @@ class MyPantryViewModel(
         }
     }
 
-    private fun getExpirationDate(purchaseDate: Date): String {
+    private fun getExpirationDate(purchaseDate: Date, category: String): String {
         val calendar = Calendar.getInstance().apply { time = purchaseDate }
-        calendar.add(Calendar.DAY_OF_YEAR, 30) // Fixed for simplicity
+        calendar.add(Calendar.DAY_OF_YEAR, expiryDaysForCategory(category))
         return SimpleDateFormat("MM/dd/yyyy", Locale.US).format(calendar.time)
     }
 
     fun addOrUpdatePantryItem(pantryItem: PantryItem) {
         viewModelScope.launch {
+            val userId = _uiState.value.userId ?: 0
+
+            // Keep existing row (to preserve receiptId on update)
+            val existing: Item? = if (pantryItem.id != 0) {
+                itemsRepository.getItemStream(pantryItem.id).first()
+            } else null
+
+            // Latest receipt id, but cast to Int? to match Item.receiptId
+            val latestReceiptId: Int? = if (pantryItem.id == 0) {
+                receiptsRepository.getReceiptsForUser(userId).first()
+                    .maxByOrNull { it.date.time }
+                    ?.receiptId
+                    ?.toInt() // <-- convert Long? -> Int?
+            } else null
+
             val quantityStr = pantryItem.quantity.replace(Regex("[^0-9.]"), "")
+            val parsedDateMillis = SimpleDateFormat("MM/dd/yyyy", Locale.US)
+                .parse(pantryItem.purchaseDate)?.time ?: System.currentTimeMillis()
+
+            val resolvedReceiptId: Int? = existing?.receiptId ?: latestReceiptId
+
             val item = Item(
                 id = pantryItem.id,
                 name = pantryItem.name,
                 price = pantryItem.unitPrice.toDoubleOrNull() ?: 0.0,
                 quantity = quantityStr.toFloatOrNull() ?: 0f,
-                date = Date(
-                    SimpleDateFormat("MM/dd/yyyy", Locale.US).parse(pantryItem.purchaseDate)
-                        ?.time ?: System.currentTimeMillis()
-                ),
+                date = java.sql.Date(parsedDateMillis),
                 store = pantryItem.store,
                 category = pantryItem.category,
-                receiptId = null
+                receiptId = resolvedReceiptId
             )
-            if (pantryItem.id == 0) {
-                itemsRepository.insertItem(item)
-            } else {
-                itemsRepository.updateItem(item)
-            }
-            loadPantryItems(_uiState.value.userId ?: 0)
+
+            if (pantryItem.id == 0) itemsRepository.insertItem(item)
+            else itemsRepository.updateItem(item)
+
+            loadPantryItems(userId)
         }
     }
+
+
 
     fun deletePantryItem(itemId: Int) {
         viewModelScope.launch {
