@@ -42,7 +42,7 @@ class ReceiptViewModel(
         viewModelScope.launch {
             // Syncs with online Receipt data
             try {
-                val syncedReceipts = (receiptsRepository as? ReceiptsRepositoryImpl)?.fetchAndSyncReceipts(userId.toString())
+                val syncedReceipts = (receiptsRepository as? ReceiptsRepositoryImpl)?.fetchAndSyncReceipts(userId)
                     ?: receiptsRepository.getReceiptsForUser(userId).first()
                 _receiptUiState.value = _receiptUiState.value.copy(receiptList = syncedReceipts)
                 updateDayAndPrice(syncedReceipts)

@@ -28,18 +28,20 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 import kotlin.collections.forEach
+import com.example.inventory.data.OnlineReceiptsRepository
 
-data class NutritionData(
-    val name: String? = null,
-    val protein: Double? = null,
-    val carbs: Double? = null,
-    val fats: Double? = null,
-    val calories: Double? = null,
-)
+//data class NutritionData(
+//    val name: String? = null,
+//    val protein: Double? = null,
+//    val carbs: Double? = null,
+//    val fats: Double? = null,
+//    val calories: Double? = null,
+//)
 
 class EditReceiptViewModel(
     private val itemsRepository: ItemsRepository,
     private val receiptsRepository: ReceiptsRepository,
+    private val onlineReceiptsRepository: OnlineReceiptsRepository?= null
 ) : ViewModel() {
 
     private val _editUiState = MutableStateFlow(EditUiState())
@@ -47,71 +49,6 @@ class EditReceiptViewModel(
     val editUiState: StateFlow<EditUiState> = _editUiState.asStateFlow()
     var deleteItems: List<Item> = emptyList()
 
-
-    /**
-     * Load draft receipt from API.
-     * Run network call in IO dispatcher to avoid blocking UI.
-     */
-
-    // New: Load from OCR ReceiptData (called after OCR success in UploadScreen)
-    // Add this function to your EditReceiptViewModel class (after loadDraftFromApi)
-    fun loadFromOcrData(receiptData: ReceiptData, receiptId: Int) {
-        viewModelScope.launch {
-            try {
-                // Parse transaction_date to java.sql.Date (assume "YYYY-MM-DD" format)
-                val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-                val parsedDate = if (receiptData.transaction_date != null) {
-                    Date(
-                        sdf.parse(receiptData.transaction_date)?.time ?: System.currentTimeMillis()
-                    )
-                } else Date(System.currentTimeMillis())
-
-                // Convert to Receipt (match your data class)
-                val receipt = Receipt(
-                    receiptId = receiptId,
-                    userId = 0,  // From nav/auth param
-                    date = parsedDate,
-                    source = receiptData.merchant_name ?: "Unknown Merchant",  // Merchant as source
-                    status = "Pending"  // Ready for edit
-                )
-
-                // Convert line_items to Items (match your Item data class)
-                val items = receiptData.line_items.map { lineItem ->
-                    Item(
-                        id = 0,  // Auto-generate or sequential
-                        name = lineItem.item_name ?: "Unknown Item",
-                        price = lineItem.item_price ?: 0.0,
-                        quantity = (lineItem.item_quantity ?: 1).toFloat(),
-                        date = parsedDate,
-                        store = receiptData.merchant_name ?: "",  // Merchant as store
-                        category = "Unknown",  // Derive from name if needed (e.g., "Banana" -> "Fruit")
-                        receiptId = receiptId
-                    )
-                }
-
-                // Update UI state with OCR data
-                _editUiState.value = _editUiState.value.copy(
-                    receipt = receipt,
-                    itemList = items.sortedBy { it.name },  // Sort by name for better UX
-                    totalItems = calculateTotalItem(items),
-                    totalPrice = calculateTotalPrice(items)
-                )
-
-                Log.d(
-                    "EditReceiptVM",
-                    "Loaded OCR data: ${items.size} items from '${receipt.source}', date ${receipt.date}"
-                )
-            } catch (e: Exception) {
-                Log.e("EditReceiptVM", "OCR data load error: ${e.message}", e)
-                _editUiState.value = _editUiState.value.copy(
-                    receipt = null,
-                    itemList = emptyList(),
-                    totalItems = 0,
-                    totalPrice = 0.0
-                )
-            }
-        }
-    }
 //deleteItem and update listItem in EditReceiptScreen
     fun deleteItem(selectedItemIndex: Int) {
         try{
@@ -245,6 +182,9 @@ class EditReceiptViewModel(
                         itemsRepository.updateItem(item.copy(receiptId = receipt.receiptId))
                     }
                 }
+                val receiptID = receipt.receiptId
+                //syns client receipt to server
+                onlineReceiptsRepository?.uploadReceiptToServer(receiptID)
                 _editUiState.value = _editUiState.value.copy(
                     receipt = receipt,
                     itemList = updatedItems
@@ -370,24 +310,6 @@ class EditReceiptViewModel(
         }
     }
 }
-
-// Data classes to parse JSON
-data class DraftResponse(
-    val draftCode: String,
-    val source: String? = null,
-    val date: Long,
-    val status: String,
-    val items: List<DraftItem>
-)
-
-data class DraftItem(
-    val id: Int,
-    val name: String,
-    val price: Double,
-    val quantity: Float,
-    val store: String? = null,
-    val category: String? = null
-)
 
 data class EditUiState(
     val itemList: List<Item> = emptyList(),

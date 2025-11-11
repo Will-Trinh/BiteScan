@@ -62,7 +62,8 @@ fun EditReceiptScreen(
             val appContainer = (context.applicationContext as InventoryApplication).container
             EditReceiptViewModel(
                 itemsRepository = appContainer.itemsRepository,
-                receiptsRepository = appContainer.receiptsRepository
+                receiptsRepository = appContainer.receiptsRepository,
+                onlineReceiptsRepository= appContainer.onlineReceiptsRepository
             )
         } else {
             // Fallback for preview environment
