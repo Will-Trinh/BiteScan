@@ -15,7 +15,7 @@
  */
 
 package com.example.inventory.data
-
+import com.example.inventory.ui.AppViewModel
 import android.content.Context
 
 /**
@@ -26,28 +26,50 @@ interface AppContainer {
     val receiptsRepository: ReceiptsRepository
     val recipesRepository: RecipesRepository
     val usersRepository: UsersRepository
+    val onlineReceiptsRepository: OnlineReceiptsRepository
 }
 
 /**
  * [AppContainer] implementation that provides instances of offline repositories
  */
+
 class AppDataContainer(private val context: Context) : AppContainer {
+
     private val database: InventoryDatabase by lazy {
         InventoryDatabase.getDatabase(context)
     }
+
+    // 1. Items Repository
     override val itemsRepository: ItemsRepository by lazy {
-        OfflineItemsRepository(InventoryDatabase.getDatabase(context).itemDao())
+        OfflineItemsRepository(database.itemDao())
     }
 
-    override val receiptsRepository: ReceiptsRepository by lazy {
-        ReceiptsRepositoryImpl(
-            OfflineReceiptsRepository(InventoryDatabase.getDatabase(context).receiptDao()),
-            OnlineReceiptsRepository.create()
+    // 2.AppViewModel instance
+    private val appViewModel: AppViewModel by lazy {
+        AppViewModel()
+    }
+
+    // 3. OnlineReceiptsRepository
+    override val onlineReceiptsRepository: OnlineReceiptsRepository by lazy {
+        OnlineReceiptsRepository.create(
+            receiptsRepository = OfflineReceiptsRepository(database.receiptDao()),
+            itemsRepository = itemsRepository,
+            appViewModel = appViewModel
         )
     }
 
+    // 4. ReceiptsRepository (sync + check internet)
+    override val receiptsRepository: ReceiptsRepository by lazy {
+        ReceiptsRepositoryImpl(
+            offlineRepo = OfflineReceiptsRepository(database.receiptDao()),
+            onlineRepo = onlineReceiptsRepository,
+            context = context
+        )
+    }
+
+    // 5. RecipesRepository
     override val recipesRepository: RecipesRepository by lazy {
-        OfflineRecipesRepository(InventoryDatabase.getDatabase(context).recipeDao())
+        OfflineRecipesRepository(database.recipeDao())
     }
 
     override val usersRepository: UsersRepository by lazy {

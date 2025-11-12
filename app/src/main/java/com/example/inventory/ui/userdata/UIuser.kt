@@ -6,6 +6,7 @@ import com.example.inventory.data.Receipt
 import com.example.inventory.data.ReceiptsRepository
 import com.example.inventory.data.User
 import com.example.inventory.data.UsersRepository
+import com.example.inventory.data.OnlineReceiptsRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import java.sql.Date
@@ -124,7 +125,7 @@ class FakeUsersRepository : UsersRepository {
     override suspend fun deleteUser(user: User) {  }
     // 6. updateUser
     override suspend fun updateUser(user: User) {  }
-    // 7. getReceiptsForUser – QUAN TRỌNG NHẤT!
+
     override fun getReceiptsForUser(userId: Int): Flow<List<Receipt>> {
         return FakeReceiptsRepository().getReceiptsForUser(userId)
     }
@@ -133,6 +134,8 @@ class FakeUsersRepository : UsersRepository {
         fakeItemsRepo.clear()
     }
 }
+
+
 
 // Fake UI user (updated to userId = 1 for consistency)
 val fakeUIuser = User(userId = 1, username = "previewUser", email = "TranXinhDep@gmail.com", phone = "1234567890")

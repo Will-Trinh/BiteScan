@@ -62,7 +62,8 @@ fun EditReceiptScreen(
             val appContainer = (context.applicationContext as InventoryApplication).container
             EditReceiptViewModel(
                 itemsRepository = appContainer.itemsRepository,
-                receiptsRepository = appContainer.receiptsRepository
+                receiptsRepository = appContainer.receiptsRepository,
+                onlineReceiptsRepository= appContainer.onlineReceiptsRepository
             )
         } else {
             // Fallback for preview environment
@@ -268,11 +269,11 @@ fun EditReceiptScreen(
                         onClick = {
                             val receipt = editUiState.receipt
                             if (receipt != null) {
-                                actualViewModel.processItems()
                                 actualViewModel.viewModelScope.launch {
                                     actualViewModel.saveUpdatedItems(
                                         receipt.copy(status = "Completed")
                                     )
+                                    actualViewModel.processItems()
                                 }
                                 navController.navigate("history/$userId") {
                                     popUpTo(navController.graph.startDestinationId) {
@@ -302,7 +303,7 @@ fun EditReceiptScreen(
                     onDismiss = { showAddDialog = false },
                     onConfirm = { newName, newPrice, newQuantity ->
                         val newItem = Item(
-                            id = 1000,
+                            id = 0,
                             name = newName,
                             price = newPrice,
                             quantity = newQuantity,
