@@ -50,7 +50,6 @@ import com.example.inventory.ui.theme.LightGreen
 @Composable
 fun HistoryScreen(
     navigateToReceiptEntry: () -> Unit,
-    userId: Int,
     navigateToReceiptUpdate: (Int) -> Unit,
     canNavigateBack: Boolean = false,
     navController: NavController,
@@ -58,6 +57,7 @@ fun HistoryScreen(
     viewModel: ReceiptViewModel? = null,
     appViewModel: AppViewModel
 ) {
+    val userId = appViewModel.userId.value
     val context = LocalContext.current
     val actualViewModel = viewModel ?: remember {
         if (context.applicationContext is InventoryApplication) {
@@ -65,19 +65,17 @@ fun HistoryScreen(
             ReceiptViewModel(
                 receiptsRepository = appContainer.receiptsRepository,
                 itemsRepository = appContainer.itemsRepository,
-                userId = userId
             )
         } else {
             ReceiptViewModel(
                 receiptsRepository = FakeReceiptsRepository(),
                 itemsRepository = FakeItemsRepository(),
-                userId = fakeUIuser.userId
             )
         }
     }
 
     LaunchedEffect(Unit) {
-        actualViewModel.loadReceiptsUser()
+        actualViewModel.loadReceiptsUser(userId ?: 0)
     }
 
     CookingAssistantTheme {
@@ -480,12 +478,11 @@ fun HistoryScreenPreview() {
     val fakeViewModel = ReceiptViewModel(
         receiptsRepository = FakeReceiptsRepository(),
         itemsRepository = FakeItemsRepository(),
-        userId = fakeUIuser.userId
     )
 
     // Initialize data loading for the preview
     LaunchedEffect(Unit) {
-        fakeViewModel.loadReceiptsUser()
+        fakeViewModel.loadReceiptsUser(0)
         fakeViewModel.loadItems(1) // Load items for a sample receipt
     }
 
@@ -497,7 +494,6 @@ fun HistoryScreenPreview() {
                 navigateToReceiptUpdate = {},
                 navController = navController,
                 viewModel = fakeViewModel,
-                userId = fakeUIuser.userId,
                 canNavigateBack = true,
                 appViewModel = AppViewModel()
             )
@@ -589,7 +585,6 @@ fun ReceiptCardPreview() {
     val fakeViewModel = ReceiptViewModel(
         receiptsRepository = FakeReceiptsRepository(),
         itemsRepository = FakeItemsRepository(),
-        userId = 0
     )
     val fakeReceipt = Receipt(
         receiptId = 1,
@@ -600,7 +595,7 @@ fun ReceiptCardPreview() {
     )
     LaunchedEffect(Unit) {
         fakeViewModel.loadItems(1)
-        fakeViewModel.loadReceiptsUser()
+        fakeViewModel.loadReceiptsUser(0)
     }
     CookingAssistantTheme {
         ReceiptCard(

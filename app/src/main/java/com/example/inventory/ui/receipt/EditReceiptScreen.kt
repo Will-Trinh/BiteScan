@@ -38,12 +38,12 @@ import com.example.inventory.ui.theme.PrimaryGreen
 @Composable
 fun EditReceiptScreen(
     receiptId: Int,
-    userId: Int,
     navigateUp: () -> Unit,
     navController: NavController,
     appViewModel: AppViewModel,
     viewModel: EditReceiptViewModel? = null
 ) {
+    val userId = appViewModel.userId.value
     var deleteItemList by remember { mutableStateOf<List<Item>?>(null) }
     var showEditDialog by remember { mutableStateOf(false) }
     var selectedItemIndex by remember { mutableStateOf(-1) }
@@ -478,7 +478,6 @@ fun EditReceiptScreenPreview() {
     CookingAssistantTheme {
         EditReceiptScreen(
             receiptId = 1,
-            userId = fakeUIuser.userId,
             navigateUp = {},
             navController = navController,
             viewModel = fakeViewModel,
