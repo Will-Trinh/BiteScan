@@ -156,7 +156,7 @@ class MyPantryViewModel(
                 date = java.sql.Date(parsedDateMillis),
                 store = pantryItem.store,
                 category = pantryItem.category,
-                receiptId = resolvedReceiptId
+                receiptId = resolvedReceiptId?:0
             )
 
             if (pantryItem.id == 0) itemsRepository.insertItem(item)

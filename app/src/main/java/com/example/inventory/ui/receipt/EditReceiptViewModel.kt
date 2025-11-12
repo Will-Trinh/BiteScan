@@ -145,8 +145,8 @@ class EditReceiptViewModel(
 
     /** Add new item */
     fun addItem(item: Item, receiptId: Int) {
-        val newItem = Item(
-            id = item.id  + 1,
+        val newItem = item.copy(
+            id = 0,
             name = item.name,
             price = item.price,
             quantity = item.quantity,
@@ -176,15 +176,19 @@ class EditReceiptViewModel(
                 //check if item is in receipt, update item in receipt, if item is new add, insert it in to the receipt.
                 val updatedItems = _editUiState.value.itemList.map { it.copy(receiptId = receipt.receiptId) }
                 updatedItems.forEach { item ->
-                    if (item.id >= 999) {
+                    if (item.id == 0) {
                         itemsRepository.insertItem(item.copy(receiptId = receipt.receiptId))
+                        Log.d("EditReceiptVM", "Item ID ${item.id} saved successfully")
                     } else {
                         itemsRepository.updateItem(item.copy(receiptId = receipt.receiptId))
+                        Log.d("EditReceiptVM", "Item ID ${item.id} updated successfully")
                     }
                 }
                 val receiptID = receipt.receiptId
                 //syns client receipt to server
-                onlineReceiptsRepository?.uploadReceiptToServer(receiptID)
+                Log.d("EditReceiptVM", "Receipt ID $receiptID uploading to server")
+                onlineReceiptsRepository!!.uploadReceiptToServer(receiptID)
+                Log.d("EditReceiptVM", "Receipt ID $receiptID uploaded to server successfully")
                 _editUiState.value = _editUiState.value.copy(
                     receipt = receipt,
                     itemList = updatedItems
@@ -192,7 +196,7 @@ class EditReceiptViewModel(
                 Log.d("EditReceiptVM", "Items saved successfully")
 
             } catch (e: Exception) {
-                android.util.Log.e("EditReceiptVM", " Error saving items: ${e.message}")
+                Log.e("EditReceiptVM", " Error saving items: ${e.message}")
             }
         }
     }
