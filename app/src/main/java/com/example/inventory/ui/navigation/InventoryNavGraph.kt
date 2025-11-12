@@ -107,7 +107,6 @@ fun InventoryNavHost(
                 },
                 canNavigateBack = navController.previousBackStackEntry != null,
                 navController = navController,
-                userId = userId,
                 appViewModel = appViewModel
             )
         }
@@ -124,7 +123,6 @@ fun InventoryNavHost(
             val userId = backStackEntry.arguments?.getInt("userId") ?: 0
             EditReceiptScreen(
                 receiptId = receiptId,
-                userId = userId,
                 navigateUp = {
                     navController.navigate("history/$userId") {
                         popUpTo(navController.graph.startDestinationId) { inclusive = false }

@@ -20,12 +20,11 @@ import android.util.Log
 class ReceiptViewModel(
     private val receiptsRepository: ReceiptsRepository,
     private val itemsRepository: ItemsRepository,
-    private val userId: Int
 ) : ViewModel() {
     private val _receiptUiState = MutableStateFlow(ReceiptUiState())
     val receiptUiState: StateFlow<ReceiptUiState> = _receiptUiState.asStateFlow()
 
-    fun loadReceiptsUser() {
+    fun loadReceiptsUser(userId : Int) {
         viewModelScope.launch {
             Log.d("ReceiptViewModel", "Loading receipts for user $userId")
             receiptsRepository.getReceiptsForUser(userId)
