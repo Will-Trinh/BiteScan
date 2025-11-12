@@ -31,7 +31,7 @@ class LoginScreenViewModel(
         _isLoading.value = true
         _loginResult.value = null
         //for testing purpose
-        _loginResult.value = LoginResult(success = true, uid = 1)
+        _loginResult.value = LoginResult(success = true, uid = 1, phone = "123456789", email = "Tran@gmail.com", username = "Tran")
         val user = User(userId = 1, username = "Tran", email = "Tran@gmail.com", phone = "123456789")
         viewModelScope.launch { usersRepository.insertUser(user)}
         //end testing
@@ -72,17 +72,17 @@ class LoginScreenViewModel(
                             val user = User(userId = uid, username = username, email = email, phone = phone)
                             usersRepository.insertUser(user)
 
-                            LoginResult(success = true, uid = uid)
+                            LoginResult(success = true, uid = uid, phone = phone, email = email, username = username)
                         } else {
                             val msg = jsonResponse.optString("message", "login failed")
-                            LoginResult(success = false, errorMessage = msg)
+                            LoginResult(success = false, errorMessage = msg, uid = 0, phone = null, email = "", username = "")
                         }
                     } else {
-                        LoginResult(success = false, errorMessage = "Connect failed with response code: $responseCode")
+                        LoginResult(success = false, errorMessage = "Connect failed with response code: $responseCode", uid = 0, phone = null, email = "", username = "")
                     }
                 } catch (e: Exception) {
                     Log.e("LoginVM", "Error during login: ${e.message}", e)
-                    LoginResult(success = false, errorMessage = "Connect failed: ${e.message}")
+                    LoginResult(success = false, errorMessage = "Connect failed: ${e.message}", uid = 0, phone = null, email = "", username = "")
                 }
             }
             //change when api available
@@ -95,5 +95,10 @@ class LoginScreenViewModel(
 data class LoginResult(
     val success: Boolean,
     val errorMessage: String? = null,
-    val uid: Int = 0
+    val uid: Int = 0,
+    val phone: String? = null,
+    val email: String,
+    val username: String? = null,
 )
+
+

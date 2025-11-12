@@ -18,7 +18,7 @@ import androidx.compose.material.icons.Icons
 import com.example.inventory.ui.AppViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AboutScreen(navController: NavController, userId: Int,appViewModel: AppViewModel, modifier: Modifier = Modifier) {
+fun AboutScreen(navController: NavController, modifier: Modifier = Modifier) {
     CookingAssistantTheme {
         Scaffold(
             topBar = {
@@ -94,6 +94,6 @@ fun AboutScreen(navController: NavController, userId: Int,appViewModel: AppViewM
 fun AboutScreenPreview() {
     val navController = rememberNavController()
     CookingAssistantTheme {
-        AboutScreen(navController = navController, userId = 1, appViewModel = AppViewModel())
+        AboutScreen(navController = navController)
     }
 }

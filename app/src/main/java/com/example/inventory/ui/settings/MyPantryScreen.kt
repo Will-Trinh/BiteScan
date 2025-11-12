@@ -47,10 +47,10 @@ import androidx.compose.foundation.shape.CircleShape
 @Composable
 fun MyPantryScreen(
     navController: NavController,
-    userId: Int,
     appViewModel: AppViewModel,
     modifier: Modifier = Modifier
 ) {
+    val userId = appViewModel.userId.value
     val context = LocalContext.current
     val appContainer = (context.applicationContext as InventoryApplication).container
 
@@ -69,7 +69,7 @@ fun MyPantryScreen(
         }
     )
 
-    LaunchedEffect(userId) { viewModel.setUserId(userId) }
+    LaunchedEffect(userId) { viewModel.setUserId(userId?:0) }
 
     val uiState by viewModel.uiState.collectAsState()
     val pantryItems = uiState.pantryItems
@@ -352,7 +352,6 @@ fun MyPantryScreenPreview() {
     CookingAssistantTheme {
         MyPantryScreen(
             navController = navController,
-            userId = 1,
             modifier = Modifier.fillMaxSize(),
             appViewModel= AppViewModel(),
         )

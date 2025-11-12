@@ -37,9 +37,9 @@ import com.example.inventory.ui.theme.PrimaryGreen
 fun UpdateInformationScreen(
     navController: NavController,
     appViewModel: AppViewModel,
-    userId: Int,
     modifier: Modifier = Modifier
 ) {
+    val userId = appViewModel.userId.value
     val context = LocalContext.current
     val appContainer = (context.applicationContext as InventoryApplication).container
     val viewModel = remember {
@@ -48,7 +48,7 @@ fun UpdateInformationScreen(
         )
     }
     LaunchedEffect(userId) {
-        viewModel.loadUser(userId)
+        viewModel.loadUser(userId?:0)
     }
     val uiState by viewModel.uiState.collectAsState()
 
@@ -166,6 +166,6 @@ fun UpdateInformationScreen(
 fun UpdateInformationScreenPreview() {
     val navController = rememberNavController()
     CookingAssistantTheme {
-        UpdateInformationScreen(navController = navController, userId = 1, appViewModel = AppViewModel())
+        UpdateInformationScreen(navController = navController, appViewModel = AppViewModel())
     }
 }

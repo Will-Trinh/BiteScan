@@ -76,7 +76,6 @@ fun InventoryNavHost(
             val userId = backStackEntry.arguments?.getInt(DashboardDestination.userIdArg) ?: 0
             DashboardScreen(
                 navController = navController,
-                userId = userId,
                 appViewModel = appViewModel
             )
         }
@@ -88,7 +87,6 @@ fun InventoryNavHost(
             if (userId != 0) {
                 DashboardScreen(
                     navController = navController,
-                    userId = userId,
                     appViewModel = appViewModel
                 )
             } else {
@@ -143,7 +141,6 @@ fun InventoryNavHost(
             val userId = backStackEntry.arguments?.getInt(SettingsDestination.userIdArg) ?: 0
             SettingScreen(
                 navController = navController,
-                userId = userId,
                 appViewModel = appViewModel
             )
         }
@@ -159,7 +156,6 @@ fun InventoryNavHost(
             UpdateInformationScreen(
                 navController = navController,
                 appViewModel = appViewModel,
-                userId = userId
             )
         }
 
@@ -172,8 +168,7 @@ fun InventoryNavHost(
             val userId = backStackEntry.arguments?.getInt(MyPantryDestination.userIdArg) ?: 0
             MyPantryScreen(
                 navController = navController,
-                appViewModel = appViewModel,
-                userId = userId
+                appViewModel = appViewModel
             )
         }
 
@@ -184,9 +179,7 @@ fun InventoryNavHost(
             val userId = backStackEntry.arguments?.getInt(LegalDestination.userIdArg)
             if (userId != null) {
                 LegalScreen(
-                    navController = navController,
-                    appViewModel = appViewModel,
-                    userId = userId
+                    navController = navController
                 )
             } else {
                 // Fallback to NotFoundScreen if userId is null (though this should not happen with proper navigation)
@@ -200,9 +193,7 @@ fun InventoryNavHost(
         ) { backStackEntry ->
             val userId = backStackEntry.arguments?.getInt(AboutDestination.userIdArg) ?: 0
             AboutScreen(
-                navController = navController,
-                appViewModel = appViewModel,
-                userId = userId
+                navController = navController
             )
         }
 
