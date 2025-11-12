@@ -251,13 +251,14 @@ fun LoginScreen(
         loginResult?.let { result ->
             Toast.makeText(
                 context,
-                if (result.success) "Login success: UID=${result.uid}" else "Login failed: ${result.errorMessage}",
+                if (result.success) "Login success: User Name: ${result.username}, User ID=${result.uid}" else "Login failed: ${result.errorMessage}",
                 Toast.LENGTH_LONG
             ).show()
             if (result.success) {
                 //save userId to navController
                 navController.currentBackStackEntry?.savedStateHandle?.set("userId", result.uid)
                 appViewModel.setUserId(result.uid)
+                appViewModel.setNameProfile(result.username?:"")
                 onLoginClick(result.uid)
             }
         }
@@ -274,7 +275,7 @@ fun LoginScreen(
                 } else {
                     Toast.makeText(context, "Please enter your email!", Toast.LENGTH_SHORT).show()
                 }
-                showResetDialog = false  // Đóng dialog
+                showResetDialog = false
             }
         )
     }

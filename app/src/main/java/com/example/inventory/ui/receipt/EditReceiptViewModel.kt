@@ -29,14 +29,6 @@ import java.util.concurrent.TimeUnit
 import kotlin.collections.forEach
 import com.example.inventory.data.OnlineReceiptsRepository
 
-//data class NutritionData(
-//    val name: String? = null,
-//    val protein: Double? = null,
-//    val carbs: Double? = null,
-//    val fats: Double? = null,
-//    val calories: Double? = null,
-//)
-
 class EditReceiptViewModel(
     private val itemsRepository: ItemsRepository,
     private val receiptsRepository: ReceiptsRepository,
@@ -44,7 +36,7 @@ class EditReceiptViewModel(
 ) : ViewModel() {
 
     private val _editUiState = MutableStateFlow(EditUiState())
-    private val nutritionApiUrl = "http://10.0.2.2:8000/nutrition/items"
+    private val nutritionApiUrl = "http://129.146.23.142:8080/nutrition/items"
     val editUiState: StateFlow<EditUiState> = _editUiState.asStateFlow()
     var deleteItems: List<Item> = emptyList()
 

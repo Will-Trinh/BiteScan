@@ -18,7 +18,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import com.example.inventory.ui.AppViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LegalScreen(navController: NavController, appViewModel: AppViewModel, userId: Int, modifier: Modifier = Modifier, ) {
+fun LegalScreen(navController: NavController, modifier: Modifier = Modifier, ) {
     CookingAssistantTheme {
         Scaffold(
             topBar = {
@@ -153,6 +153,6 @@ fun LegalScreen(navController: NavController, appViewModel: AppViewModel, userId
 fun LegalScreenPreview() {
     val navController = rememberNavController()
     CookingAssistantTheme {
-        LegalScreen(navController = navController, userId = 1, appViewModel = AppViewModel())
+        LegalScreen(navController = navController)
     }
 }

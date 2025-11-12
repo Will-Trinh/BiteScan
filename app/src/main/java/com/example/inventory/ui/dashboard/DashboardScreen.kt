@@ -38,10 +38,10 @@ import com.example.inventory.ui.AppViewModel
 @Composable
 fun DashboardScreen(
     navController: NavController,
-    userId: Int,
     modifier: Modifier = Modifier,
     appViewModel: AppViewModel
 ) {
+    val userId = appViewModel.userId.value
     val context = LocalContext.current
     val appContainer = (context.applicationContext as InventoryApplication).container
     val viewModel = remember {
@@ -53,7 +53,7 @@ fun DashboardScreen(
 
 
     LaunchedEffect(userId) {
-        viewModel.setCurrentUserId(userId)
+        viewModel.setCurrentUserId(userId?:0)
     }
 
     val metrics by viewModel.metrics.collectAsState()
@@ -514,6 +514,6 @@ fun RecipeItem(title: String, details: String, iconResId: Int) {
 fun DashboardScreenPreview() {
     val navController = rememberNavController()
     CookingAssistantTheme {
-        DashboardScreen(navController = navController, userId = 1, appViewModel = AppViewModel())
+        DashboardScreen(navController = navController, appViewModel = AppViewModel())
     }
 }

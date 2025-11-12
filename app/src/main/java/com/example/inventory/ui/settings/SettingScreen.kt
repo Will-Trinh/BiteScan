@@ -275,10 +275,10 @@ fun DeleteAccountDialog(
 @Composable
 fun SettingScreen(
     navController: NavController,
-    userId: Int,
     modifier: Modifier = Modifier,
     appViewModel: AppViewModel
 ) {
+    val userId = appViewModel.userId.value
     val context = LocalContext.current
     val appContainer = if (context.applicationContext is InventoryApplication) {
         (context.applicationContext as InventoryApplication).container
@@ -295,7 +295,7 @@ fun SettingScreen(
     }
 
     val isLoggedOut by viewModel.logoutCompleted.collectAsState()
-    LaunchedEffect(userId) { viewModel.setCurrentUserId(userId) }
+    LaunchedEffect(userId) { viewModel.setCurrentUserId(userId?:0) }
     val userIdText = viewModel.userId.collectAsState().value
 
     var showExternalLinkDialog by remember { mutableStateOf(false) }
@@ -484,7 +484,6 @@ fun SettingScreenPreview() {
     CookingAssistantTheme {
         SettingScreen(
             navController = navController,
-            userId = 1,
             appViewModel = AppViewModel()
         )
     }
