@@ -36,7 +36,6 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.inventory.ui.AppViewModel
 
-// --- Login Screen Composable ---
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(

@@ -117,7 +117,7 @@ fun MyPantryScreen(
                     .padding(paddingValues)
                     .padding(16.dp)
             ) {
-                Text("$activeCount active items", fontSize = 16.sp, color = Color(0xFF4CAF50))
+                Text("$activeCount active items", fontSize = 16.sp, color = PrimaryGreen)
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -126,7 +126,7 @@ fun MyPantryScreen(
                         Button(
                             onClick = { selectedTab = tab },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (selectedTab == tab) Color(0xFF4CAF50) else Color.White,
+                                containerColor = if (selectedTab == tab) PrimaryGreen else Color.White,
                                 contentColor = if (selectedTab == tab) Color.White else Color.Gray
                             ),
                             shape = RoundedCornerShape(20.dp)
@@ -153,9 +153,10 @@ fun MyPantryScreen(
                     }
                 }
             }
-            val categories = viewModel.PANTRY_CATEGORIES
             selectedItem?.let { item ->
                 AlertDialog(
+                    containerColor = Color.White,
+                    textContentColor = PrimaryGreen,
                     onDismissRequest = { selectedItem = null },
                     title = { Text(if (item.id == 0) "Add Item" else "Edit Item") },
                     text = {
@@ -164,7 +165,7 @@ fun MyPantryScreen(
                                 value = item.name,
                                 onValueChange = { selectedItem = item.copy(name = it) },
                                 label = { Text("Name") },
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
                             )
                             OutlinedTextField(
                                 value = item.quantity,
@@ -209,7 +210,8 @@ fun MyPantryScreen(
                                 )
                                 ExposedDropdownMenu(
                                     expanded = expanded,
-                                    onDismissRequest = { expanded = false }
+                                    onDismissRequest = { expanded = false },
+                                    containerColor = Color.White,
                                 ) {
                                     viewModel.PANTRY_CATEGORIES.forEach { option ->
                                         val daysInfo = viewModel.categoryExpiryInfo[option] ?: "Other"
@@ -291,14 +293,14 @@ fun PantryItemCard(item: PantryItem, onEdit: () -> Unit, onDelete: () -> Unit) {
                 DropdownMenu(
                     expanded = showMenu,
                     onDismissRequest = { showMenu = false },
-                    containerColor = PrimaryGreen,
+                    containerColor = Color.White,
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Edit") },
+                        text = { Text("Edit", color = PrimaryGreen) },
                         onClick = { onEdit(); showMenu = false }
                     )
                     DropdownMenuItem(
-                        text = { Text("Delete") },
+                        text = { Text("Delete", color = Color.Red) },
                         onClick = { onDelete(); showMenu = false }
                     )
                 }
@@ -312,7 +314,7 @@ fun PantryItemCard(item: PantryItem, onEdit: () -> Unit, onDelete: () -> Unit) {
             val daysColor = when {
                 item.daysLeft <= 0 -> Color.Red
                 item.daysLeft <= 3 -> Color(0xFFFFA500)
-                else -> Color(0xFF4CAF50)
+                else -> PrimaryGreen
             }
             Text(
                 text = daysText,

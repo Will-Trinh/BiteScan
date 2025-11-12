@@ -21,11 +21,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlin.math.roundToInt
+import com.example.inventory.ui.theme.PrimaryGreen
+import com.example.inventory.ui.theme.LightGrayBackground
 
-
-
-private val PrimaryGreen = Color(0xFF4CAF50)
-private val LightGrayBackground = Color(0xFFF5F5E9)
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable

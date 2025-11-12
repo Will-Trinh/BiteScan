@@ -2,7 +2,6 @@ package com.example.inventory.ui.settings
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -12,7 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,6 +30,8 @@ import androidx.compose.ui.platform.LocalContext
 import com.example.inventory.data.OfflineUsersRepository
 import androidx.compose.runtime.LaunchedEffect
 import com.example.inventory.ui.AppViewModel
+import com.example.inventory.ui.theme.PrimaryGreen
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UpdateInformationScreen(
@@ -88,7 +88,7 @@ fun UpdateInformationScreen(
                     text = "Hi ${uiState.userName.ifEmpty { "user" }}!",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF4CAF50),
+                    color = PrimaryGreen,
                     modifier = Modifier.padding(top = 32.dp)
                 )
 
@@ -152,7 +152,7 @@ fun UpdateInformationScreen(
                         .height(56.dp)
                         .padding(bottom = 16.dp),
                     shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
                 ) {
                     Text("Update", fontSize = 16.sp, color = Color.White)
                 }

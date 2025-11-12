@@ -31,9 +31,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.material.icons.filled.ArrowForward
 import com.example.inventory.ui.theme.CookingAssistantTheme
-
-private val PrimaryGreen = Color(0xFF4CAF50)
-private val LightGreen = Color(0xFFE8F5E9)
+import com.example.inventory.ui.theme.PrimaryGreen
+import com.example.inventory.ui.theme.LightGreen
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable

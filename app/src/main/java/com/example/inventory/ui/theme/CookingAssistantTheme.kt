@@ -7,7 +7,6 @@ import androidx.compose.ui.graphics.Color
 
 // Define your custom colors here (reusable across the app)
 
-private val LightGreen = Color(0xFFE8F5E9) // Used for insight backgrounds
 private val CardBackground = Color.White
 
 private val LightColorScheme = lightColorScheme(

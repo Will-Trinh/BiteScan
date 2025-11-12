@@ -14,7 +14,7 @@
   ~ limitations under the License.
   -->
 <resources>
-    <string name="app_name">Inventory</string>
+    <string name="app_name">BiteScan</string>
     <string name="attention">Attention</string>
     <string name="back_button">Back</string>
     <string name="delete">Delete</string>
@@ -80,9 +80,6 @@
     <string name="dashboard_title">Nutrition Dashboard</string>
     <string name="landing">Landing</string>
     <string name="recipe_recommendations_title">Recipe Recommendations</string>
-
-
-
 
 
 </resources>

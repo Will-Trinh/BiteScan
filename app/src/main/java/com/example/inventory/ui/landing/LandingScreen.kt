@@ -27,7 +27,6 @@ import com.example.inventory.R
 import com.example.inventory.ui.theme.PrimaryGreen
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.example.inventory.ui.navigation.LoginDestination
 
 @Composable
 fun LandingScreen(
