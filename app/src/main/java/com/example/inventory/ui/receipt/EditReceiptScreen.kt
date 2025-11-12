@@ -16,9 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
 import com.example.inventory.ui.theme.CookingAssistantTheme
 import com.example.inventory.ui.navigation.BottomNavigationBar
-import com.example.inventory.R
 import com.example.inventory.data.Item
-import com.example.inventory.ui.navigation.NavigationDestination
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
@@ -31,27 +29,21 @@ import com.example.inventory.ui.userdata.FakeReceiptsRepository
 import com.example.inventory.ui.userdata.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.clickable
 import com.example.inventory.ui.AppViewModel
-object EditReceiptDestination : NavigationDestination {
-    override val route = "edit_receipt"
-    const val receiptIdArg = "receiptId"
-    override val titleRes = R.string.edit_receipt_title
-    val routeWithArgs = "$route/{$receiptIdArg}"
-}
+import com.example.inventory.ui.theme.PrimaryGreen
 
 @SuppressLint("DefaultLocale")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditReceiptScreen(
     receiptId: Int,
-    userId: Int,
     navigateUp: () -> Unit,
     navController: NavController,
     appViewModel: AppViewModel,
     viewModel: EditReceiptViewModel? = null
 ) {
+    val userId = appViewModel.userId.value
     var deleteItemList by remember { mutableStateOf<List<Item>?>(null) }
     var showEditDialog by remember { mutableStateOf(false) }
     var selectedItemIndex by remember { mutableStateOf(-1) }
@@ -62,7 +54,8 @@ fun EditReceiptScreen(
             val appContainer = (context.applicationContext as InventoryApplication).container
             EditReceiptViewModel(
                 itemsRepository = appContainer.itemsRepository,
-                receiptsRepository = appContainer.receiptsRepository
+                receiptsRepository = appContainer.receiptsRepository,
+                onlineReceiptsRepository= appContainer.onlineReceiptsRepository
             )
         } else {
             // Fallback for preview environment
@@ -149,7 +142,7 @@ fun EditReceiptScreen(
                                     )
                                 }",
                                 fontSize = 14.sp,
-                                color = Color(0xFF4CAF50), // Green color similar to the image
+                                color = PrimaryGreen,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -216,7 +209,7 @@ fun EditReceiptScreen(
                             .padding(horizontal = 1.dp)
                             .fillMaxWidth(),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = Color(0xFF4CAF50)
+                            contentColor = PrimaryGreen
                         ),
                         border = ButtonDefaults.outlinedButtonBorder(true)
                     ) {
@@ -255,7 +248,7 @@ fun EditReceiptScreen(
                             .padding(horizontal = 1.dp)
                             .fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF4CAF50), // Green color for the button
+                            containerColor = PrimaryGreen,
                             contentColor = Color.White
                         ),
                         enabled = editUiState.receipt != null
@@ -268,11 +261,11 @@ fun EditReceiptScreen(
                         onClick = {
                             val receipt = editUiState.receipt
                             if (receipt != null) {
-                                actualViewModel.processItems()
                                 actualViewModel.viewModelScope.launch {
                                     actualViewModel.saveUpdatedItems(
                                         receipt.copy(status = "Completed")
                                     )
+                                    actualViewModel.processItems()
                                 }
                                 navController.navigate("history/$userId") {
                                     popUpTo(navController.graph.startDestinationId) {
@@ -286,7 +279,7 @@ fun EditReceiptScreen(
                             .padding(horizontal = 1.dp)
                             .fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF4CAF50), // Green color for the button
+                            containerColor = PrimaryGreen,
                             contentColor = Color.White
                         ),
                         enabled = editUiState.receipt != null
@@ -302,7 +295,7 @@ fun EditReceiptScreen(
                     onDismiss = { showAddDialog = false },
                     onConfirm = { newName, newPrice, newQuantity ->
                         val newItem = Item(
-                            id = 1000,
+                            id = 0,
                             name = newName,
                             price = newPrice,
                             quantity = newQuantity,
@@ -370,7 +363,7 @@ fun EditOrDeleteItemDialog(
                         )
                         onUpdate(updatedItem)
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
                 ) {
                     Text("Update")
                 }
@@ -485,7 +478,6 @@ fun EditReceiptScreenPreview() {
     CookingAssistantTheme {
         EditReceiptScreen(
             receiptId = 1,
-            userId = fakeUIuser.userId,
             navigateUp = {},
             navController = navController,
             viewModel = fakeViewModel,

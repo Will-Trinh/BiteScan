@@ -8,22 +8,21 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.inventory.ui.upload.UploadScreen
-import com.example.inventory.ui.receipt.EditReceiptDestination
 import com.example.inventory.ui.receipt.EditReceiptScreen
-import com.example.inventory.ui.history.HistoryDestination
-import com.example.inventory.ui.history.ReceiptScreen
+import com.example.inventory.ui.history.HistoryScreen
 import com.example.inventory.ui.settings.SettingScreen
 import com.example.inventory.ui.settings.UpdateInformationScreen
 import com.example.inventory.ui.settings.MyPantryScreen
 import com.example.inventory.ui.settings.AboutScreen
-import com.example.inventory.ui.NotFoundScreen
 import com.example.inventory.ui.settings.LegalScreen
+import com.example.inventory.ui.NotFoundScreen
 import com.example.inventory.ui.dashboard.DashboardScreen
+import com.example.inventory.ui.AppViewModel
+import com.example.inventory.ui.recipe.RecipeRecommendationScreen
+import com.example.inventory.ui.landing.LandingScreen
 import com.example.inventory.ui.landing.LoginScreen
 import com.example.inventory.ui.landing.RegistrationScreen
-import com.example.inventory.ui.AppViewModel
-import com.example.inventory.ui.landing.LandingScreen
-import com.example.inventory.ui.recipe.RecipeRecommendationScreen
+
 
 @Composable
 fun InventoryNavHost(
@@ -101,14 +100,13 @@ fun InventoryNavHost(
             arguments = listOf(navArgument(HistoryDestination.userIdArg) { type = NavType.IntType })
         ) { backStackEntry ->
             val userId = backStackEntry.arguments?.getInt(HistoryDestination.userIdArg) ?: 0
-            ReceiptScreen(
+            HistoryScreen(
                 navigateToReceiptEntry = {},
                 navigateToReceiptUpdate = { receiptId ->
                     navController.navigate("edit_receipt/$receiptId/$userId")
                 },
                 canNavigateBack = navController.previousBackStackEntry != null,
                 navController = navController,
-                userId = userId,
                 appViewModel = appViewModel
             )
         }
@@ -125,7 +123,6 @@ fun InventoryNavHost(
             val userId = backStackEntry.arguments?.getInt("userId") ?: 0
             EditReceiptScreen(
                 receiptId = receiptId,
-                userId = userId,
                 navigateUp = {
                     navController.navigate("history/$userId") {
                         popUpTo(navController.graph.startDestinationId) { inclusive = false }
@@ -223,7 +220,7 @@ fun InventoryNavHost(
             RecipeRecommendationScreen(
                 navController = navController,
                 userId = userId,
-                appViewModel = appViewModel  // Pass if needed
+                appViewModel = appViewModel
             )
         }
     }

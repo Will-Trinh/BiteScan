@@ -87,3 +87,16 @@ object RecipeDestination : NavigationDestination {
     val routeWithArgs = "$route/{userId}"
 }
 
+object HistoryDestination : NavigationDestination {
+    override val route = "history"
+    override val titleRes = R.string.history_title
+    const val userIdArg = "userId"
+    val routeWithArgs = "$route/{$userIdArg}"
+}
+
+object EditReceiptDestination : NavigationDestination {
+    override val route = "edit_receipt"
+    const val receiptIdArg = "receiptId"
+    override val titleRes = R.string.edit_receipt_title
+    val routeWithArgs = "$route/{$receiptIdArg}"
+}

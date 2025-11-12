@@ -13,45 +13,45 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import com.example.inventory.data.ReceiptsRepositoryImpl
+import android.util.Log
 
 
 
 class ReceiptViewModel(
     private val receiptsRepository: ReceiptsRepository,
     private val itemsRepository: ItemsRepository,
-    private val userId: Int
 ) : ViewModel() {
     private val _receiptUiState = MutableStateFlow(ReceiptUiState())
     val receiptUiState: StateFlow<ReceiptUiState> = _receiptUiState.asStateFlow()
 
-//    fun loadReceiptsUser() {
-//        viewModelScope.launch {
-//
-//            receiptsRepository.getReceiptsForUser(userId)
-//                .collect { receipts ->
-//                    println("Receipts for user $userId: $receipts")
-//                    _receiptUiState.value = ReceiptUiState(receiptList = receipts)
-//                    updateDayAndPrice(receipts)
-//                }
-//
-//        }
-//    }
-
-    //TODo: when api has done, use the online receipt data to replace the offline receipt data
-    fun loadReceiptsUser() {
+    fun loadReceiptsUser(userId : Int) {
         viewModelScope.launch {
-            // Syncs with online Receipt data
-            try {
-                val syncedReceipts = (receiptsRepository as? ReceiptsRepositoryImpl)?.fetchAndSyncReceipts(userId.toString())
-                    ?: receiptsRepository.getReceiptsForUser(userId).first()
-                _receiptUiState.value = _receiptUiState.value.copy(receiptList = syncedReceipts)
-                updateDayAndPrice(syncedReceipts)
-            } catch (e: Exception) {
-                println("Error loading receipts: $e")
-                _receiptUiState.value = _receiptUiState.value.copy(receiptList = emptyList())
-            }
+            Log.d("ReceiptViewModel", "Loading receipts for user $userId")
+            receiptsRepository.getReceiptsForUser(userId)
+                .collect { receipts ->
+                    println("Receipts for user $userId: $receipts")
+                    _receiptUiState.value = ReceiptUiState(receiptList = receipts)
+                    updateDayAndPrice(receipts)
+                }
+
         }
     }
+
+    //TODo: when api has done, use the online receipt data to replace the offline receipt data
+//    fun loadReceiptsUser() {
+//        viewModelScope.launch {
+//            // Syncs with online Receipt data
+//            try {
+//                val syncedReceipts = (receiptsRepository as? ReceiptsRepositoryImpl)?.fetchAndSyncReceipts(userId)
+//                    ?: receiptsRepository.getReceiptsForUser(userId).first()
+//                _receiptUiState.value = _receiptUiState.value.copy(receiptList = syncedReceipts)
+//                updateDayAndPrice(syncedReceipts)
+//            } catch (e: Exception) {
+//                println("Error loading receipts: $e")
+//                _receiptUiState.value = _receiptUiState.value.copy(receiptList = emptyList())
+//            }
+//        }
+//    }
 
     fun loadItems(receiptId: Int) {
         viewModelScope.launch {

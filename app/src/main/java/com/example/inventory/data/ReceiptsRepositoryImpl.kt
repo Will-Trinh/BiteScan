@@ -1,11 +1,15 @@
 package com.example.inventory.data
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
 class ReceiptsRepositoryImpl(
     private val offlineRepo: OfflineReceiptsRepository,
-    private val onlineRepo: OnlineReceiptsRepository
+    private val onlineRepo: OnlineReceiptsRepository,
+    private val context: Context
 ) : ReceiptsRepository {
     override fun getAllReceiptsStream(): Flow<List<Receipt>> = offlineRepo.getAllReceiptsStream()
     override suspend fun getReceipt(id: Int): Receipt? = offlineRepo.getReceipt(id)
@@ -15,29 +19,20 @@ class ReceiptsRepositoryImpl(
     override suspend fun deleteReceipt(receipt: Receipt) = offlineRepo.deleteReceipt(receipt)
     override suspend fun updateReceipt(receipt: Receipt) = offlineRepo.updateReceipt(receipt)
 
-    suspend fun fetchAndSyncReceipts(userId: String): List<Receipt> {
-        return if (isNetworkAvailable()) {
-            val onlineReceipts = onlineRepo.fetchReceiptsFromApi(userId)
-            // return all the existing Receipt to syncs with the up coming receipt.
-            val existingReceipts = offlineRepo.getAllReceiptsStream().first().associateBy { it.receiptId }
 
-            onlineReceipts.forEach { onlineReceipt ->
-                val existingReceipt = existingReceipts[onlineReceipt.receiptId]
-                if (existingReceipt == null) {
-                    offlineRepo.insertReceipt(onlineReceipt)
-                } else if (onlineReceipt != existingReceipt) {
-                    offlineRepo.updateReceipt(onlineReceipt)
-                }
-            }
-            offlineRepo.getAllReceiptsStream().first()
+    suspend fun fetchAndSyncReceipts(userId: Int): List<Receipt> {
+        return if (isNetworkAvailable()) {
+            onlineRepo.syncReceiptsFromServer()
+            offlineRepo.getReceiptsForUser(userId).first()
         } else {
-            offlineRepo.getAllReceiptsStream().first()
+            offlineRepo.getReceiptsForUser(userId).first()
         }
     }
 
     private fun isNetworkAvailable(): Boolean {
-        //check the connection on device and return true or false
-
-        return false
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = cm.activeNetwork ?: return false
+        val capabilities = cm.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 }

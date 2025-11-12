@@ -31,7 +31,7 @@ data class Item(
     val store: String,
     val category: String,
     @ColumnInfo(name = "receiptId")
-    val receiptId: Int? = null,
+    val receiptId: Int,
     val calories: Double? = null,
     val protein: Double? = null,
     val carbs: Double? = null,

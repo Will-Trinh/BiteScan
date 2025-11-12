@@ -27,10 +27,8 @@ import com.example.inventory.ui.theme.CookingAssistantTheme
 import com.example.inventory.ui.theme.md_theme_light_primary
 import androidx.compose.ui.platform.LocalContext
 import com.example.inventory.InventoryApplication
+import com.example.inventory.ui.theme.OutlineGray
 
-
-// Define secondary colors
-val OutlineGray = Color(0xFFE0E0E0) // Lighter gray for outlines
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,9 +55,6 @@ fun RegistrationScreen(
     }
 
     val signUpResult = actualViewModel.signUpResult.collectAsState().value
-    val isLoading = actualViewModel.isLoading.collectAsState().value
-
-
 
     CookingAssistantTheme {
         Surface(
@@ -89,7 +84,7 @@ fun RegistrationScreen(
                 Spacer(modifier = Modifier.height(32.dp))
 
                 // Logo and Welcome Text
-                Row () {
+                Row {
                     Icon(
                         imageVector = Icons.Default.Eco,
                         contentDescription = "BiteScan Logo",

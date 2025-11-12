@@ -29,7 +29,6 @@ import com.example.inventory.InventoryApplication
 import com.example.inventory.R
 import com.example.inventory.data.Receipt
 import com.example.inventory.ui.navigation.BottomNavigationBar
-import com.example.inventory.ui.navigation.NavigationDestination
 import com.example.inventory.ui.theme.CookingAssistantTheme
 import java.sql.Date
 import androidx.compose.ui.tooling.preview.Preview
@@ -43,21 +42,14 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.nativeCanvas
 import com.example.inventory.ui.AppViewModel
-private val PrimaryGreen = Color(0xFF4CAF50)
-private val LightGreen = Color(0xFFE8F5E9)
+import com.example.inventory.ui.theme.PrimaryGreen
+import com.example.inventory.ui.theme.LightGreen
 
-object HistoryDestination : NavigationDestination {
-    override val route = "history"
-    override val titleRes = R.string.history_title
-    const val userIdArg = "userId"
-    val routeWithArgs = "$route/{$userIdArg}"
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ReceiptScreen(
+fun HistoryScreen(
     navigateToReceiptEntry: () -> Unit,
-    userId: Int,
     navigateToReceiptUpdate: (Int) -> Unit,
     canNavigateBack: Boolean = false,
     navController: NavController,
@@ -65,6 +57,7 @@ fun ReceiptScreen(
     viewModel: ReceiptViewModel? = null,
     appViewModel: AppViewModel
 ) {
+    val userId = appViewModel.userId.value
     val context = LocalContext.current
     val actualViewModel = viewModel ?: remember {
         if (context.applicationContext is InventoryApplication) {
@@ -72,19 +65,17 @@ fun ReceiptScreen(
             ReceiptViewModel(
                 receiptsRepository = appContainer.receiptsRepository,
                 itemsRepository = appContainer.itemsRepository,
-                userId = userId
             )
         } else {
             ReceiptViewModel(
                 receiptsRepository = FakeReceiptsRepository(),
                 itemsRepository = FakeItemsRepository(),
-                userId = fakeUIuser.userId
             )
         }
     }
 
     LaunchedEffect(Unit) {
-        actualViewModel.loadReceiptsUser()
+        actualViewModel.loadReceiptsUser(userId ?: 0)
     }
 
     CookingAssistantTheme {
@@ -132,7 +123,7 @@ fun ReceiptScreen(
                     .then(modifier),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                ReceiptBody(
+                HistoryBody(
                     receiptList = actualViewModel.receiptUiState.collectAsState().value.receiptList,
                     dayAndPrice = actualViewModel.receiptUiState.collectAsState().value.dayAndPrice,
                     onReceiptClick = navigateToReceiptUpdate,
@@ -145,7 +136,7 @@ fun ReceiptScreen(
 }
 
 @Composable
-fun ReceiptBody(
+fun HistoryBody(
     receiptList: List<Receipt>,
     dayAndPrice: List<Pair<String, Double>>,
     onReceiptClick: (Int) -> Unit,
@@ -245,8 +236,6 @@ fun ChartCard(dayAndPrice: List<Pair<String, Double>>, modifier: Modifier = Modi
     }
 }
 
-
-
 @Composable
 fun LineChart(
     dayAndPrice: List<Pair<String, Double>>,
@@ -257,128 +246,130 @@ fun LineChart(
     val prices = days.map { priceMap[it] ?: 0.0 }
     val maxPrice = prices.maxOrNull()?.takeIf { it > 0 } ?: 1.0
     val nonZeroIndices = prices.indices.filter { prices[it] > 0 }
+    CookingAssistantTheme {
+        Canvas(
+            modifier = modifier
+                .padding(horizontal = 8.dp, vertical = 8.dp)
+                .background(Color.White)
+        ) {
+            val chartWidth = size.width
+            val chartHeight = size.height
+            val dayWidth = chartWidth / days.size
+            val baseY = chartHeight - 40.dp.toPx()  // Leave space for labels
+            val maxHeight = baseY - 20.dp.toPx()  // Padding from top
 
-    Canvas(
-        modifier = modifier
-            .padding(horizontal = 8.dp, vertical = 8.dp)
-            .background(Color.White)
-    ) {
-        val chartWidth = size.width
-        val chartHeight = size.height
-        val dayWidth = chartWidth / days.size
-        val baseY = chartHeight - 40.dp.toPx()  // Leave space for labels
-        val maxHeight = baseY - 20.dp.toPx()  // Padding from top
+            // Draw connecting lines between non-zero points
+            if (nonZeroIndices.size > 1) {
+                var previousX = 0f
+                var previousY = 0f
+                nonZeroIndices.forEachIndexed { index, dayIndex ->
+                    val x = dayIndex * dayWidth + dayWidth / 2
+                    val normalizedPrice = (prices[dayIndex] / maxPrice).toFloat()  // Cast to Float
+                    val y = baseY - (normalizedPrice * maxHeight)
+                    if (index > 0) {
+                        drawLine(
+                            color = PrimaryGreen,
+                            start = Offset(previousX, previousY),  // Public constructor with Floats
+                            end = Offset(x, y),  // Public constructor with Floats
+                            strokeWidth = 3f
+                        )
+                    }
+                    previousX = x
+                    previousY = y
+                }
+            }
 
-        // Draw connecting lines between non-zero points
-        if (nonZeroIndices.size > 1) {
-            var previousX = 0f
-            var previousY = 0f
-            nonZeroIndices.forEachIndexed { index, dayIndex ->
+            // Draw dots for each non-zero spending day
+            nonZeroIndices.forEach { dayIndex ->
                 val x = dayIndex * dayWidth + dayWidth / 2
                 val normalizedPrice = (prices[dayIndex] / maxPrice).toFloat()  // Cast to Float
                 val y = baseY - (normalizedPrice * maxHeight)
-                if (index > 0) {
-                    drawLine(
-                        color = PrimaryGreen,
-                        start = Offset(previousX, previousY),  // Public constructor with Floats
-                        end = Offset(x, y),  // Public constructor with Floats
-                        strokeWidth = 3f
-                    )
-                }
-                previousX = x
-                previousY = y
+                drawCircle(
+                    color = PrimaryGreen,
+                    radius = 6.dp.toPx(),
+                    center = Offset(x, y),  // Public constructor with Floats
+                    style = androidx.compose.ui.graphics.drawscope.Fill
+                )
+            }
+
+            // Draw day labels
+            days.forEachIndexed { index, day ->
+                val x = index * dayWidth + dayWidth / 2
+                drawContext.canvas.nativeCanvas.drawText(
+                    day,
+                    x,
+                    baseY + 20.dp.toPx(),
+                    android.graphics.Paint().apply {
+                        textSize = 12.sp.toPx()
+                        textAlign = android.graphics.Paint.Align.CENTER
+                        color = android.graphics.Color.GRAY
+                    }
+                )
             }
         }
-
-        // Draw dots for each non-zero spending day
-        nonZeroIndices.forEach { dayIndex ->
-            val x = dayIndex * dayWidth + dayWidth / 2
-            val normalizedPrice = (prices[dayIndex] / maxPrice).toFloat()  // Cast to Float
-            val y = baseY - (normalizedPrice * maxHeight)
-            drawCircle(
-                color = PrimaryGreen,
-                radius = 6.dp.toPx(),
-                center = Offset(x, y),  // Public constructor with Floats
-                style = androidx.compose.ui.graphics.drawscope.Fill
-            )
-        }
-
-        // Draw day labels
-        days.forEachIndexed { index, day ->
-            val x = index * dayWidth + dayWidth / 2
-            drawContext.canvas.nativeCanvas.drawText(
-                day,
-                x,
-                baseY + 20.dp.toPx(),
-                android.graphics.Paint().apply {
-                    textSize = 12.sp.toPx()
-                    textAlign = android.graphics.Paint.Align.CENTER
-                    color = android.graphics.Color.GRAY
-                }
-            )
-        }
     }
+
 }
-
-
-
 
 @Composable
 fun TrackPricesButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(2.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
-    ) {
-        Row(
-            modifier = Modifier
+    CookingAssistantTheme {
+        Card(
+            modifier = modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .clickable(onClick = onClick),
+            shape = RoundedCornerShape(12.dp),
+            elevation = CardDefaults.cardElevation(2.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
-            // Icon and Text
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(LightGreen),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ShoppingBag, // Placeholder for the bag/price icon
-                        contentDescription = "Track Prices",
-                        tint = PrimaryGreen,
-                        modifier = Modifier.size(24.dp)
-                    )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Icon and Text
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(LightGreen),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ShoppingBag, // Placeholder for the bag/price icon
+                            contentDescription = "Track Prices",
+                            tint = PrimaryGreen,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text(
+                            text = "Track Prices",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.Black
+                        )
+                        Text(
+                            text = "Monitor grocery price trends",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.width(16.dp))
-                Column {
-                    Text(
-                        text = "Track Prices",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.Black
-                    )
-                    Text(
-                        text = "Monitor grocery price trends",
-                        fontSize = 12.sp,
-                        color = Color.Gray
-                    )
-                }
+                // Arrow
+                Icon(
+                    imageVector = Icons.Default.ArrowForward,
+                    contentDescription = "Go",
+                    tint = Color.Gray
+                )
             }
-            // Arrow
-            Icon(
-                imageVector = Icons.Default.ArrowForward,
-                contentDescription = "Go",
-                tint = Color.Gray
-            )
         }
     }
+
 }
 
 // HistoryReceiptCard now relies entirely on the ViewModel for data (except date formatting)
@@ -487,24 +478,22 @@ fun HistoryScreenPreview() {
     val fakeViewModel = ReceiptViewModel(
         receiptsRepository = FakeReceiptsRepository(),
         itemsRepository = FakeItemsRepository(),
-        userId = fakeUIuser.userId
     )
 
     // Initialize data loading for the preview
     LaunchedEffect(Unit) {
-        fakeViewModel.loadReceiptsUser()
+        fakeViewModel.loadReceiptsUser(0)
         fakeViewModel.loadItems(1) // Load items for a sample receipt
     }
 
     CookingAssistantTheme {
         // Set the background color to match the light gray from the overall design
         Surface(color = Color(0xFFF5F5F5)) {
-            ReceiptScreen(
+            HistoryScreen(
                 navigateToReceiptEntry = {},
                 navigateToReceiptUpdate = {},
                 navController = navController,
                 viewModel = fakeViewModel,
-                userId = fakeUIuser.userId,
                 canNavigateBack = true,
                 appViewModel = AppViewModel()
             )
@@ -560,7 +549,7 @@ fun ReceiptCard(
                             )
                         }",
                         fontSize = 14.sp,
-                        color = Color(0xFF4CAF50),
+                        color = PrimaryGreen,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -591,38 +580,11 @@ fun ReceiptCard(
 
 @Preview(showBackground = true)
 @Composable
-fun ReceiptScreenPreview() {
-    val navController = rememberNavController()
-    val fakeViewModel = ReceiptViewModel(
-        receiptsRepository = FakeReceiptsRepository(),
-        itemsRepository = FakeItemsRepository(),
-        userId = 0
-    )
-    LaunchedEffect(Unit) {
-        fakeViewModel.loadReceiptsUser()
-        fakeViewModel.loadItems(1)
-    }
-    CookingAssistantTheme {
-        ReceiptScreen(
-            navigateToReceiptEntry = {},
-            navigateToReceiptUpdate = {},
-            navController = navController,
-            viewModel = fakeViewModel,
-            userId = fakeUIuser.userId,
-            canNavigateBack = true,
-            appViewModel = AppViewModel()
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
 fun ReceiptCardPreview() {
     val navController = rememberNavController()
     val fakeViewModel = ReceiptViewModel(
         receiptsRepository = FakeReceiptsRepository(),
         itemsRepository = FakeItemsRepository(),
-        userId = 0
     )
     val fakeReceipt = Receipt(
         receiptId = 1,
@@ -633,7 +595,7 @@ fun ReceiptCardPreview() {
     )
     LaunchedEffect(Unit) {
         fakeViewModel.loadItems(1)
-        fakeViewModel.loadReceiptsUser()
+        fakeViewModel.loadReceiptsUser(0)
     }
     CookingAssistantTheme {
         ReceiptCard(
