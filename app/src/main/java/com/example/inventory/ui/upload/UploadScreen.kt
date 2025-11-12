@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.sp
 import com.example.inventory.ui.theme.CookingAssistantTheme
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.example.inventory.ui.navigation.BottomNavigationBar
 import android.net.Uri
 import androidx.activity.result.PickVisualMediaRequest
@@ -33,9 +32,10 @@ import androidx.compose.ui.platform.LocalContext
 import com.example.inventory.InventoryApplication
 import com.example.inventory.ui.loading.LoadingScreen
 import android.util.Log
-import com.example.inventory.ui.theme.md_theme_light_primary
 import com.example.inventory.ui.navigation.UploadDestination
 import com.example.inventory.ui.AppViewModel
+import com.example.inventory.ui.theme.PrimaryGreen
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UploadScreen(
@@ -210,7 +210,7 @@ fun UploadArea(
                 imageVector = Icons.Default.PhotoCamera,
                 contentDescription = "Take Photo",
                 modifier = Modifier.size(48.dp),
-                tint = md_theme_light_primary
+                tint = PrimaryGreen
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text("Take Photo", fontSize = 18.sp)
@@ -236,7 +236,7 @@ fun UploadArea(
                 imageVector = Icons.Default.FileUpload,
                 contentDescription = "Choose File",
                 modifier = Modifier.size(48.dp),
-                tint = md_theme_light_primary
+                tint = PrimaryGreen
 
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -249,7 +249,7 @@ fun UploadArea(
             color = Color.Gray
         )
         if (isProcessing) {
-            CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp))
+            LoadingScreen()
         }
     }
 
@@ -264,8 +264,8 @@ fun OcrResultsSection(receiptData: ReceiptData) {
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
+            CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp))
             Text(text = "OCR Results (Saving...)", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-            // ... (keep existing JSON/line items display)
         }
     }
 }

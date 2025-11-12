@@ -171,7 +171,7 @@ class DashboardViewModel(
             lowerName.contains("milk") || lowerName.contains("cheese") || lowerName.contains("egg") || lowerName.contains("yogurt") || lowerName.contains("mozzarella") -> "Dairy"
             lowerName.contains("chicken") || lowerName.contains("breast") || lowerName.contains("meatball") || lowerName.contains("ground beef") || lowerName.contains("beef") || lowerName.contains("tuna") -> "Meat"
             lowerName.contains("granola") || lowerName.contains("bread") || lowerName.contains("rice") -> "Grains"
-            else -> "Unknown"
+            else -> "Grocery"
         }
     }
 
@@ -214,8 +214,8 @@ private fun computeMacroBreakdown(items: List<Item>): MacroBreakdown {
         items.groupBy { it.category }
             .values
             .map { group ->
-                val key = group.firstOrNull()?.category ?: "Unknown"
-                val w = weight[key] ?: MacroTotals(2.0, 8.0, 2.0) // fallback for Unknown
+                val key = group.firstOrNull()?.category ?: "Grocery"
+                val w = weight[key] ?: MacroTotals(2.0, 8.0, 2.0) // fallback for Grocery
                 MacroTotals(
                     protein = w.protein * group.size,
                     carbs   = w.carbs   * group.size,

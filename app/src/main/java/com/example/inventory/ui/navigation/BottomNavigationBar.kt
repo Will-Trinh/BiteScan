@@ -20,7 +20,6 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
-import com.example.inventory.ui.history.HistoryDestination
 import com.example.inventory.ui.AppViewModel
 
 @Composable

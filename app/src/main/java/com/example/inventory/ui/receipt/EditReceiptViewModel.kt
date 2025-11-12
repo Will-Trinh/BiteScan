@@ -14,7 +14,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.sql.Date
 import android.util.Log
-import com.example.inventory.ui.upload.ReceiptData  // Import from upload package
 import org.json.JSONArray
 import kotlinx.coroutines.TimeoutCancellationException
 import java.text.SimpleDateFormat

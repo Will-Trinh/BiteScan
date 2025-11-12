@@ -24,9 +24,7 @@ import com.example.inventory.data.User
 import com.example.inventory.data.OfflineUsersRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import com.example.inventory.BuildConfig
 import com.example.inventory.ui.navigation.*
-import com.example.inventory.ui.history.HistoryDestination
 import com.example.inventory.ui.AppViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 

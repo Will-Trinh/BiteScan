@@ -117,7 +117,7 @@ fun MyPantryScreen(
                     .padding(paddingValues)
                     .padding(16.dp)
             ) {
-                Text("$activeCount active items", fontSize = 16.sp, color = Color(0xFF4CAF50))
+                Text("$activeCount active items", fontSize = 16.sp, color = PrimaryGreen)
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -126,7 +126,7 @@ fun MyPantryScreen(
                         Button(
                             onClick = { selectedTab = tab },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (selectedTab == tab) Color(0xFF4CAF50) else Color.White,
+                                containerColor = if (selectedTab == tab) PrimaryGreen else Color.White,
                                 contentColor = if (selectedTab == tab) Color.White else Color.Gray
                             ),
                             shape = RoundedCornerShape(20.dp)
@@ -314,7 +314,7 @@ fun PantryItemCard(item: PantryItem, onEdit: () -> Unit, onDelete: () -> Unit) {
             val daysColor = when {
                 item.daysLeft <= 0 -> Color.Red
                 item.daysLeft <= 3 -> Color(0xFFFFA500)
-                else -> Color(0xFF4CAF50)
+                else -> PrimaryGreen
             }
             Text(
                 text = daysText,
