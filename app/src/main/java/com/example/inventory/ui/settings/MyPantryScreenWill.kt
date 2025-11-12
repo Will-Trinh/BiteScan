@@ -74,7 +74,7 @@ fun MyPantryScreen(
     val uiState by viewModel.uiState.collectAsState()
     val pantryItems = uiState.pantryItems
 
-    val activeCount = pantryItems.filter { it.daysLeft > 0 }.size
+    val activeCount = pantryItems.count { it.daysLeft > 0 }
 
     val tabs = listOf("All", "Expiring Soon", "Expired")
     var selectedTab by remember { mutableStateOf("All") }
@@ -117,6 +117,21 @@ fun MyPantryScreen(
                     .padding(paddingValues)
                     .padding(16.dp)
             ) {
+                // Show error message if present
+                uiState.errorMessage?.let { error ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE))
+                    ) {
+                        Text(
+                            text = error,
+                            color = Color.Red,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
                 Text("$activeCount active items", fontSize = 16.sp, color = Color(0xFF4CAF50))
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -138,18 +153,61 @@ fun MyPantryScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth()
-                ) {
-                    items(items = getFilteredItems(selectedTab, pantryItems)) { item ->
-                        PantryItemCard(
-                            item = item,
-                            onEdit = { selectedItem = item },
-                            onDelete = { viewModel.deletePantryItem(item.id) }
-                        )
+                // Show loading indicator
+                if (uiState.isLoading) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = PrimaryGreen)
+                    }
+                } else {
+                    val filteredItems = getFilteredItems(selectedTab, pantryItems)
+
+                    // Show empty state
+                    if (filteredItems.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = when (selectedTab) {
+                                        "All" -> "No items in your pantry"
+                                        "Expiring Soon" -> "No items expiring soon"
+                                        "Expired" -> "No expired items"
+                                        else -> "No items"
+                                    },
+                                    fontSize = 16.sp,
+                                    color = Color.Gray
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Tap + to add items",
+                                    fontSize = 14.sp,
+                                    color = Color.Gray
+                                )
+                            }
+                        }
+                    } else {
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .fillMaxWidth()
+                        ) {
+                            items(items = filteredItems) { item ->
+                                PantryItemCard(
+                                    item = item,
+                                    onEdit = { selectedItem = item },
+                                    onDelete = { viewModel.deletePantryItem(item.id) }
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -328,7 +386,7 @@ private fun getCount(tab: String, items: List<PantryItem>): Int {
 
 private fun getFilteredItems(tab: String, items: List<PantryItem>): List<PantryItem> {
     return when (tab) {
-        "All" -> items.filter { it.daysLeft > 0 }
+        "All" -> items // Show ALL items, including expired
         "Expiring Soon" -> items.filter { it.daysLeft in 1..3 }
         "Expired" -> items.filter { it.daysLeft <= 0 }
         else -> emptyList()
