@@ -65,7 +65,7 @@ class ReceiptViewModel(
 
 
     fun calculateTotalPrice(items: List<Item>): Double {
-        val totalPrice = items.sumOf { it.price }  // Calculate total price
+        val totalPrice = items.sumOf { it.price * it.quantity }  // Calculate total price
         return totalPrice
     }
 

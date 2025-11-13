@@ -134,7 +134,7 @@ fun DashboardScreen(
                     item {
                         RecipesSection(
                             recipes = recipes,
-                            onSeeAllClick = { navController.navigate("recipe_recommendations/$userId") }
+                            onSeeAllClick = { navController.navigate("recipe_recommendations") }
                         )
                     }
 
