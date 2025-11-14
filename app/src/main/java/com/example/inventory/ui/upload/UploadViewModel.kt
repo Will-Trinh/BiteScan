@@ -26,6 +26,9 @@ import java.util.*
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.TimeoutCancellationException
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.delay
+
 
 data class ReceiptData(
     val merchant_name: String? = null,
@@ -55,14 +58,57 @@ class UploadViewModel(
     private val receiptsRepository: ReceiptsRepository,
     private val itemsRepository: ItemsRepository
 ) : ViewModel() {
+    //for loading screen
+    data class LoadingStep(
+        val label: String,
+        val status: StepStatus = StepStatus.PENDING
+    )
+
+    enum class StepStatus { PENDING, IN_PROGRESS, COMPLETED, FAILED }
+
+    data class UploadProgress(
+        val isProcessing: Boolean = false,
+        val progress: Float = 0f,
+        val steps: List<LoadingStep> = listOf(
+            LoadingStep("Checking the Image..."),
+            LoadingStep("Loading the Image..."),
+            LoadingStep("Your receipt is processed..."),
+            LoadingStep("Connecting to Server..."),
+            LoadingStep("Finishing the receipt..."),
+            LoadingStep("Saving the receipt..."),
+            LoadingStep("Completed! Enjoy your receipt!")
+        )
+    )
+    private fun updateStep(index: Int, status: StepStatus, progress: Float? = null) {
+        val newSteps = _uploadProgress.value.steps.toMutableList().apply {
+            this[index] = this[index].copy(status = status)
+        }
+        _uploadProgress.value = _uploadProgress.value.copy(
+            steps = newSteps,
+            progress = progress ?: _uploadProgress.value.progress
+        )
+    }
+
+    private fun setProcessing(processing: Boolean) {
+        _uploadProgress.value = _uploadProgress.value.copy(isProcessing = processing)
+    }
+
+    private fun finishAll() {
+        _uploadProgress.value = _uploadProgress.value.copy(
+            isProcessing = false,
+            progress = 1f
+        )
+    }
+
+    private val _uploadProgress = MutableStateFlow(UploadProgress())
+    val uploadProgress: StateFlow<UploadProgress> = _uploadProgress.asStateFlow()
+
+
     private val _ocrState = MutableStateFlow<OcrState>(OcrState.Idle)
     val ocrState: StateFlow<OcrState> = _ocrState
 
     private val _isProcessing = MutableStateFlow(false)
     val isProcessing: StateFlow<Boolean> = _isProcessing
-
-    // For emulator
-//    private val ocrApiUrl = "http://10.0.2.2:8000/ocr"  // Changed port
 
     private val ocrApiUrl = "http://129.146.23.142:8080/ocr"
 
@@ -71,12 +117,31 @@ class UploadViewModel(
         viewModelScope.launch {
             _isProcessing.value = true
             _ocrState.value = OcrState.Loading
+            _uploadProgress.value = UploadProgress(isProcessing = true)
             try {
+                //Convert bitmap to base64 + Loading step 1 "Checking the Image"
+                updateStep(0, StepStatus.IN_PROGRESS, 0.05f)
                 withTimeout(300000L) {  // 30s timeout to prevent ANR
+                    //Loading step 2: "Loading the Image"
+                    delay(500)
+                    updateStep(0, StepStatus.COMPLETED)
+                    updateStep(1, StepStatus.IN_PROGRESS, 0.15f)
                     val base64Image =
                         withContext(Dispatchers.Default) { convertBitmapToBase64(bitmap) }
+                    //Loading step 3: Your receipt is processed...
+                    updateStep(1, StepStatus.COMPLETED)
+                    delay(600)
+                    updateStep(2, StepStatus.IN_PROGRESS, 0.35f)
+                    updateStep(2, StepStatus.COMPLETED)
+                    //Loading step 4: Connecting to Server...
+                    updateStep(3, StepStatus.IN_PROGRESS, 0.4f)
                     val receiptData = withContext(Dispatchers.IO) { callPythonOcrApi(base64Image) }
+                    updateStep(3, StepStatus.COMPLETED)
+                    //Loading step 5: Finishing the receipt...
+                    delay(600)
+                    updateStep(4, StepStatus.IN_PROGRESS, 0.7f)
                     _ocrState.value = OcrState.Success(receiptData)
+                    updateStep(4, StepStatus.COMPLETED)
                 }
             } catch (e: TimeoutCancellationException) {
                 Log.e("UploadViewModel", "OCR timed out after 30s")
@@ -93,7 +158,11 @@ class UploadViewModel(
     suspend fun saveReceiptAndItems(receiptData: ReceiptData, userId: Int): Int {
         return withContext(Dispatchers.IO) {
             try {
+                ////Loading step 6: Saving the receipt...
+                delay(600)
+                updateStep(5, StepStatus.IN_PROGRESS, 0.75f)
                 Log.d("UploadViewModel", "Saving receipt with userId=$userId")
+
                 val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
                 val parsedDate = Date(
                     sdf.parse(receiptData.transaction_date ?: "")?.time
@@ -124,11 +193,18 @@ class UploadViewModel(
                     val itemID = itemsRepository.insertItem(newItem)
                     Log.d("UploadViewModel", "Inserted item ID: $itemID")
                 }
-
+                updateStep(5, StepStatus.COMPLETED)
+                delay(600)
+                //Loading step 7: Completed! Enjoy your receipt!
+                updateStep(6, StepStatus.IN_PROGRESS, 0.85f)
                 Log.d("UploadViewModel", "Saved receipt ID: $newReceiptId")
+                updateStep(6, StepStatus.COMPLETED)
+                delay(600)
                 newReceiptId
             } catch (e: Exception) {
+                updateStep(5, StepStatus.FAILED)
                 Log.e("UploadViewModel", "Save failed: ${e.message}")
+                finishAll()
                 throw e
             }
             finally {
@@ -201,49 +277,5 @@ class UploadViewModel(
         } finally {
             response.close()
         }
-//    private suspend fun callPythonOcrApi(base64Image: String): ReceiptData {
-//        Log.d("UploadViewModel", "Starting API call to testing only")
-//
-//        // Mẫu JSON testing (String)
-//        val responseBody = """
-//        {
-//            "merchant_name": "Walmart",
-//            "merchant_address": "123 ABC Avenue, Long Beach, CA 92801",
-//            "transaction_date": "2025-10-23",
-//            "transaction_time": "17:58:00",
-//            "total_amount": 49.2,
-//            "line_items": [
-//                { "item_name": "Banana", "item_quantity": 1, "item_price": 1.49, "item_total": 1.49 },
-//                { "item_name": "Potato", "item_quantity": 1, "item_price": 0.99, "item_total": 0.99 },
-//                { "item_name": "Granola & Fruit", "item_quantity": 1, "item_price": 3.99, "item_total": 3.99 },
-//                { "item_name": "Strawberry", "item_quantity": 1, "item_price": 5.99, "item_total": 5.99 },
-//                { "item_name": "Avocado", "item_quantity": 1, "item_price": 3.99, "item_total": 3.99 },
-//                { "item_name": "Chicken breast", "item_quantity": 1, "item_price": 10.98, "item_total": 10.98 },
-//                { "item_name": "Meatball", "item_quantity": 1, "item_price": 8.99, "item_total": 8.99 },
-//                { "item_name": "Ground beef", "item_quantity": 1, "item_price": 12.80, "item_total": 12.80 }
-//            ]
-//        }
-//    """.trimIndent()
-//
-//        Log.d("UploadViewModel", "Full Response Body: $responseBody")
-//
-//        val responseJson = JSONObject(responseBody)
-//        return ReceiptData(
-//            merchant_name = responseJson.optString("merchant_name"),
-//            merchant_address = responseJson.optString("merchant_address"),
-//            transaction_date = responseJson.optString("transaction_date"),
-//            transaction_time = responseJson.optString("transaction_time"),
-//            total_amount = responseJson.optDouble("total_amount"),
-//            line_items = (0 until (responseJson.optJSONArray("line_items")?.length()
-//                ?: 0)).map { i ->
-//                val itemJson = responseJson.optJSONArray("line_items")?.getJSONObject(i)
-//                LineItem(
-//                    item_name = itemJson?.optString("item_name"),
-//                    item_quantity = itemJson?.optInt("item_quantity"),
-//                    item_price = itemJson?.optDouble("item_price"),
-//                    item_total = itemJson?.optDouble("item_total")
-//                )
-//            }
-//        )
     }
 }
