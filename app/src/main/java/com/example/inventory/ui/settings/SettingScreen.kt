@@ -375,22 +375,22 @@ fun SettingScreen(
                 SectionCard(title = "Other Settings") {
                     val items = listOf(
                         SettingNav("Update my information", Icons.Default.Edit) {
-                            navController.navigate("update_information/$userId")
+                            navController.navigate("update_information")
                         },
                         SettingNav("History", Icons.Default.Receipt) {
-                            navController.navigate("history/$userId")
+                            navController.navigate("history")
                         },
                         SettingNav("My Pantry", Icons.Default.Kitchen) {
-                            navController.navigate("my_pantry/$userId")
+                            navController.navigate("my_pantry")
                         },
                         SettingNav("Like us on Facebook", Icons.Default.ThumbUp) {
                             showExternalLinkDialog = true
                         },
                         SettingNav("Legals", Icons.Default.Handshake) {
-                            navController.navigate("legal/$userId")
+                            navController.navigate("legal")
                         },
                         SettingNav("About\n1.0.0", Icons.Default.Info) {
-                            navController.navigate("about/$userId")
+                            navController.navigate("about")
                         }
                     )
                     items.forEach { SettingNavRow(it) }

@@ -82,7 +82,7 @@ class DashboardViewModel(
 
             if (userItems.isEmpty()) {
                 // Fallback placeholders
-                _metrics.value = DashboardMetrics(1847, 142, 19.76, 4)
+                _metrics.value = DashboardMetrics(0, 0, 0.0, 0)
                 _macroBreakdown.value = MacroBreakdown("30%", "45%", "25%")
                 _spendingByCategory.value = SpendingByCategory(
                     listOf("Produce" to 0.8f, "Meat" to 0.4f, "Dairy" to 0.7f, "Grains" to 0.6f)

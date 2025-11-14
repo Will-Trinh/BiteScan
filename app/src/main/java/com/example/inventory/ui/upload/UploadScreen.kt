@@ -107,7 +107,7 @@ fun UploadScreen(
             try {
                 Log.d("UploadScreen", "Saving receipt with userId=$userId")
                 val newReceiptId = viewModel.saveReceiptAndItems(currentState.receiptData, userId!!)
-                navController.navigate("edit_receipt/$newReceiptId/$userId") {
+                navController.navigate("edit_receipt/$newReceiptId") {
                     popUpTo(navController.graph.startDestinationId) { inclusive = false }
                     launchSingleTop = true
                 }

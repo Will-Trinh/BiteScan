@@ -6,7 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import com.example.inventory.ui.theme.InventoryTheme
 import androidx.navigation.compose.rememberNavController
@@ -27,7 +26,6 @@ import kotlinx.coroutines.launch
 import com.example.inventory.ui.navigation.*
 import com.example.inventory.ui.AppViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-
 
 
 class MainActivity : ComponentActivity() {
@@ -54,17 +52,17 @@ class MainActivity : ComponentActivity() {
                     LandingDestination.route,
                     LoginDestination.route,
                     RegisterDestination.route,
-                    DashboardDestination.routeWithArgs,
-                    UploadDestination.routeWithArgs,
-                    HistoryDestination.routeWithArgs,
-                    "edit_receipt/{receiptId}/{userId}",
-                    SettingsDestination.routeWithArgs,
-                    UpdateInformationDestination.routeWithArgs,
-                    MyPantryDestination.routeWithArgs,
-                    LegalDestination.routeWithArgs,
-                    AboutDestination.routeWithArgs,
-                    NotFoundDestination.routeWithArgs,
-                    RecipeDestination.routeWithArgs
+                    DashboardDestination.route,
+                    UploadDestination.route,
+                    HistoryDestination.route,
+                    EditReceiptDestination.route,
+                    SettingsDestination.route,
+                    UpdateInformationDestination.route,
+                    MyPantryDestination.route,
+                    LegalDestination.route,
+                    AboutDestination.route,
+                    NotFoundDestination.route,
+                    RecipeDestination.route
                 )
                 if (!validRoutes.any { it == destination.route }) {
                     navController.navigate(NotFoundDestination.route) {

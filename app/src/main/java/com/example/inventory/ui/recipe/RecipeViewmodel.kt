@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.inventory.data.Item
 import com.example.inventory.data.ItemsRepository
 import com.example.inventory.data.ReceiptsRepository
+import com.example.inventory.ui.AppViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -31,9 +32,9 @@ data class RecipeUiState(
 )
 
 class RecipeViewModel(
-    private val userId: Int,
     private val itemsRepository: ItemsRepository,
-    private val receiptsRepository: ReceiptsRepository
+    private val receiptsRepository: ReceiptsRepository,
+    appViewModel: AppViewModel,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -48,12 +49,13 @@ class RecipeViewModel(
     init {
         refreshTopPantryAndRecipes()
     }
+    val userId = appViewModel.userId.value
 
     /** Loads pantry items from the user's receipt history and takes the Top 5 by total quantity (fallback to count). */
     private fun refreshTopPantryAndRecipes() {
         viewModelScope.launch {
             // 1) Get all receipts for the user, newest first
-            val receipts = receiptsRepository.getReceiptsForUser(userId).first()
+            val receipts = receiptsRepository.getReceiptsForUser(userId?:0).first()
                 .sortedByDescending { it.date.time }
 
             // 2) Flatten items across all receipts (pantry history)
