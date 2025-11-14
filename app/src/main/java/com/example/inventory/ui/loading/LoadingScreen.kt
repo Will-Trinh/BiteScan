@@ -19,7 +19,8 @@ import com.example.inventory.ui.theme.CookingAssistantTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.inventory.ui.upload.UploadViewModel.LoadingStep
+import com.example.inventory.ui.upload.UploadViewModel.StepStatus
 import kotlin.math.roundToInt
 import com.example.inventory.ui.theme.PrimaryGreen
 import com.example.inventory.ui.theme.LightGrayBackground
@@ -28,12 +29,15 @@ import com.example.inventory.ui.theme.LightGrayBackground
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun LoadingScreen(
-    viewModel: LoadingViewModel = viewModel()  // Load from ViewModel (dynamic)
+    progress: Float = 0f,
+    steps: List<LoadingStep> = emptyList(),
+    onFinished: () -> Unit = {}
 ) {
-    val loadingState by viewModel.loadingState.collectAsState()
-
-    // Hide if not loading
-    if (loadingState.progress == 1f) return
+    //hide when finished
+    if (progress >= 1f) {
+        onFinished()
+        return
+    }
 
     CookingAssistantTheme {
         Surface(
@@ -61,7 +65,9 @@ fun LoadingScreen(
                             .padding(24.dp)
                     ) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(64.dp).padding(vertical = 8.dp),
+                            modifier = Modifier
+                                .size(64.dp)
+                                .padding(vertical = 8.dp),
                             color = PrimaryGreen,
                             strokeWidth = 3.dp
                         )
@@ -82,18 +88,9 @@ fun LoadingScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Animated Linear Progress Bar
-                        val infiniteTransition = rememberInfiniteTransition()
-                        val animatedProgress by infiniteTransition.animateFloat(
-                            initialValue = loadingState.progress,
-                            targetValue = loadingState.progress + 0.1f,  // Slight pulse for realism
-                            animationSpec = infiniteRepeatable(
-                                animation = tween(2000),  // 2s loop
-                                repeatMode = RepeatMode.Restart
-                            )
-                        )
+
                         LinearProgressIndicator(
-                            progress = { animatedProgress.coerceIn(loadingState.progress, 1f) },
+                            progress = { progress.coerceIn(0f, 1f) },
                             modifier = Modifier
                                 .fillMaxWidth(0.8f)
                                 .height(6.dp)
@@ -103,7 +100,7 @@ fun LoadingScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "${(loadingState.progress * 100).roundToInt()}% complete",
+                            text = "${(progress * 100).roundToInt()}% complete",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = PrimaryGreen
@@ -111,7 +108,7 @@ fun LoadingScreen(
                         Spacer(modifier = Modifier.height(32.dp))
 
                         // Dynamic Step List
-                        loadingState.steps.forEachIndexed { index, step ->
+                        steps.forEachIndexed { index, step ->
                             AnimatedVisibility(
                                 visible = true,
                                 enter = fadeIn() + slideInVertically(),
@@ -126,6 +123,7 @@ fun LoadingScreen(
         }
     }
 }
+
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -149,6 +147,7 @@ private fun StepStatusItem(label: String, status: StepStatus) {
                     )
                 }
             }
+
             StepStatus.IN_PROGRESS -> {
                 {
                     CircularProgressIndicator(
@@ -158,6 +157,7 @@ private fun StepStatusItem(label: String, status: StepStatus) {
                     )
                 }
             }
+
             else -> {
                 {
                     Box(
