@@ -70,13 +70,13 @@ class UploadViewModel(
         val isProcessing: Boolean = false,
         val progress: Float = 0f,
         val steps: List<LoadingStep> = listOf(
-            LoadingStep("Checking the Image..."),
             LoadingStep("Loading the Image..."),
-            LoadingStep("Your receipt is processed..."),
+            LoadingStep("Checking the Image..."),
             LoadingStep("Connecting to Server..."),
-            LoadingStep("Finishing the receipt..."),
+            LoadingStep("Reading the receipt..."),
+            LoadingStep("Processing the receipt..."),
             LoadingStep("Saving the receipt..."),
-            LoadingStep("Completed! Enjoy your receipt!")
+            LoadingStep("Completed!")
         )
     )
     private fun updateStep(index: Int, status: StepStatus, progress: Float? = null) {
