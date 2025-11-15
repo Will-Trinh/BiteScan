@@ -5,7 +5,10 @@ from sqlalchemy.exc import IntegrityError
 
 from database import get_session
 from dependencies import get_current_user
+
 from models.user import User
+from models.receipt import Receipt
+from models.receipt_item import ReceiptItem
 
 from schemas.signup import Signup as SignupSchema
 from schemas.login import Login as LoginSchema
@@ -54,7 +57,7 @@ async def login(login: LoginSchema, session: Session = Depends(get_session)):
 
 # use same subset of properties from signup to perform update
 @router.patch("{id}", status_code=204)
-def update_password(id: int, user: SignupSchema, session: Session = Depends(get_session)):
+def update_user(id: int, user: SignupSchema, session: Session = Depends(get_session)):
     stmt = (
         update(User)
         .where(User.id == id) 
@@ -97,8 +100,18 @@ def delete_user(id: int, session: Session = Depends(get_session)):
 
 #region receipts
 
-@router.get("receipts/{id}", status_code=200)
-def get_user_receipts(id: int, session: Session = Depends(get_session)):
-    return
+@router.get("/{user_id}/receipts", status_code=200)
+def get_user_receipts(user_id: int, session: Session = Depends(get_session)):
+    stmt = (
+        select(Receipt, ReceiptItem)
+        .join(ReceiptItem, ReceiptItem.receipt_id == Receipt.id)
+        .where(Receipt.user_id == user_id)
+    )
+
+    return session.exec(stmt).fetchall()
+
+@router.post("/{user_id}/receipts", status_code=201)
+def create_receipt(user_id: int, session: Session = Depends(get_session)):
+    pass
 
 #endregion

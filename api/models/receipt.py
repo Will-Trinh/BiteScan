@@ -1,9 +1,9 @@
 from sqlmodel import SQLModel, Field
+from datetime import date
 
-class User(SQLModel, table=True):
-    __tablename__ = "users"
+class Receipt(SQLModel, table=True):
+    __tablename__ = "receipts"
     id: int = Field(default=None, primary_key=True)
-    email: str = Field(unique=True, nullable=False)
-    username: str = Field(nullable=False)
-    password: str = Field(nullable=False)
-    disabled: bool = Field(default=False, nullable=False)
+    user_id: int = Field(foreign_key='users.id', nullable=False)
+    store: str = Field()
+    purchase_date: date = Field()
