@@ -13,6 +13,8 @@ from models.receipt_item import ReceiptItem
 from schemas.signup import Signup as SignupSchema
 from schemas.login import Login as LoginSchema
 from schemas.reset_password import ResetPassowrd as ResetPasswordSchema
+from schemas.receipt import Receipt as ReceiptSchema
+from schemas.receipt_item import ReceiptItem as ReceiptItemSchema
 
 router = APIRouter(
     prefix="/users",
@@ -100,15 +102,43 @@ def delete_user(id: int, session: Session = Depends(get_session)):
 
 #region receipts
 
-@router.get("/{user_id}/receipts", status_code=200)
+@router.get("/{user_id}/receipts", status_code=200, response_model=list[ReceiptSchema])
 def get_user_receipts(user_id: int, session: Session = Depends(get_session)):
     stmt = (
         select(Receipt, ReceiptItem)
-        .join(ReceiptItem, ReceiptItem.receipt_id == Receipt.id)
+        .outerjoin(ReceiptItem, ReceiptItem.receipt_id == Receipt.id)
         .where(Receipt.user_id == user_id)
     )
 
-    return session.exec(stmt).fetchall()
+    result = session.exec(stmt)
+    rows = result.fetchall()
+
+    receipts = []
+    for receipt, receipt_item in rows:
+        receipt_dict = next((r for r in receipts if r["id"] == receipt.id), None)
+        if not receipt_dict:
+            receipt_dict = {
+                "id": receipt.id,
+                "user_id": receipt.user_id,
+                "store": receipt.store,
+                "purchase_date": receipt.purchase_date,
+                "items": []
+            }
+            receipts.append(receipt_dict)
+        
+        if receipt_item:
+            # Add ReceiptItem details to the receipt
+            receipt_dict["items"].append({
+                "sequence": receipt_item.sequence,
+                "name": receipt_item.name,
+                "quantity": receipt_item.quantity,
+                "category": receipt_item.category,
+                "protein": receipt_item.protein,
+                "fats": receipt_item.fats,
+                "calories": receipt_item.calories
+            })
+    
+    return receipts
 
 @router.post("/{user_id}/receipts", status_code=201)
 def create_receipt(user_id: int, session: Session = Depends(get_session)):
