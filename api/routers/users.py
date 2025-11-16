@@ -56,7 +56,7 @@ async def login(login: LoginSchema, session: Session = Depends(get_session)):
     )
 
 # use same subset of properties from signup to perform update
-@router.patch("{id}", status_code=204)
+@router.patch("/{id}", status_code=204)
 def update_user(id: int, user: SignupSchema, session: Session = Depends(get_session)):
     stmt = (
         update(User)
@@ -72,7 +72,7 @@ def update_user(id: int, user: SignupSchema, session: Session = Depends(get_sess
     session.commit()
     return 
 
-@router.patch("password-reset/{id}", status_code=204)
+@router.patch("/password-reset/{id}", status_code=204)
 def update_password(id: int, reset: ResetPasswordSchema, session: Session = Depends(get_session)):
     stmt = (
         update(User)
@@ -84,7 +84,7 @@ def update_password(id: int, reset: ResetPasswordSchema, session: Session = Depe
     session.commit()
     return 
 
-@router.delete("{id}", status_code=204)
+@router.delete("/{id}", status_code=204)
 def delete_user(id: int, session: Session = Depends(get_session)):
     stmt = (
         update(User)
