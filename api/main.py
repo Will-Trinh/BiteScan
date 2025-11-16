@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routers import users, receipts, auth, system, nutrition
+from routers import users, receipts, auth, system, nutrition, ocr
 
 app = FastAPI()
 
@@ -10,6 +10,7 @@ app.include_router(receipts.router)
 app.include_router(auth.router)
 app.include_router(system.router)
 app.include_router(nutrition.router)
+app.include_router(ocr.router)
 
 app.add_middleware(
     CORSMiddleware,

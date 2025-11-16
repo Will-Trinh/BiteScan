@@ -5,7 +5,7 @@ router = APIRouter(
     tags=["system"]
 )
 
-@router.post("/health")
+@router.get("/health")
 def health():
     """Health check endpoint."""
     return {"ok": True}
