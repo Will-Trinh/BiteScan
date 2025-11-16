@@ -41,8 +41,8 @@ class OnlineReceiptsRepository(
         val body = json.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
 
         val request = Request.Builder()
-            .url("http://HoangHandsome.com/api/receipts")
-            .post(body)
+            .url("http://129.146.23.142:8080//users/$userId/receipts")
+            .get()
             .build()
 
         val response = client.newCall(request).execute()
@@ -104,7 +104,7 @@ class OnlineReceiptsRepository(
             ?: throw IllegalStateException("User ID is not available!")
 
         val receipt = receiptsRepository.getReceipt(receiptId)
-            ?: throw IllegalStateException("Receipt không tồn tại: $receiptId")
+            ?: throw IllegalStateException("Receipt not found: $receiptId")
 
         val items = itemsRepository.getItemsForReceipt(receiptId).first()
 
@@ -151,7 +151,7 @@ class OnlineReceiptsRepository(
             .toRequestBody("application/json; charset=utf-8".toMediaType())
 
         val request = Request.Builder()
-            .url("http://HoangHandsome.com/api/upload-receipt") // URL API upload receipt
+            .url("http://129.146.23.142:8080//users/$userId/receipts") // URL API upload receipt
             .post(body)
             .addHeader("User-Agent", "AndroidApp/1.0")
             .build()
