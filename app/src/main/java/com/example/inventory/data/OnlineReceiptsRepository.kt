@@ -40,7 +40,7 @@ class OnlineReceiptsRepository(
         val body = json.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
 
         val request = Request.Builder()
-            .url("http://129.146.23.142:8080//users/$userId/receipts")
+            .url("http://129.146.23.142:8080/users/$userId/receipts")
             .get()
             .build()
 
@@ -57,13 +57,13 @@ class OnlineReceiptsRepository(
                 for (i in 0 until receiptsArray.length()) {
                     val receiptObj = receiptsArray.getJSONObject(i)
                     val receiptJson = receiptObj.getJSONObject("receipt")
-                    val itemsArray = receiptObj.getJSONArray("items")
+                    val itemsArray = receiptJson.getJSONArray("items")
 
                     val receipt = Receipt(
                         userId = userId,
                         date = Date(receiptJson.getLong("date")),  // timestamp millis
-                        source = receiptJson.optString("source", "Unknown"),
-                        status = receiptJson.optString("status", "Pending")
+                        source = receiptJson.optString("store", "Unknown"),
+                        status = "null"
                     )
                     val receiptId = receiptsRepository.insertReceipt(receipt).toInt()
                     Log.d("OnlineReceipts", "Inserted receiptId=$receiptId")
@@ -116,19 +116,19 @@ class OnlineReceiptsRepository(
 
         // { "user_id": 123, "receipt": {...}, "items": [...] }
         val receiptJson = JSONObject().apply {
-            put("date", receipt.date.time)
-            put("source", receipt.source)
+            put("purchase_date", receipt.date.time)
+            put("store", receipt.source)
             put("status", receipt.status)
         }
         val itemsArray = JSONArray()
 
+        var seq = 0;
         for (item in items) {
             val itemJson = JSONObject().apply {
+                put("sequence", seq)
                 put("name", item.name)
                 put("price", item.price)
                 put("quantity", item.quantity)
-                put("date", item.date.time)
-                put("store", item.store)
                 put("category", item.category)
                 put("calories", item.calories)
                 put("protein", item.protein)
@@ -136,6 +136,7 @@ class OnlineReceiptsRepository(
                 put("fats", item.fats)
             }
             itemsArray.put(itemJson)
+            ++seq;
         }
 
         val requestJson = JSONObject().apply {
@@ -148,7 +149,7 @@ class OnlineReceiptsRepository(
             .toRequestBody("application/json; charset=utf-8".toMediaType())
 
         val request = Request.Builder()
-            .url("http://129.146.23.142:8080//users/$userId/receipts") // URL API upload receipt
+            .url("http://129.146.23.142:8080/users/$userId/receipts") // URL API upload receipt
             .post(body)
             .addHeader("User-Agent", "AndroidApp/1.0")
             .build()

@@ -14,6 +14,7 @@ from schemas.signup import Signup as SignupSchema
 from schemas.login import Login as LoginSchema
 from schemas.reset_password import ResetPassowrd as ResetPasswordSchema
 from schemas.receipt import Receipt as ReceiptSchema
+from schemas.receipt_post import ReceiptPost
 from schemas.receipt_item import ReceiptItem as ReceiptItemSchema
 
 router = APIRouter(
@@ -136,10 +137,13 @@ def get_user_receipts(user_id: int, session: Session = Depends(get_session)):
                 "calories": receipt_item.calories
             })
     
-    return receipts
+    return {"receipts": receipts}
 
 @router.post("/{user_id}/receipts", status_code=201)
-def create_receipt(user_id: int, session: Session = Depends(get_session)):
-    pass
+def create_receipt(user_id: int, receipt: ReceiptPost, items: list[ReceiptItem], session: Session = Depends(get_session)):
+    db_receipt = Receipt(**receipt.model_dump()) 
+    print(db_receipt)
+
+    print(items)
 
 #endregion
