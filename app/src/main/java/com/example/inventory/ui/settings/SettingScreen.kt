@@ -303,6 +303,7 @@ fun SettingScreen(
     val userName by viewModel.userName.collectAsState()
     val userEmail by viewModel.userEmail.collectAsState()
 
+
     val isLoggedOut by viewModel.logoutCompleted.collectAsState()
     LaunchedEffect(userId) { viewModel.setCurrentUserId(userId?:0) }
     val userIdText = viewModel.userId.collectAsState().value
