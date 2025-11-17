@@ -142,22 +142,33 @@ def get_user_receipts(user_id: int, session: Session = Depends(get_session)):
 @router.post("/{user_id}/receipts", status_code=201)
 def create_receipt(user_id: int, receipt: ReceiptPost, items: list[ReceiptItem], session: Session = Depends(get_session)):
     stmt = (
-        delete(ReceiptItem)
-        .where(ReceiptItem.receipt_id == receipt.id,
-                ReceiptItem.user_id == user_id
+        select(Receipt)
+        .where(Receipt.id == receipt.id,
+               Receipt.user_id == user_id)
+    )
+
+    result = session.exec(stmt)
+    
+    if result.first():
+        # update, delete all items and add them back later
+        stmt = (
+            delete(ReceiptItem)
+            .where(ReceiptItem.receipt_id == receipt.id,
+                    ReceiptItem.user_id == user_id
+            )
         )
-    )
+        session.exec(stmt)
+    else:
+        # create
+        session.add(Receipt(**receipt.model_dump()))
 
-    session.exec(stmt)
+    for i in items:
+        db_item = ReceiptItem(**i.model_dump())
+        db_item.user_id = user_id
+        db_item.receipt_id = receipt.id
+        session.add(db_item)
 
-    stmt = (
-
-    )
-    db_receipt = Receipt(**receipt.model_dump())
-    db_receipt.user_id = user_id
-    print(db_receipt)
-
-    print(items)
+    session.commit()
 
 @router.delete("/{user_id}/receipts/{receipt_id}", status_code=204)
 def delete_receipt(user_id: int, receipt_id: int, session: Session = Depends(get_session)):
