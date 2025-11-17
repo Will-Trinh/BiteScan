@@ -160,7 +160,9 @@ def create_receipt(user_id: int, receipt: ReceiptPost, items: list[ReceiptItem],
         session.exec(stmt)
     else:
         # create
-        session.add(Receipt(**receipt.model_dump()))
+        db_receipt = Receipt(**receipt.model_dump())
+        db_receipt.user_id = user_id
+        session.add()
 
     for i in items:
         db_item = ReceiptItem(**i.model_dump())
