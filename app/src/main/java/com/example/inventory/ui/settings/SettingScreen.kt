@@ -115,7 +115,11 @@ fun ToggleRow(
 }
 
 @Composable
-fun ProfileCard(userIdText: String?) {
+fun ProfileCard(
+    userIdText: String?,
+    userName: String,
+    userEmail: String
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -143,21 +147,23 @@ fun ProfileCard(userIdText: String?) {
                     .background(PrimaryGreen)
             ) {
                 Text(
-                    text = userIdText ?: "Loading...",
+                    text = userIdText ?: "—",
                     color = Color.White,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
+
             Spacer(Modifier.width(16.dp))
             Column {
-                Text("John Doe", fontSize = 20.sp, fontWeight = FontWeight.Medium)
-                Text("john.doe@example.com", fontSize = 16.sp, color = Color.Gray)
+                Text(userName, fontSize = 20.sp, fontWeight = FontWeight.Medium)
+                Text(userEmail, fontSize = 16.sp, color = Color.Gray)
             }
         }
     }
 }
+
 
 @Composable
 fun CheckboxWithLabel(
@@ -294,6 +300,9 @@ fun SettingScreen(
         )
     }
 
+    val userName by viewModel.userName.collectAsState()
+    val userEmail by viewModel.userEmail.collectAsState()
+
     val isLoggedOut by viewModel.logoutCompleted.collectAsState()
     LaunchedEffect(userId) { viewModel.setCurrentUserId(userId?:0) }
     val userIdText = viewModel.userId.collectAsState().value
@@ -352,7 +361,12 @@ fun SettingScreen(
                     .verticalScroll(rememberScrollState())
             ) {
                 // Profile
-                ProfileCard(userIdText)
+                ProfileCard(
+                    userIdText = userIdText,
+                    userName = userName ?: "Loading...",
+                    userEmail = userEmail ?: "unknown@example.com"
+                )
+
 
                 // Dietary Preferences
                 SectionCard(title = "Dietary Preferences") {
