@@ -44,7 +44,7 @@ import androidx.compose.ui.graphics.nativeCanvas
 import com.example.inventory.ui.AppViewModel
 import com.example.inventory.ui.theme.PrimaryGreen
 import com.example.inventory.ui.theme.LightGreen
-
+import androidx.compose.material.icons.filled.Warning
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -124,6 +124,7 @@ fun HistoryScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 HistoryBody(
+                    receiptState = actualViewModel.receiptUiState.collectAsState().value.syncStatus,
                     receiptList = actualViewModel.receiptUiState.collectAsState().value.receiptList,
                     dayAndPrice = actualViewModel.receiptUiState.collectAsState().value.dayAndPrice,
                     onReceiptClick = navigateToReceiptUpdate,
@@ -137,6 +138,7 @@ fun HistoryScreen(
 
 @Composable
 fun HistoryBody(
+    receiptState: SyncStatus,
     receiptList: List<Receipt>,
     dayAndPrice: List<Pair<String, Double>>,
     onReceiptClick: (Int) -> Unit,
@@ -146,6 +148,30 @@ fun HistoryBody(
 ) {
     LaunchedEffect(dayAndPrice) {
         println("dayAndPrice: $dayAndPrice")
+    }
+    Column(modifier = modifier.fillMaxSize()) {
+
+        when (receiptState) {
+            SyncStatus.LOADING -> {
+                Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = PrimaryGreen, strokeWidth = 3.dp)
+                }
+            }
+            SyncStatus.ERROR -> {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .background(Color(0xFFFFF3CD), RoundedCornerShape(12.dp))
+                        .padding(12.dp)
+                ) {
+                    Icon(Icons.Default.Warning, null, tint = Color(0xFFE6A800), modifier = Modifier.size(20.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Server Error! Please try again later.", color = Color(0xFFE6A800), fontSize = 14.sp)
+                }
+            }
+            else -> {}
+        }
     }
     LazyColumn(
         modifier = modifier.fillMaxSize(),

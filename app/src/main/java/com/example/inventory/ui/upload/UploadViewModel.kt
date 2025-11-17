@@ -155,7 +155,7 @@ class UploadViewModel(
         }
     }
 
-    suspend fun saveReceiptAndItems(receiptData: ReceiptData, userId: Int): Int {
+    suspend fun saveReceiptAndItems(receiptData: ReceiptData, userId: Int): Long {
         return withContext(Dispatchers.IO) {
             try {
                 ////Loading step 6: Saving the receipt...
@@ -177,7 +177,11 @@ class UploadViewModel(
                     status = "Pending"
                 )
 
-                val newReceiptId = receiptsRepository.insertReceipt(newReceipt).toInt()
+                val newReceiptID = receiptsRepository.insertReceipt(newReceipt)
+                Log.d("UploadViewModel", "Inserted receipt ID: $newReceiptID")
+                val newReceiptId = newReceiptID.toInt()
+
+
                 Log.d("UploadViewModel", "Inserted receipt ID: $newReceiptId")
                 receiptData.line_items.forEach { lineItem ->
                     val newItem = Item(
@@ -200,14 +204,13 @@ class UploadViewModel(
                 Log.d("UploadViewModel", "Saved receipt ID: $newReceiptId")
                 updateStep(6, StepStatus.COMPLETED)
                 delay(600)
-                newReceiptId
+                newReceiptID
             } catch (e: Exception) {
                 updateStep(5, StepStatus.FAILED)
                 Log.e("UploadViewModel", "Save failed: ${e.message}")
                 finishAll()
                 throw e
-            }
-            finally {
+            } finally {
                 resetState()
             }
         }

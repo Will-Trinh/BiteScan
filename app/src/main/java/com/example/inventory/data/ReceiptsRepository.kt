@@ -17,7 +17,7 @@
 package com.example.inventory.data
 
 import kotlinx.coroutines.flow.Flow
-
+import androidx.room.Insert
 /**
  * Repository for Receipts (user-provided input).
  */
@@ -26,7 +26,9 @@ interface ReceiptsRepository {
     fun getReceiptsForUser(userId: Int): Flow<List<Receipt>>
     fun searchReceipts(query: String): Flow<List<Receipt>>
     suspend fun getReceipt(id: Int): Receipt?
+    @Insert
     suspend fun insertReceipt(receipt: Receipt): Long
     suspend fun deleteReceipt(receipt: Receipt)
     suspend fun updateReceipt(receipt: Receipt)
+    suspend fun fetchAndSyncReceipts(userId: Int): List<Receipt>
 }

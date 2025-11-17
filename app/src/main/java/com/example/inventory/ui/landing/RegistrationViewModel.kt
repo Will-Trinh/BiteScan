@@ -33,7 +33,7 @@ class RegistrationViewModel(
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
                 try {
-                    val apiUrl = URL("https://abc.com/api/signup")
+                    val apiUrl = URL("http://129.146.23.142:8080/users/signup")
                     val conn = apiUrl.openConnection() as HttpURLConnection
                     //Set timeout (10s connect, 15s response)
                     conn.connectTimeout = 10_000
@@ -53,23 +53,29 @@ class RegistrationViewModel(
                     val responseCode = conn.responseCode
                     Log.d("LoginVM", "Response code: $responseCode")
 
-                    if (responseCode == HttpURLConnection.HTTP_OK) {
-                        val responseText = conn.inputStream.bufferedReader().use { it.readText() }
-                        val jsonResponse = JSONObject(responseText)
-                        val success = jsonResponse.getBoolean("success") // Dùng getBoolean
+                    if (responseCode in 200..299) {
 
-                        if (success) {
-                            SignUpResult(success = true, signupMessage = "Sign Up successful")
-                        } else {
-                            val msg = jsonResponse.optString("message", "SignUp failed")
-                            SignUpResult(success = false, signupMessage = msg)
-                        }
+                        val responseText = conn.inputStream?.bufferedReader()?.use { it.readText() }
+
+                        // API "User created" ?
+                        SignUpResult(
+                            success = true,
+                            signupMessage = responseText ?: "Sign up successful"
+                        )
+
                     } else {
-                        SignUpResult(success = false, signupMessage = "Connect failed with response code: $responseCode")
+
+                        val errorText = conn.errorStream?.bufferedReader()?.use { it.readText() }
+
+                        SignUpResult(
+                            success = false,
+                            signupMessage = errorText ?: "Error $responseCode"
+                        )
                     }
+
                 } catch (e: Exception) {
-                    Log.e("LoginVM", "Error during login: ${e.message}", e)
-                    SignUpResult(success = false, signupMessage = "Connect failed: ${e.message}")
+                    Log.e("LoginVM", "Error during signup: ${e.message}", e)
+                    SignUpResult(false, "Connect failed: ${e.message}")
                 }
             }
             //change when api available
