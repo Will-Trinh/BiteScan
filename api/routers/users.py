@@ -116,7 +116,7 @@ def get_user_receipts(user_id: int, session: Session = Depends(get_session)):
 
     receipts = []
     for receipt, receipt_item in rows:
-        receipt_dict = next((r for r in receipts if r["id"] == receipt.id), None)
+        receipt_dict = next((r for r in receipts if r.get("id") == receipt.id), None)
         if not receipt_dict:
             receipt_dict = {
                 "receipt_id": receipt.id,
