@@ -34,6 +34,9 @@ async def get_nutrition(items: list[Item]):
     """
 
     for i in items:
+        if i.calories != 0:
+            print(f"skipping {i.name}, data already present")
+            continue
         try:
             result: IngredientResult = client.analyze_ingredient(i.name)
             i.calories = result.nutrition.calories
