@@ -141,7 +141,9 @@ def get_user_receipts(user_id: int, session: Session = Depends(get_session)):
 
 @router.post("/{user_id}/receipts", status_code=201)
 def create_receipt(user_id: int, receipt: ReceiptPost, items: list[ReceiptItem], session: Session = Depends(get_session)):
-    db_receipt = Receipt(**receipt.model_dump()) 
+    print(receipt)
+    db_receipt = Receipt(**receipt.model_dump())
+    db_receipt.user_id = user_id
     print(db_receipt)
 
     print(items)

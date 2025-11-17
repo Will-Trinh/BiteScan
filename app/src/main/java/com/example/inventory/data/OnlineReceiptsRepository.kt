@@ -155,6 +155,8 @@ class OnlineReceiptsRepository(
             .addHeader("User-Agent", "AndroidApp/1.0")
             .build()
 
+        Log.d("OnlineReceipts", "sending post request now")
+
         val response = client.newCall(request).execute()
         val responseBody = response.body?.string() ?: "{}"
         Log.d("OnlineReceipts", "Upload response: ${response.code}, body: $responseBody")
