@@ -35,7 +35,7 @@ import com.example.inventory.ui.userdata.FakeUsersRepository
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.inventory.ui.AppViewModel
-import com.example.inventory.data.ReceiptsRepositoryImpl
+import com.example.inventory.data.UsersRepository
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,7 +51,10 @@ fun LoginScreen(
     val context = LocalContext.current
     val actualViewModel = viewModel ?: remember {
         if (context.applicationContext is InventoryApplication) {
-            LoginScreenViewModel()
+            val appContainer = (context.applicationContext as InventoryApplication).container
+            LoginScreenViewModel(
+                usersRepository = appContainer.usersRepository
+            )
         } else {
             throw IllegalStateException("Application context is not an instance of InventoryApplication")
     }
@@ -255,6 +258,7 @@ fun LoginScreen(
             if (result.success) {
                 //save userId to navController
                 navController.currentBackStackEntry?.savedStateHandle?.set("userId", result.uid)
+
                 appViewModel.setUserId(result.uid)
                 appViewModel.setNameProfile(result.username?:"")
                 onLoginClick(result.uid)
@@ -407,7 +411,9 @@ fun RowScope.ToggleButton(
 @Preview(showBackground = true)
 @Composable
 fun LoginScreenPreview() {
-    val fakeViewModel = LoginScreenViewModel()
+    val fakeViewModel = LoginScreenViewModel(
+        usersRepository = FakeUsersRepository()
+    )
 
     CookingAssistantTheme {
         LoginScreen(

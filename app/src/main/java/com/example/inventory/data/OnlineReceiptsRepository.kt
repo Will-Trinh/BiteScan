@@ -65,7 +65,8 @@ class OnlineReceiptsRepository(
                         source = receiptJson.optString("store", "Unknown"),
                         status = "null"
                     )
-                    val receiptId = receiptsRepository.insertReceipt(receipt).toInt()
+                    val receiptIdLong = receiptsRepository.insertReceipt(receipt)
+                    val receiptId = receiptIdLong.toInt()
                     Log.d("OnlineReceipts", "Inserted receiptId=$receiptId")
 
                     for (j in 0 until itemsArray.length()) {

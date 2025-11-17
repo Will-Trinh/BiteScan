@@ -170,63 +170,63 @@ fun HistoryBody(
                     Text("Server Error! Please try again later.", color = Color(0xFFE6A800), fontSize = 14.sp)
                 }
             }
-            else -> {}
+            SyncStatus.SUCCESS ->
+                LazyColumn(
+                    modifier = modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // 1. Chart Card
+                    item {
+                        ChartCard(dayAndPrice = dayAndPrice, modifier = Modifier.padding(bottom = 8.dp))
+                    }
+
+                    // 2. Track Prices Button
+                    item {
+                        TrackPricesButton(
+                            onClick = { /* TODO: Navigate to price trends screen */ },
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                    }
+
+                    // 3. Recent Receipts Header
+                    item {
+                        Text(
+                            text = "Recent Receipts",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp, bottom = 8.dp)
+                        )
+                    }
+
+                    // 4. Receipt List
+                    if (receiptList.isEmpty()) {
+                        item {
+                            Text(
+                                text = stringResource(R.string.no_receipt_description),
+                                textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        }
+                    } else {
+                        val sortedReceipts = receiptList.sortedByDescending { it.date }
+                        items(items = sortedReceipts, key = { it.receiptId }) { receipt ->
+                            HistoryReceiptCard(
+                                receipt = receipt,
+                                onReceiptClick = onReceiptClick,
+                                viewModel = viewModel
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        // 1. Chart Card
-        item {
-            ChartCard(dayAndPrice = dayAndPrice, modifier = Modifier.padding(bottom = 8.dp))
-        }
-
-        // 2. Track Prices Button
-        item {
-            TrackPricesButton(
-                onClick = { /* TODO: Navigate to price trends screen */ },
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-        }
-
-        // 3. Recent Receipts Header
-        item {
-            Text(
-                text = "Recent Receipts",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp, bottom = 8.dp)
-            )
-        }
-
-        // 4. Receipt List
-        if (receiptList.isEmpty()) {
-            item {
-                Text(
-                    text = stringResource(R.string.no_receipt_description),
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(16.dp)
-                )
-            }
-        } else {
-            val sortedReceipts = receiptList.sortedByDescending { it.date }
-            items(items = sortedReceipts, key = { it.receiptId }) { receipt ->
-                HistoryReceiptCard(
-                    receipt = receipt,
-                    onReceiptClick = onReceiptClick,
-                    viewModel = viewModel
-                )
-            }
-        }
-    }
-}
 
 @Composable
 fun ChartCard(dayAndPrice: List<Pair<String, Double>>, modifier: Modifier = Modifier) {

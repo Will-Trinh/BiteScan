@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import com.example.inventory.data.ReceiptsRepository
 
 class LoginScreenViewModel(
+    private val usersRepository: UsersRepository
 
 ) : ViewModel() {
 
@@ -71,6 +72,7 @@ class LoginScreenViewModel(
                         } catch (e: Exception) {
                             Log.e("LoginVM", "Error during sync: ${e.message}")
                         }}
+                        viewModelScope.launch { usersRepository.insertUser(User(userId = userId, username = username, email = email, phone =""))}
                         return@withContext LoginResult(
                             success = true,
                             uid = userId,
