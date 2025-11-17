@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
+import com.google.gson.Gson
 
 class OnlineReceiptsRepository(
     private val receiptsRepository: OfflineReceiptsRepository,
@@ -51,17 +52,16 @@ class OnlineReceiptsRepository(
         try {
             if (response.isSuccessful) {
                 val jsonResponse = JSONObject(responseBody)
-
+                val gson = Gson()
                 //{ "receipts": [ { "receipt": {...}, "items": [...] }, ... ] }
                 val receiptsArray = jsonResponse.getJSONArray("receipts")
                 for (i in 0 until receiptsArray.length()) {
-                    val receiptObj = receiptsArray.getJSONObject(i)
-                    val receiptJson = receiptObj.getJSONObject("receipt")
+                    val receiptJson = receiptsArray.getJSONObject(i)
                     val itemsArray = receiptJson.getJSONArray("items")
 
                     val receipt = Receipt(
                         userId = userId,
-                        date = Date(receiptJson.getLong("date")),  // timestamp millis
+                        date = Date.valueOf(receiptJson.getString("purchase_date")),
                         source = receiptJson.optString("store", "Unknown"),
                         status = "null"
                     )
@@ -74,8 +74,8 @@ class OnlineReceiptsRepository(
                             name = itemJson.optString("name", "Unknown"),
                             price = itemJson.optDouble("price", 0.0),
                             quantity = itemJson.optDouble("quantity", 1.0).toFloat(),
-                            date = Date(itemJson.getLong("date")),
                             store = itemJson.optString("store", "Unknown"),
+                            date = receipt.date,
                             category = itemJson.optString("category", "Unknown"),
                             receiptId = receiptId,
                             calories = itemJson.optDouble("calories", 0.0),
