@@ -31,6 +31,7 @@ class SettingsViewModel(
     private val _userEmail = MutableStateFlow<String?>(null)
     val userEmail: StateFlow<String?> = _userEmail
 
+
     init {
         viewModelScope.launch {
             val uid = appViewModel.userId.value
@@ -55,8 +56,8 @@ class SettingsViewModel(
 
     private suspend fun loadUserDetails(userId: Int) {
         val user = repository.getUser(userId).firstOrNull()
-        _userName.value = user?.username ?: "User"
-        _userEmail.value = user?.email ?: "unknown@example.com"
+        _userName.value = user?.username ?: appViewModel.nameProfile.value ?: "User"
+        _userEmail.value = user?.email ?: appViewModel.email.value ?: "unknown@example.com"
     }
 
     fun logout() {

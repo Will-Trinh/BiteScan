@@ -53,19 +53,26 @@ class ReceiptViewModel(
         }
     }
 
+    private val _itemsByReceipt = MutableStateFlow<Map<Int, List<Item>>>(emptyMap())
+    val itemsByReceipt: StateFlow<Map<Int, List<Item>>> = _itemsByReceipt
+
     fun loadItems(receiptId: Int) {
         viewModelScope.launch {
             itemsRepository.getItemsForReceipt(receiptId).collect { items ->
-                _receiptUiState.value = _receiptUiState.value.copy(
-                    itemList = items.sortedBy { it.id },
-                )
+                val updated = _itemsByReceipt.value.toMutableMap()
+                updated[receiptId] = items
+                _itemsByReceipt.value = updated
             }
         }
     }
 
+    fun prefetchItems(receiptIds: List<Int>) {
+        receiptIds.distinct().forEach { id -> loadItems(id) }
+    }
+
 
     fun calculateTotalPrice(items: List<Item>): Double {
-        val totalPrice = items.sumOf { it.price * it.quantity }  // Calculate total price
+        val totalPrice = items.sumOf { it.price * it.quantity.toDouble() }  // Calculate total price
         return totalPrice
     }
 
