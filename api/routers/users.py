@@ -141,7 +141,18 @@ def get_user_receipts(user_id: int, session: Session = Depends(get_session)):
 
 @router.post("/{user_id}/receipts", status_code=201)
 def create_receipt(user_id: int, receipt: ReceiptPost, items: list[ReceiptItem], session: Session = Depends(get_session)):
-    print(receipt)
+    stmt = (
+        delete(ReceiptItem)
+        .where(ReceiptItem.receipt_id == receipt.id,
+                ReceiptItem.user_id == user_id
+        )
+    )
+
+    session.exec(stmt)
+
+    stmt = (
+
+    )
     db_receipt = Receipt(**receipt.model_dump())
     db_receipt.user_id = user_id
     print(db_receipt)
@@ -152,7 +163,9 @@ def create_receipt(user_id: int, receipt: ReceiptPost, items: list[ReceiptItem],
 def delete_receipt(user_id: int, receipt_id: int, session: Session = Depends(get_session)):
     stmt = (
         delete(Receipt)
-        .where(Receipt.id == receipt_id & Receipt.user_id == user_id)
+        .where(Receipt.id == receipt_id,
+                Receipt.user_id == user_id
+        )
     )
 
     session.exec(stmt)
