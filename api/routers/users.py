@@ -104,11 +104,23 @@ def update_password(id: int, reset: ResetPasswordSchema, session: Session = Depe
 def delete_user(id: int, session: Session = Depends(get_session)):
     stmt = (
         delete(User)
-        .where(User.id == id) 
+        .where(User.id == id)
+        .returning(User.email, User.username)
     )
 
-    session.exec(stmt)
+    result = session.exec(stmt)
+    deleted_user = result.fetchone()
     session.commit()
+
+    email_payload = {
+        "sender": "thailand.davian@moonfee.com",
+        "recipients": [delete_user.email],
+        "subject": "BiteScan Account Deletion",
+        "text": f"Thanks for stopping by! We are sorry to see you go {delete_user.username}."
+    }
+
+    smtp_client.send(**email_payload)
+    
     return 
 
 #endregion
