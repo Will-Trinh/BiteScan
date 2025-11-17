@@ -16,9 +16,10 @@ import java.net.URL
 import com.example.inventory.data.UsersRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import com.example.inventory.data.ReceiptsRepository
 
 class LoginScreenViewModel(
-    private val usersRepository: UsersRepository
+
 ) : ViewModel() {
 
     private val _loginResult = MutableStateFlow<LoginResult?>(null)
@@ -31,15 +32,15 @@ class LoginScreenViewModel(
         _isLoading.value = true
         _loginResult.value = null
         //for testing purpose
-        _loginResult.value = LoginResult(success = true, uid = 1)
-        val user = User(userId = 1, username = "Tran", email = "Tran@gmail.com", phone = "123456789")
-        viewModelScope.launch { usersRepository.insertUser(user)}
+        //_loginResult.value = LoginResult(success = true, uid = 1, phone = "123456789", email = "Tran@gmail.com", username = "Tran")
+        //val user = User(userId = 1, username = "Tran", email = "Tran@gmail.com", phone = "123456789")
+        //viewModelScope.launch { usersRepository.insertUser(user)}
         //end testing
 
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
                 try {
-                    val apiUrl = URL("https://abc.com/api/login")
+                    val apiUrl = URL("http://129.146.23.142:8080/users/login")
                     val conn = apiUrl.openConnection() as HttpURLConnection
                     //Set timeout (10s connect, 15s response)
                     conn.connectTimeout = 10_000
@@ -57,43 +58,72 @@ class LoginScreenViewModel(
                     val responseCode = conn.responseCode
                     Log.d("LoginVM", "Response code: $responseCode")
 
-                    if (responseCode == HttpURLConnection.HTTP_OK) {
-                        val responseText = conn.inputStream.bufferedReader().use { it.readText() }
-                        val jsonResponse = JSONObject(responseText)
-                        val success = jsonResponse.getBoolean("success") // Dùng getBoolean
+                    if (responseCode == 200) {
+                        val raw = conn.inputStream.bufferedReader().use { it.readText() }
+                        Log.d("API_RAW_RESPONSE", raw)
 
-                        if (success) {
-                            val uid = jsonResponse.getInt("uid")
-                            val phone = jsonResponse.getString("phone")
-                            val email = jsonResponse.getString("email")
-                            val username = jsonResponse.getString("username")
+                        val jsonResponse = JSONObject(raw)
+                        val userId = jsonResponse.getInt("id")
+                        val username = jsonResponse.getString("username")
+                        val email = jsonResponse.getString("email")
+                        viewModelScope.launch {try {
+                            Log.d("LoginVM", "syns successfully")
+                        } catch (e: Exception) {
+                            Log.e("LoginVM", "Error during sync: ${e.message}")
+                        }}
+                        return@withContext LoginResult(
+                            success = true,
+                            uid = userId,
+                            username = username,
+                            email = email,
+                            phone = null,
+                            errorMessage = ""
+                        )
+                    } else if (responseCode == 422) {
 
-
-                            val user = User(userId = uid, username = username, email = email, phone = phone)
-                            usersRepository.insertUser(user)
-
-                            LoginResult(success = true, uid = uid)
-                        } else {
-                            val msg = jsonResponse.optString("message", "login failed")
-                            LoginResult(success = false, errorMessage = msg)
+                        val errorText = conn.errorStream?.bufferedReader()?.use { it.readText() }
+                        val detail = try {
+                            JSONObject(errorText).getJSONArray("detail")
+                                .getJSONObject(0)
+                                .getString("msg")
+                        } catch (e: Exception) {
+                            "Validation error"
                         }
+
+                        return@withContext LoginResult(
+                            success = false,
+                            errorMessage = detail,
+                            email = ""
+                        )
+
                     } else {
-                        LoginResult(success = false, errorMessage = "Connect failed with response code: $responseCode")
+
+                        return@withContext LoginResult(
+                            success = false,
+                            errorMessage = "Login failed ($responseCode)",
+                            email = ""
+                        )
                     }
                 } catch (e: Exception) {
                     Log.e("LoginVM", "Error during login: ${e.message}", e)
-                    LoginResult(success = false, errorMessage = "Connect failed: ${e.message}")
+                    LoginResult(success = false, errorMessage = "Connect failed: ${e.message}", uid = 0, phone = null, email = "", username = "")
                 }
             }
             //change when api available
-            //_loginResult.value = result
-            //_isLoading.value = false
+            _loginResult.value = result
+            _isLoading.value = false
         }
     }
 }
 
+
 data class LoginResult(
     val success: Boolean,
     val errorMessage: String? = null,
-    val uid: Int = 0
+    val uid: Int = 0,
+    val phone: String? = null,
+    val email: String,
+    val username: String? = null,
 )
+
+

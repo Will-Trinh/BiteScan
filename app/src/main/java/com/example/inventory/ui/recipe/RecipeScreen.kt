@@ -38,10 +38,10 @@ import com.example.inventory.ui.theme.LightGreen
 @Composable
 fun RecipeRecommendationScreen(
     navController: NavController,
-    userId: Int,
     modifier: Modifier = Modifier,
     appViewModel: AppViewModel
 ) {
+    val userId = appViewModel.userId.value
     val context = androidx.compose.ui.platform.LocalContext.current
     val appContainer = (context.applicationContext as com.example.inventory.InventoryApplication).container
 
@@ -51,9 +51,9 @@ fun RecipeRecommendationScreen(
                 if (modelClass.isAssignableFrom(RecipeViewModel::class.java)) {
                     @Suppress("UNCHECKED_CAST")
                     return RecipeViewModel(
-                        userId = userId,
                         itemsRepository = appContainer.itemsRepository,
-                        receiptsRepository = appContainer.receiptsRepository
+                        receiptsRepository = appContainer.receiptsRepository,
+                        appViewModel = appViewModel
                     ) as T
                 }
                 throw IllegalArgumentException("Unknown ViewModel class")
@@ -97,8 +97,8 @@ fun RecipeRecommendationScreen(
                     uiState = uiState,
                     onFilterClick = viewModel::toggleFilter,
                     navController = navController,
-                    userId = userId,
                     modifier = Modifier.fillMaxSize(),
+                    appViewModel = appViewModel
                 )
             }
         }
@@ -111,9 +111,11 @@ fun RecipeBody(
     uiState: RecipeUiState,
     onFilterClick: (String) -> Unit,
     navController: NavController,
-    userId: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    appViewModel: AppViewModel
+
 ) {
+    val userId = appViewModel.userId.value
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = 8.dp),
@@ -124,7 +126,7 @@ fun RecipeBody(
                 ingredients = uiState.availableIngredients,
                 onCardClick = {
                     navController.navigate(
-                        com.example.inventory.ui.navigation.MyPantryDestination.routeWithArgs
+                        com.example.inventory.ui.navigation.MyPantryDestination.route
                             .replace("{userId}", userId.toString())
                     )
                 },
@@ -386,7 +388,6 @@ fun RecipeRecommendationScreenPreview() {
     CookingAssistantTheme {
         RecipeRecommendationScreen(
             navController = navController,
-            userId = 1,
             appViewModel = AppViewModel()
         )
     }

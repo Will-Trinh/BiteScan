@@ -35,6 +35,7 @@ import com.example.inventory.ui.userdata.FakeUsersRepository
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.inventory.ui.AppViewModel
+import com.example.inventory.data.ReceiptsRepositoryImpl
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,10 +51,7 @@ fun LoginScreen(
     val context = LocalContext.current
     val actualViewModel = viewModel ?: remember {
         if (context.applicationContext is InventoryApplication) {
-            val appContainer = (context.applicationContext as InventoryApplication).container
-            LoginScreenViewModel(
-                usersRepository = appContainer.usersRepository
-            )
+            LoginScreenViewModel()
         } else {
             throw IllegalStateException("Application context is not an instance of InventoryApplication")
     }
@@ -251,13 +249,14 @@ fun LoginScreen(
         loginResult?.let { result ->
             Toast.makeText(
                 context,
-                if (result.success) "Login success: UID=${result.uid}" else "Login failed: ${result.errorMessage}",
+                if (result.success) "Login success: User Name: ${result.username}, User ID=${result.uid}" else "Login failed: ${result.errorMessage}",
                 Toast.LENGTH_LONG
             ).show()
             if (result.success) {
                 //save userId to navController
                 navController.currentBackStackEntry?.savedStateHandle?.set("userId", result.uid)
                 appViewModel.setUserId(result.uid)
+                appViewModel.setNameProfile(result.username?:"")
                 onLoginClick(result.uid)
             }
         }
@@ -274,7 +273,7 @@ fun LoginScreen(
                 } else {
                     Toast.makeText(context, "Please enter your email!", Toast.LENGTH_SHORT).show()
                 }
-                showResetDialog = false  // Đóng dialog
+                showResetDialog = false
             }
         )
     }
@@ -408,7 +407,7 @@ fun RowScope.ToggleButton(
 @Preview(showBackground = true)
 @Composable
 fun LoginScreenPreview() {
-    val fakeViewModel = LoginScreenViewModel(FakeUsersRepository())
+    val fakeViewModel = LoginScreenViewModel()
 
     CookingAssistantTheme {
         LoginScreen(

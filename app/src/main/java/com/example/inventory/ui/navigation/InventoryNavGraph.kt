@@ -23,87 +23,74 @@ import com.example.inventory.ui.landing.LandingScreen
 import com.example.inventory.ui.landing.LoginScreen
 import com.example.inventory.ui.landing.RegistrationScreen
 
-
 @Composable
 fun InventoryNavHost(
     navController: NavHostController,
     appViewModel: AppViewModel,
     modifier: Modifier = Modifier,
 ) {
+    val userId = appViewModel.userId.value
+
     NavHost(
         navController = navController,
         startDestination = LandingDestination.route,
         modifier = modifier
     ) {
+        // Landing
         composable(route = LandingDestination.route) {
-            LandingScreen(navController = navController, onGetStartedClick = { navController.navigate(LoginDestination.route)})
+            LandingScreen(
+                navController = navController,
+                onGetStartedClick = { navController.navigate(LoginDestination.route) }
+            )
         }
+
+        // Login
         composable(route = LoginDestination.route) {
             LoginScreen(
                 navController = navController,
                 appViewModel = appViewModel,
-                onLoginClick = { userId ->
-                    navController.navigate("upload/$userId") {
+                onLoginClick = { _ ->
+                    navController.navigate(UploadDestination.route) {
                         popUpTo(LoginDestination.route) { inclusive = true }
                     }
                 },
                 onCreateAccountClick = {
-                    //Todo: Create account
+                    // TODO: Navigate to register or show create account flow
                 },
             )
         }
-        //register route
+
+        // Register
         composable(route = RegisterDestination.route) {
             RegistrationScreen(navController = navController)
         }
 
-        composable(
-            route = UploadDestination.routeWithArgs,
-            arguments = listOf(navArgument(UploadDestination.userIdArg) { type = NavType.IntType })
-        ) { backStackEntry ->
-            val userId = backStackEntry.arguments?.getInt(UploadDestination.userIdArg) ?: 0
+        // Upload
+        composable(route = UploadDestination.route) {
             UploadScreen(
                 navController = navController,
                 appViewModel = appViewModel,
             )
         }
-        composable(
-            route = DashboardDestination.routeWithArgs,
-            arguments = listOf(navArgument(DashboardDestination.userIdArg) {
-                type = NavType.IntType
-            })
-        ) { backStackEntry ->
-            val userId = backStackEntry.arguments?.getInt(DashboardDestination.userIdArg) ?: 0
-            DashboardScreen(
-                navController = navController,
-                userId = userId,
-                appViewModel = appViewModel
-            )
-        }
 
-        // New no-arg route for Dashboard (for bottom nav; extracts shared userId)
+        // Dashboard
         composable(route = DashboardDestination.route) {
-            val userId = navController.previousBackStackEntry?.savedStateHandle?.get<Int>("userId")
-                ?: navController.currentBackStackEntry?.savedStateHandle?.get<Int>("userId") ?: 0
             if (userId != 0) {
                 DashboardScreen(
                     navController = navController,
-                    userId = userId,
                     appViewModel = appViewModel
                 )
             } else {
                 NotFoundScreen(navController = navController)
             }
         }
-        composable(
-            route = HistoryDestination.routeWithArgs,
-            arguments = listOf(navArgument(HistoryDestination.userIdArg) { type = NavType.IntType })
-        ) { backStackEntry ->
-            val userId = backStackEntry.arguments?.getInt(HistoryDestination.userIdArg) ?: 0
+
+        // History
+        composable(route = HistoryDestination.route) {
             HistoryScreen(
                 navigateToReceiptEntry = {},
                 navigateToReceiptUpdate = { receiptId ->
-                    navController.navigate("edit_receipt/$receiptId/$userId")
+                    navController.navigate("edit_receipt/$receiptId")
                 },
                 canNavigateBack = navController.previousBackStackEntry != null,
                 navController = navController,
@@ -111,20 +98,18 @@ fun InventoryNavHost(
             )
         }
 
+        // Edit receipt
         composable(
-            route = "edit_receipt/{receiptId}/{userId}",
+            route = EditReceiptDestination.route,
             arguments = listOf(
-                navArgument(EditReceiptDestination.receiptIdArg) { type = NavType.IntType },
-                navArgument("userId") { type = NavType.IntType }
+                navArgument("receiptId") { type = NavType.IntType }
             )
         ) { backStackEntry ->
-            val receiptId =
-                backStackEntry.arguments?.getInt(EditReceiptDestination.receiptIdArg) ?: 0
-            val userId = backStackEntry.arguments?.getInt("userId") ?: 0
+            val receiptId = backStackEntry.arguments?.getInt("receiptId") ?: 0
             EditReceiptScreen(
                 receiptId = receiptId,
                 navigateUp = {
-                    navController.navigate("history/$userId") {
+                    navController.navigate(HistoryDestination.route) {
                         popUpTo(navController.graph.startDestinationId) { inclusive = false }
                         launchSingleTop = true
                     }
@@ -134,92 +119,53 @@ fun InventoryNavHost(
             )
         }
 
-        composable(
-            route = SettingsDestination.routeWithArgs,
-            arguments = listOf(navArgument(SettingsDestination.userIdArg) {
-                type = NavType.IntType
-            })
-        ) { backStackEntry ->
-            val userId = backStackEntry.arguments?.getInt(SettingsDestination.userIdArg) ?: 0
+        // Settings
+        composable(route = SettingsDestination.route) {
             SettingScreen(
                 navController = navController,
-                userId = userId,
                 appViewModel = appViewModel
             )
         }
 
-        composable(
-            route = UpdateInformationDestination.routeWithArgs,
-            arguments = listOf(navArgument(UpdateInformationDestination.userIdArg) {
-                type = NavType.IntType
-            })
-        ) { backStackEntry ->
-            val userId =
-                backStackEntry.arguments?.getInt(UpdateInformationDestination.userIdArg) ?: 0
+        // Update Information
+        composable(route = UpdateInformationDestination.route) {
             UpdateInformationScreen(
                 navController = navController,
                 appViewModel = appViewModel,
-                userId = userId
             )
         }
 
-        composable(
-            route = MyPantryDestination.routeWithArgs,
-            arguments = listOf(navArgument(MyPantryDestination.userIdArg) {
-                type = NavType.IntType
-            })
-        ) { backStackEntry ->
-            val userId = backStackEntry.arguments?.getInt(MyPantryDestination.userIdArg) ?: 0
+        // My Pantry
+        composable(route = MyPantryDestination.route) {
             MyPantryScreen(
                 navController = navController,
-                appViewModel = appViewModel,
-                userId = userId
+                appViewModel = appViewModel
             )
         }
 
-        composable(
-            route = LegalDestination.routeWithArgs,
-            arguments = listOf(navArgument(LegalDestination.userIdArg) { type = NavType.IntType })
-        ) { backStackEntry ->
-            val userId = backStackEntry.arguments?.getInt(LegalDestination.userIdArg)
-            if (userId != null) {
-                LegalScreen(
-                    navController = navController,
-                    appViewModel = appViewModel,
-                    userId = userId
-                )
+        // Legal
+        composable(route = LegalDestination.route) {
+            if (userId != 0) {
+                LegalScreen(navController = navController)
             } else {
-                // Fallback to NotFoundScreen if userId is null (though this should not happen with proper navigation)
                 NotFoundScreen(navController = navController)
             }
         }
 
-        composable(
-            route = AboutDestination.routeWithArgs,
-            arguments = listOf(navArgument(AboutDestination.userIdArg) { type = NavType.IntType })
-        ) { backStackEntry ->
-            val userId = backStackEntry.arguments?.getInt(AboutDestination.userIdArg) ?: 0
-            AboutScreen(
-                navController = navController,
-                appViewModel = appViewModel,
-                userId = userId
-            )
+        // About
+        composable(route = AboutDestination.route) {
+            AboutScreen(navController = navController)
         }
 
-        composable(route = NotFoundDestination.routeWithArgs) {
-            NotFoundScreen(
-                navController = navController
-            )
+        // Not Found
+        composable(route = NotFoundDestination.route) {
+            NotFoundScreen(navController = navController)
         }
 
-        composable(
-            route = RecipeDestination.routeWithArgs,  // e.g., "recipe_recommendations/{userId}"
-            arguments = listOf(navArgument(RecipeDestination.userIdArg) { type = NavType.IntType })
-        ) { backStackEntry ->
-            val userId = backStackEntry.arguments?.getInt(RecipeDestination.userIdArg) ?: 0
+        // Recipe Recommendations
+        composable(route = RecipeDestination.route) {
             RecipeRecommendationScreen(
                 navController = navController,
-                userId = userId,
                 appViewModel = appViewModel
             )
         }

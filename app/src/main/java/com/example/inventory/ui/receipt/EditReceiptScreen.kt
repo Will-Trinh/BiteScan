@@ -236,7 +236,7 @@ fun EditReceiptScreen(
                                         receipt.copy(status = "Completed")
                                     )
                                 }
-                                navController.navigate("dashboard/$userId") {
+                                navController.navigate("dashboard") {
                                     popUpTo(navController.graph.startDestinationId) {
                                         inclusive = false
                                     }
@@ -263,11 +263,11 @@ fun EditReceiptScreen(
                             if (receipt != null) {
                                 actualViewModel.viewModelScope.launch {
                                     actualViewModel.saveUpdatedItems(
-                                        receipt.copy(status = "Completed")
+                                        receipt.copy(status = "Completed"),userId!!
                                     )
                                     actualViewModel.processItems()
                                 }
-                                navController.navigate("history/$userId") {
+                                navController.navigate("history") {
                                     popUpTo(navController.graph.startDestinationId) {
                                         inclusive = false
                                     }

@@ -43,8 +43,10 @@ fun UploadScreen(
     navController: NavController,
     appViewModel: AppViewModel,
 ) {
+
     val context = LocalContext.current
     val appContainer = (context.applicationContext as InventoryApplication).container
+
     val viewModel: UploadViewModel = viewModel(
         factory = UploadViewModelFactory(
             receiptsRepository = appContainer.receiptsRepository,
@@ -52,11 +54,9 @@ fun UploadScreen(
         )
     )
     val userId = appViewModel.userId.value
-
+    val uploadProgress by viewModel.uploadProgress.collectAsState()
     val ocrState by viewModel.ocrState.collectAsState()
-    val isProcessing by viewModel.isProcessing.collectAsState()
 
-    // Add this to UploadScreen.kt (inside the Composable, after viewModel declaration)
     DisposableEffect(navController) {
         val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
             if (destination.route == UploadDestination.route) {
@@ -107,7 +107,7 @@ fun UploadScreen(
             try {
                 Log.d("UploadScreen", "Saving receipt with userId=$userId")
                 val newReceiptId = viewModel.saveReceiptAndItems(currentState.receiptData, userId!!)
-                navController.navigate("edit_receipt/$newReceiptId/$userId") {
+                navController.navigate("edit_receipt/$newReceiptId") {
                     popUpTo(navController.graph.startDestinationId) { inclusive = false }
                     launchSingleTop = true
                 }
@@ -143,20 +143,22 @@ fun UploadScreen(
                     UploadArea(
                         galleryLauncher = galleryLauncher,
                         cameraPermissionLauncher = cameraPermissionLauncher,
-                        isProcessing = isProcessing
+                        isProcessing = uploadProgress.isProcessing
                     )
 
-                    // Brief OCR results preview (before nav; optional)
-                    if (ocrState is OcrState.Success && !isProcessing) {
+                    if (ocrState is OcrState.Success && !uploadProgress.isProcessing) {
                         OcrResultsSection(receiptData = (ocrState as OcrState.Success).receiptData)
-                    } else if (ocrState is OcrState.Error && !isProcessing) {
+                    } else if (ocrState is OcrState.Error && !uploadProgress.isProcessing) {
                         ErrorSection(message = (ocrState as OcrState.Error).message)
                     }
                 }
 
-                // Loading Overlay
-                if (isProcessing) {
-                    LoadingScreen()
+
+                if (uploadProgress.isProcessing) {
+                    LoadingScreen(
+                        progress = uploadProgress.progress,
+                        steps = uploadProgress.steps
+                    )
                 }
             }
         }
@@ -248,9 +250,6 @@ fun UploadArea(
             fontSize = 16.sp,
             color = Color.Gray
         )
-        if (isProcessing) {
-            LoadingScreen()
-        }
     }
 
 }

@@ -17,30 +17,40 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.inventory.ui.AppViewModel
+import androidx.compose.material3.NavigationBarItemDefaults
+import com.example.inventory.ui.theme.PrimaryGreen
+import androidx.compose.ui.graphics.Color
 
 @Composable
-fun BottomNavigationBar(navController: NavController,
-                        appViewModel: AppViewModel) {
+fun BottomNavigationBar(
+    navController: NavController,
+    appViewModel: AppViewModel
+) {
     NavigationBar(
         modifier = Modifier.fillMaxWidth(),
         containerColor = MaterialTheme.colorScheme.surface,
         contentColor = MaterialTheme.colorScheme.onSurface,
-
     ) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = navBackStackEntry?.destination
         val userId by appViewModel.userId
+
         val items = listOf(
-            DashboardDestination to Icons.Default.Dashboard,
-            UploadDestination to Icons.Default.CameraAlt,
-            HistoryDestination to Icons.Default.History,
-            SettingsDestination to Icons.Default.Settings
+            DashboardDestination to Icons.Filled.Dashboard,
+            UploadDestination to Icons.Filled.CameraAlt,
+            HistoryDestination to Icons.Filled.History,
+            SettingsDestination to Icons.Filled.Settings
         )
+
         items.forEach { (destination, icon) ->
+            val selected =
+                currentDestination?.hierarchy?.any { it.route == destination.route } == true
+
             NavigationBarItem(
                 icon = { Icon(icon, contentDescription = destination.route) },
                 label = {
@@ -49,26 +59,30 @@ fun BottomNavigationBar(navController: NavController,
                         fontSize = 12.sp
                     )
                 },
-                selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true,
+                selected = selected,
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = PrimaryGreen,
+                    selectedTextColor = PrimaryGreen,
+                    indicatorColor = Color.Transparent,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                ),
                 onClick = {
                     if (userId == 0) {
                         navController.navigate(LoginDestination.route) {
-                            popUpTo(0) { inclusive = true } // back to login if lost data
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = false
+                            }
                             launchSingleTop = true
+                            restoreState = false
                         }
                         return@NavigationBarItem
                     }
-                    val route = when (destination) {
-                        UploadDestination -> "${UploadDestination.route}/$userId"
-                        DashboardDestination -> "${DashboardDestination.route}/$userId"
-                        HistoryDestination -> "${destination.route}/$userId"
-                        SettingsDestination -> "${SettingsDestination.route}/$userId"
-                        else -> destination.route
-                    }
-                    navController.navigate(route) {
-                        popUpTo(navController.graph.startDestinationId) {
-                            saveState = true
-                        }
+
+                    if (selected) return@NavigationBarItem
+
+                    navController.navigate(destination.route) {
+                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                         launchSingleTop = true
                         restoreState = true
                     }
@@ -81,6 +95,6 @@ fun BottomNavigationBar(navController: NavController,
 @Preview
 @Composable
 fun BottomNavigationBarPreview() {
-    val navController = rememberNavController() // Mock NavController
+    val navController = rememberNavController()
     BottomNavigationBar(navController, AppViewModel())
 }

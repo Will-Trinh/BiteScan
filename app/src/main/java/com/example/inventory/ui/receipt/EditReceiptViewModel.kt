@@ -29,14 +29,6 @@ import java.util.concurrent.TimeUnit
 import kotlin.collections.forEach
 import com.example.inventory.data.OnlineReceiptsRepository
 
-//data class NutritionData(
-//    val name: String? = null,
-//    val protein: Double? = null,
-//    val carbs: Double? = null,
-//    val fats: Double? = null,
-//    val calories: Double? = null,
-//)
-
 class EditReceiptViewModel(
     private val itemsRepository: ItemsRepository,
     private val receiptsRepository: ReceiptsRepository,
@@ -44,7 +36,7 @@ class EditReceiptViewModel(
 ) : ViewModel() {
 
     private val _editUiState = MutableStateFlow(EditUiState())
-    private val nutritionApiUrl = "http://10.0.2.2:8000/nutrition/items"
+    private val nutritionApiUrl = "http://129.146.23.142:8080/nutrition/items"
     val editUiState: StateFlow<EditUiState> = _editUiState.asStateFlow()
     var deleteItems: List<Item> = emptyList()
 
@@ -163,7 +155,7 @@ class EditReceiptViewModel(
     }
 
     //save updated list item to database with the receipt id
-    fun saveUpdatedItems(receipt: Receipt) {
+    fun saveUpdatedItems(receipt: Receipt, userId: Int) {
         viewModelScope.launch {
             try {
                 //delete items
@@ -186,7 +178,7 @@ class EditReceiptViewModel(
                 val receiptID = receipt.receiptId
                 //syns client receipt to server
                 Log.d("EditReceiptVM", "Receipt ID $receiptID uploading to server")
-                onlineReceiptsRepository!!.uploadReceiptToServer(receiptID)
+                onlineReceiptsRepository!!.uploadReceiptToServer(receiptID, userId)
                 Log.d("EditReceiptVM", "Receipt ID $receiptID uploaded to server successfully")
                 _editUiState.value = _editUiState.value.copy(
                     receipt = receipt,
