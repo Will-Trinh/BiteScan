@@ -114,9 +114,9 @@ def delete_user(id: int, session: Session = Depends(get_session)):
 
     email_payload = {
         "sender": "thailand.davian@moonfee.com",
-        "recipients": [delete_user.email],
+        "recipients": [deleted_user.email],
         "subject": "BiteScan Account Deletion",
-        "text": f"Thanks for stopping by! We are sorry to see you go {delete_user.username}."
+        "text": f"Thanks for stopping by! We are sorry to see you go {deleted_user.username}."
     }
 
     smtp_client.send(**email_payload)
