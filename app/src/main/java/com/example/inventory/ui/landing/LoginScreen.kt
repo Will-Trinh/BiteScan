@@ -257,6 +257,7 @@ fun LoginScreen(
                 navController.currentBackStackEntry?.savedStateHandle?.set("userId", result.uid)
                 appViewModel.setUserId(result.uid)
                 appViewModel.setNameProfile(result.username?:"")
+                appViewModel.setEmail(result.email)
                 onLoginClick(result.uid)
             }
         }
