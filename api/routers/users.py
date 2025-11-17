@@ -90,9 +90,8 @@ def update_password(id: int, reset: ResetPasswordSchema, session: Session = Depe
 @router.delete("/{id}", status_code=204)
 def delete_user(id: int, session: Session = Depends(get_session)):
     stmt = (
-        update(User)
+        delete(User)
         .where(User.id == id) 
-        .values(disabled=True)
     )
 
     session.exec(stmt)
@@ -107,7 +106,8 @@ def delete_user(id: int, session: Session = Depends(get_session)):
 def get_user_receipts(user_id: int, session: Session = Depends(get_session)):
     stmt = (
         select(Receipt, ReceiptItem)
-        .outerjoin(ReceiptItem, ReceiptItem.receipt_id == Receipt.id)
+        .outerjoin(ReceiptItem, 
+                   ReceiptItem.receipt_id == Receipt.id)
         .where(Receipt.user_id == user_id)
     )
 
@@ -116,7 +116,7 @@ def get_user_receipts(user_id: int, session: Session = Depends(get_session)):
 
     receipts = []
     for receipt, receipt_item in rows:
-        receipt_dict = next((r for r in receipts if r.get("id") == receipt.id), None)
+        receipt_dict = next((r for r in receipts if r.get("receipt_id") == receipt.id), None)
         if not receipt_dict:
             receipt_dict = {
                 "receipt_id": receipt.id,
@@ -171,6 +171,7 @@ def create_receipt(user_id: int, receipt: ReceiptPost, items: list[ReceiptItem],
         session.add(db_item)
 
     session.commit()
+    return
 
 @router.delete("/{user_id}/receipts/{receipt_id}", status_code=204)
 def delete_receipt(user_id: int, receipt_id: int, session: Session = Depends(get_session)):
@@ -183,5 +184,6 @@ def delete_receipt(user_id: int, receipt_id: int, session: Session = Depends(get
 
     session.exec(stmt)
     session.commit()
+    return
 
 #endregion
