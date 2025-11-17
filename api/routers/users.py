@@ -103,7 +103,7 @@ def delete_user(id: int, session: Session = Depends(get_session)):
 
 #region receipts
 
-@router.get("/{user_id}/receipts", status_code=200, response_model=list[ReceiptSchema])
+@router.get("/{user_id}/receipts", status_code=200, response_model=dict[str, list[ReceiptSchema]])
 def get_user_receipts(user_id: int, session: Session = Depends(get_session)):
     stmt = (
         select(Receipt, ReceiptItem)
