@@ -90,9 +90,8 @@ def update_password(id: int, reset: ResetPasswordSchema, session: Session = Depe
 @router.delete("/{id}", status_code=204)
 def delete_user(id: int, session: Session = Depends(get_session)):
     stmt = (
-        update(User)
+        delete(User)
         .where(User.id == id) 
-        .values(disabled=True)
     )
 
     session.exec(stmt)
@@ -107,7 +106,8 @@ def delete_user(id: int, session: Session = Depends(get_session)):
 def get_user_receipts(user_id: int, session: Session = Depends(get_session)):
     stmt = (
         select(Receipt, ReceiptItem)
-        .outerjoin(ReceiptItem, ReceiptItem.receipt_id == Receipt.id)
+        .outerjoin(ReceiptItem, 
+                   ReceiptItem.receipt_id == Receipt.id)
         .where(Receipt.user_id == user_id)
     )
 
@@ -116,7 +116,7 @@ def get_user_receipts(user_id: int, session: Session = Depends(get_session)):
 
     receipts = []
     for receipt, receipt_item in rows:
-        receipt_dict = next((r for r in receipts if r["id"] == receipt.id), None)
+        receipt_dict = next((r for r in receipts if r.get("receipt_id") == receipt.id), None)
         if not receipt_dict:
             receipt_dict = {
                 "receipt_id": receipt.id,
@@ -141,19 +141,49 @@ def get_user_receipts(user_id: int, session: Session = Depends(get_session)):
 
 @router.post("/{user_id}/receipts", status_code=201)
 def create_receipt(user_id: int, receipt: ReceiptPost, items: list[ReceiptItem], session: Session = Depends(get_session)):
-    db_receipt = Receipt(**receipt.model_dump()) 
-    print(db_receipt)
+    stmt = (
+        select(Receipt)
+        .where(Receipt.id == receipt.id,
+               Receipt.user_id == user_id)
+    )
 
-    print(items)
+    result = session.exec(stmt)
+    
+    if result.first():
+        # update, delete all items and add them back later
+        stmt = (
+            delete(ReceiptItem)
+            .where(ReceiptItem.receipt_id == receipt.id,
+                    ReceiptItem.user_id == user_id
+            )
+        )
+        session.exec(stmt)
+    else:
+        # create
+        db_receipt = Receipt(**receipt.model_dump())
+        db_receipt.user_id = user_id
+        session.add(db_receipt)
+
+    for i in items:
+        db_item = ReceiptItem(**i.model_dump())
+        db_item.user_id = user_id
+        db_item.receipt_id = receipt.id
+        session.add(db_item)
+
+    session.commit()
+    return
 
 @router.delete("/{user_id}/receipts/{receipt_id}", status_code=204)
 def delete_receipt(user_id: int, receipt_id: int, session: Session = Depends(get_session)):
     stmt = (
         delete(Receipt)
-        .where(Receipt.id == receipt_id & Receipt.user_id == user_id)
+        .where(Receipt.id == receipt_id,
+                Receipt.user_id == user_id
+        )
     )
 
     session.exec(stmt)
     session.commit()
+    return
 
 #endregion

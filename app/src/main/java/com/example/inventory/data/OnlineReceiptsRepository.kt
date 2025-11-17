@@ -100,7 +100,7 @@ class OnlineReceiptsRepository(
     }
 
     // API UploadReceipt
-    suspend fun uploadReceiptToServer(receiptId: Int, userId: Int) {
+    suspend fun uploadReceiptToServer(receiptId: Int, userId: Int) = withContext(Dispatchers.IO) {
         val receipt = receiptsRepository.getReceipt(receiptId)
             ?: throw IllegalStateException("Receipt not found: $receiptId")
 
@@ -120,7 +120,7 @@ class OnlineReceiptsRepository(
             put("id", receipt.receiptId)
             put("purchase_date", receipt.date)
             put("store", receipt.source)
-            //put("status", receipt.status)
+            put("status", receipt.status)
         }
         val itemsArray = JSONArray()
 
@@ -154,6 +154,8 @@ class OnlineReceiptsRepository(
             .post(body)
             .addHeader("User-Agent", "AndroidApp/1.0")
             .build()
+
+        Log.d("OnlineReceipts", "sending post request now")
 
         val response = client.newCall(request).execute()
         val responseBody = response.body?.string() ?: "{}"

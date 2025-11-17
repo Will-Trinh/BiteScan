@@ -261,6 +261,7 @@ fun LoginScreen(
 
                 appViewModel.setUserId(result.uid)
                 appViewModel.setNameProfile(result.username?:"")
+                appViewModel.setEmail(result.email)
                 onLoginClick(result.uid)
             }
         }
