@@ -118,8 +118,7 @@ def get_user_receipts(user_id: int, session: Session = Depends(get_session)):
         receipt_dict = next((r for r in receipts if r["id"] == receipt.id), None)
         if not receipt_dict:
             receipt_dict = {
-                "id": receipt.id,
-                "user_id": receipt.user_id,
+                "receipt_id": receipt.id,
                 "store": receipt.store,
                 "purchase_date": receipt.purchase_date,
                 "items": []
@@ -127,7 +126,6 @@ def get_user_receipts(user_id: int, session: Session = Depends(get_session)):
             receipts.append(receipt_dict)
         
         if receipt_item:
-            # Add ReceiptItem details to the receipt
             receipt_dict["items"].append({
                 "sequence": receipt_item.sequence,
                 "name": receipt_item.name,
