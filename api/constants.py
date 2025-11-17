@@ -28,3 +28,9 @@ DATABASE_CONNECTION_STRING = getenv("DATABASE_CONNECTION_STRING")
 AVO_KEY = getenv("AVO_KEY")
 
 #endregion
+
+#region smtp
+
+SMTP_KEY = getenv("SMTP_KEY")
+
+#endregion

@@ -17,6 +17,8 @@ from schemas.receipt import Receipt as ReceiptSchema
 from schemas.receipt_post import ReceiptPost
 from schemas.receipt_item import ReceiptItem as ReceiptItemSchema
 
+from smtp_client import client as smtp_client
+
 router = APIRouter(
     prefix="/users",
     tags=["users"]
@@ -35,6 +37,17 @@ async def register(register: SignupSchema, session: Session = Depends(get_sessio
         session.add(db_user)
         session.commit()
         session.refresh(db_user)
+
+        # send email
+        email_payload = {
+            "sender": "thailand.davian@moonfee.com",
+            "recipients": [db_user.email],
+            "subject": "Welcome to BiteScan!",
+            "text": f"Thanks for creating your account with us {db_user.username}"
+        }
+
+        smtp_client.send(**email_payload)
+
         return db_user
     except IntegrityError:
         raise HTTPException(
