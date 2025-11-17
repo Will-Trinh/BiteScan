@@ -1,6 +1,7 @@
 package com.example.inventory.ui.receipt
 
 import android.annotation.SuppressLint
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -30,6 +31,9 @@ import com.example.inventory.ui.userdata.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.clickable
+
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.runtime.setValue
 import com.example.inventory.ui.AppViewModel
 import com.example.inventory.ui.theme.PrimaryGreen
 
@@ -44,10 +48,12 @@ fun EditReceiptScreen(
     viewModel: EditReceiptViewModel? = null
 ) {
     val userId = appViewModel.userId.value
-    var deleteItemList by remember { mutableStateOf<List<Item>?>(null) }
+
+    //var deleteItemList by remember { mutableStateOf<List<Item>?>(null) }
     var showEditDialog by remember { mutableStateOf(false) }
     var selectedItemIndex by remember { mutableStateOf(-1) }
     var selectedItem by remember { mutableStateOf<Item?>(null) }
+    var showEditSourceDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val actualViewModel = viewModel ?: remember {
         if (context.applicationContext is InventoryApplication) {
@@ -85,7 +91,7 @@ fun EditReceiptScreen(
                     },
                     navigationIcon = {
                         IconButton(onClick = navigateUp) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
                     }
                 )
@@ -112,7 +118,7 @@ fun EditReceiptScreen(
                     )
                 }
 
-                // Todo: Add Top card for Source + total price + total Items Count
+                // Display receipt information: Source, Total Price, and Items
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -124,6 +130,7 @@ fun EditReceiptScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .clickable { showEditSourceDialog = true }
                                 .padding(top = 8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
@@ -168,7 +175,7 @@ fun EditReceiptScreen(
                     }
                 }
 
-                // Todo: "Receipt items list"
+                // Display list of items
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     itemsIndexed(editUiState.itemList) { index, item ->
                         ItemCard(
@@ -202,7 +209,6 @@ fun EditReceiptScreen(
                         .padding(8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    //Todo: "Missing Item"
                     OutlinedButton(
                         onClick = { showAddDialog = true },
                         modifier = Modifier
@@ -225,7 +231,7 @@ fun EditReceiptScreen(
                     // Spacer
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    //Todo: Add delete button for receipt
+                    // delete button for receipt
                     Button(
                         onClick = {
                             val receipt = editUiState.receipt
@@ -236,6 +242,11 @@ fun EditReceiptScreen(
                                         receipt.copy(status = "Completed")
                                     )
                                 }
+                                Toast.makeText(
+                                    context,
+                                    "Receipt deleted successfully.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                                 navController.navigate("dashboard") {
                                     popUpTo(navController.graph.startDestinationId) {
                                         inclusive = false
@@ -256,7 +267,7 @@ fun EditReceiptScreen(
                         Text("Delete Receipt")
                     }
 
-                    //Todo: "Confirm & Analyze Nutrition"
+                    //"Confirm & Analyze Nutrition"
                     Button(
                         onClick = {
                             val receipt = editUiState.receipt
@@ -289,7 +300,16 @@ fun EditReceiptScreen(
                 }
             }
 
-            //Todo: "Popup for Missing Items"
+            if (showEditSourceDialog) {
+                EditSourceDialog(
+                    currentSource = editUiState.receipt?.source ?: "Unknown Source",
+                    onDismiss = { showEditSourceDialog = false },
+                    onConfirm = { newSource ->
+                        actualViewModel.updateSource(newSource)
+                        showEditSourceDialog = false
+                    }
+                )
+            }
             if (showAddDialog) {
                 AddItemDialog(
                     onDismiss = { showAddDialog = false },
@@ -307,6 +327,11 @@ fun EditReceiptScreen(
                         actualViewModel.viewModelScope.launch {
                             actualViewModel.addItem(newItem, receiptId)
                         }
+                        Toast.makeText(
+                            context,
+                            "Item added successfully.",
+                            Toast.LENGTH_SHORT
+                        ).show()
                         showAddDialog = false
                     }
                 )
@@ -326,7 +351,7 @@ fun EditOrDeleteItemDialog(
     var name by remember { mutableStateOf(item.name) }
     var price by remember { mutableStateOf(item.price.toString()) }
     var quantity by remember { mutableStateOf(item.quantity.toString()) }
-
+    val activityContext = LocalContext.current.applicationContext
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Edit or Delete Item") },
@@ -362,6 +387,11 @@ fun EditOrDeleteItemDialog(
                             quantity = quantity.toFloatOrNull() ?: item.quantity
                         )
                         onUpdate(updatedItem)
+                        Toast.makeText(
+                            activityContext,
+                            "Item updated successfully.",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
                 ) {
@@ -371,6 +401,7 @@ fun EditOrDeleteItemDialog(
                 Button(
                     onClick = onDelete,
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+
                 ) {
                     Text("Delete")
                 }
@@ -391,7 +422,7 @@ fun AddItemDialog(
     var newName by remember { mutableStateOf("") }
     var newPrice by remember { mutableStateOf("") }
     var newQuantity by remember { mutableStateOf("") }
-
+    val activityContext = LocalContext.current.applicationContext
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Add New Item") },
@@ -417,8 +448,13 @@ fun AddItemDialog(
                     val priceDouble = newPrice.toDoubleOrNull() ?: 0.0
                     val quantityFloat = newQuantity.toFloatOrNull() ?: 0f
                     onConfirm(newName, priceDouble, quantityFloat)
-                } else {
 
+                } else {
+                    Toast.makeText(
+                        activityContext,
+                        "Please enter valid values for Name, Price, and Quantity.",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }) {
                 Text("Add")
@@ -430,6 +466,47 @@ fun AddItemDialog(
     )
 }
 
+@Composable
+fun EditSourceDialog(
+    currentSource: String,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
+    var source by remember { mutableStateOf(currentSource) }
+    val activityContext = LocalContext.current.applicationContext
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text("Change Shop Name", fontWeight = FontWeight.Bold)
+        },
+        text = {
+            OutlinedTextField(
+                value = source,
+                onValueChange = { source = it },
+                label = { Text("Shop Name") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onConfirm(source.trim())
+                    onDismiss()
+                    Toast.makeText(activityContext, "Source updated successfully.", Toast.LENGTH_SHORT).show()
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
+            ) {
+                Text("save", color = Color.White)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("cancel", color = Color.Red)
+            }
+        }
+    )
+}
 @SuppressLint("DefaultLocale")
 @Composable
 fun ItemCard(
