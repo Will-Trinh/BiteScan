@@ -208,10 +208,8 @@ class EditReceiptViewModel(
         viewModelScope.launch {
             try {
                 withTimeout(300000L) {  // 30s timeout to prevent ANR
-                    val nutritionData = withContext(Dispatchers.IO) { _processItems() }
+                    withContext(Dispatchers.IO) { _processItems() }
                 }
-            } catch (e: TimeoutCancellationException) {
-                Log.e("UploadViewModel", "nutrition timed out")
             } catch (e: Exception) {
                 Log.e("UploadViewModel", "nutrition failed: ${e.message}", e)  // Log stack trace
             }
@@ -278,8 +276,7 @@ class EditReceiptViewModel(
             for (i in 0 until responseJson.length()) {
                 val itemJson = responseJson.getJSONObject(i)
                 val dateString = itemJson.optString("date")
-                val date = java.sql.Date(
-                    SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(dateString).time
+                val date = Date(SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(dateString).time
                 )
                 nutritionList.add(
                     Item(

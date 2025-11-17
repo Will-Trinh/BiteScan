@@ -91,10 +91,6 @@ class UploadViewModel(
         )
     }
 
-    private fun setProcessing(processing: Boolean) {
-        _uploadProgress.value = _uploadProgress.value.copy(isProcessing = processing)
-    }
-
     private fun finishAll() {
         _uploadProgress.value = _uploadProgress.value.copy(
             isProcessing = false,
@@ -110,7 +106,6 @@ class UploadViewModel(
     val ocrState: StateFlow<OcrState> = _ocrState
 
     private val _isProcessing = MutableStateFlow(false)
-    val isProcessing: StateFlow<Boolean> = _isProcessing
 
     private val ocrApiUrl = "http://129.146.23.142:8080/ocr"
 
@@ -145,9 +140,6 @@ class UploadViewModel(
                     _ocrState.value = OcrState.Success(receiptData)
                     updateStep(4, StepStatus.COMPLETED)
                 }
-            } catch (e: TimeoutCancellationException) {
-                Log.e("UploadViewModel", "OCR timed out after 30s")
-                _ocrState.value = OcrState.Error("Processing timed out. Try a smaller image.")
             } catch (e: Exception) {
                 Log.e("UploadViewModel", "OCR failed: ${e.message}", e)  // Log stack trace
                 _ocrState.value = OcrState.Error(e.message ?: "Unknown error")
