@@ -118,7 +118,7 @@ class OnlineReceiptsRepository(
         // { "user_id": 123, "receipt": {...}, "items": [...] }
         val receiptJson = JSONObject().apply {
             put("id", receipt.receiptId)
-            put("purchase_date", receipt.date.time)
+            put("purchase_date", receipt.date)
             put("store", receipt.source)
             //put("status", receipt.status)
         }

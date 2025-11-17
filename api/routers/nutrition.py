@@ -34,10 +34,13 @@ async def get_nutrition(items: list[Item]):
     """
 
     for i in items:
-        result: IngredientResult = client.analyze_ingredient(i.name)
-        i.calories = result.nutrition.calories
-        i.carbs = result.nutrition.carbohydrates_total
-        i.fats = result.nutrition.total_fat_total
-        i.protein = result.nutrition.protein_total
-
+        try:
+            result: IngredientResult = client.analyze_ingredient(i.name)
+            i.calories = result.nutrition.calories
+            i.carbs = result.nutrition.carbohydrates_total
+            i.fats = result.nutrition.total_fat_total
+            i.protein = result.nutrition.protein_total
+        except ValueError as e:
+            print(e)
+        
     return items
