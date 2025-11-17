@@ -33,7 +33,7 @@ class ReceiptViewModel(
             (receiptsRepository as? ReceiptsRepositoryImpl)?.fetchAndSyncReceipts(userId)
             _receiptUiState.value = _receiptUiState.value.copy(syncStatus = SyncStatus.SUCCESS)}
             catch (e: Exception) {
-                Log.d("History-OnlineReceipt", "failed to fetch and sync receipts for user $userId")
+                Log.d("History-OnlineReceipt", "failed to fetch and sync receipts for user $userId $e")
                 _receiptUiState.value = _receiptUiState.value.copy(syncStatus = SyncStatus.ERROR)
             }
             receiptsRepository.getReceiptsForUser(userId).collect { receipts ->
