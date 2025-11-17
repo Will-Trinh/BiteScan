@@ -34,10 +34,18 @@ async def get_nutrition(items: list[Item]):
     """
 
     for i in items:
-        result: IngredientResult = client.analyze_ingredient(i.name)
-        i.calories = result.nutrition.calories
-        i.carbs = result.nutrition.carbohydrates_total
-        i.fats = result.nutrition.total_fat_total
-        i.protein = result.nutrition.protein_total
+        if i.calories != 0:
+            print(f"skipping {i.name}, data already present")
+            continue
+        try:
+            result: IngredientResult = client.analyze_ingredient(i.name)
+            i.calories = result.nutrition.calories
+            i.carbs = result.nutrition.carbohydrates_total
+            i.fats = result.nutrition.total_fat_total
+            i.protein = result.nutrition.protein_total
+            print(f"Nutirion hit: {i.name}")
+        except:
+            print(f"Validation Error: no nutrition found for item - {i.name}")
 
+    print("analsyis complete")
     return items

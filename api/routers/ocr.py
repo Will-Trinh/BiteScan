@@ -38,8 +38,13 @@ async def ocr_receipt(data: dict):
 
         # Parse CLI output as JSON
         parsed_result = json.loads(result.stdout.strip())
+
+        for item in parsed_result["line_items"]:
+            if not item.get("item_quantity"):
+                item["item_quantity"] = 1
+
         print(f"CLI output parsed: {parsed_result}")
-        #TODO: if parsed result containts no qunaity: default to 1
+
         return parsed_result
     except CalledProcessError as e:
         print(f"CLI error: {e.stderr}")

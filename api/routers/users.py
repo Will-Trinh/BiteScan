@@ -1,6 +1,6 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import Session, select, update
+from sqlmodel import Session, select, update, delete
 from sqlalchemy.exc import IntegrityError
 
 from database import get_session
@@ -141,9 +141,34 @@ def get_user_receipts(user_id: int, session: Session = Depends(get_session)):
 
 @router.post("/{user_id}/receipts", status_code=201)
 def create_receipt(user_id: int, receipt: ReceiptPost, items: list[ReceiptItem], session: Session = Depends(get_session)):
-    db_receipt = Receipt(**receipt.model_dump()) 
+    stmt = (
+        delete(ReceiptItem)
+        .where(ReceiptItem.receipt_id == receipt.id,
+                ReceiptItem.user_id == user_id
+        )
+    )
+
+    session.exec(stmt)
+
+    stmt = (
+
+    )
+    db_receipt = Receipt(**receipt.model_dump())
+    db_receipt.user_id = user_id
     print(db_receipt)
 
     print(items)
+
+@router.delete("/{user_id}/receipts/{receipt_id}", status_code=204)
+def delete_receipt(user_id: int, receipt_id: int, session: Session = Depends(get_session)):
+    stmt = (
+        delete(Receipt)
+        .where(Receipt.id == receipt_id,
+                Receipt.user_id == user_id
+        )
+    )
+
+    session.exec(stmt)
+    session.commit()
 
 #endregion

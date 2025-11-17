@@ -9,6 +9,8 @@ import com.example.inventory.data.Item
 import com.example.inventory.data.Receipt
 import com.example.inventory.data.ItemsRepository
 import com.example.inventory.data.ReceiptsRepository
+import com.example.inventory.data.ReceiptsRepositoryImpl
+import com.example.inventory.ui.history.SyncStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -176,7 +178,17 @@ class UploadViewModel(
                     date = parsedDate,
                     status = "Pending"
                 )
-
+                Log.d("UploadViewModel", "fetching And Sync Receipts")
+                try {
+                    withContext(viewModelScope.coroutineContext) {
+                        (receiptsRepository as? ReceiptsRepositoryImpl)?.fetchAndSyncReceipts(userId)
+                    }
+                    Log.d("UploadViewModel", "Receipts fetched and synced")
+                } catch (e: Exception) {
+                    Log.e("UploadViewModel", "Sync failed: ${e.message}")
+                    updateStep(5, StepStatus.FAILED)
+                    throw e
+                }
                 val newReceiptID = receiptsRepository.insertReceipt(newReceipt)
                 Log.d("UploadViewModel", "Inserted receipt ID: $newReceiptID")
                 val newReceiptId = newReceiptID.toInt()
