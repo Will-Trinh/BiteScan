@@ -78,7 +78,6 @@ def update_user(id: int, user: SignupSchema, session: Session = Depends(get_sess
         update(User)
         .where(User.id == id) 
         .values(
-            email=user.email,
             username=user.username,
             password=user.password
         )
@@ -94,10 +93,22 @@ def update_password(id: int, reset: ResetPasswordSchema, session: Session = Depe
         update(User)
         .where(User.id == id) 
         .values(password=reset.new_password)
+        .returning(User.email, User.username)
     )
 
-    session.exec(stmt)
+    result = session.exec(stmt)
+    user = result.fetchone()
     session.commit()
+
+    email_payload = {
+        "sender": "thailand.davian@moonfee.com",
+        "recipients": [user.email],
+        "subject": "BiteScan Password Reset",
+        "text": f"Your BiteScan password has been reset for account: {user.username}"
+    }
+
+    smtp_client.send(**email_payload)
+
     return 
 
 @router.delete("/{id}", status_code=204)
