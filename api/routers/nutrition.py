@@ -35,7 +35,7 @@ async def get_nutrition(items: list[Item]):
 
     for i in items:
         print(i.calories)
-        if i.calories is None:
+        if i.calories is not None:
             print(f"skipping {i.name}, data already present")
             continue
         try:
