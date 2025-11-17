@@ -40,7 +40,9 @@ async def get_nutrition(items: list[Item]):
             i.carbs = result.nutrition.carbohydrates_total
             i.fats = result.nutrition.total_fat_total
             i.protein = result.nutrition.protein_total
+            print(f"Nutirion hit: {i.name}")
         except:
             print(f"Validation Error: no nutrition found for item - {i.name}")
-        
+
+    print("analsyis complete")
     return items
