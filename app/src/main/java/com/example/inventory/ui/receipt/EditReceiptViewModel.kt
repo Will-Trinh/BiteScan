@@ -187,7 +187,7 @@ class EditReceiptViewModel(
                 Log.d("EditReceiptVM", "Items saved successfully")
 
             } catch (e: Exception) {
-                Log.e("EditReceiptVM", " Error saving items: ${e.message}")
+                Log.e("EditReceiptVM", " Error saving items: ${e}")
             }
         }
     }

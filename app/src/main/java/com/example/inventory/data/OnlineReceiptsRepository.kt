@@ -117,9 +117,10 @@ class OnlineReceiptsRepository(
 
         // { "user_id": 123, "receipt": {...}, "items": [...] }
         val receiptJson = JSONObject().apply {
+            put("id", receipt.receiptId)
             put("purchase_date", receipt.date.time)
             put("store", receipt.source)
-            put("status", receipt.status)
+            //put("status", receipt.status)
         }
         val itemsArray = JSONArray()
 
@@ -141,7 +142,6 @@ class OnlineReceiptsRepository(
         }
 
         val requestJson = JSONObject().apply {
-            put("user_id", userId)
             put("receipt", receiptJson)
             put("items", itemsArray)
         }
