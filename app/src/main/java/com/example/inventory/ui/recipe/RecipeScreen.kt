@@ -30,38 +30,56 @@ import com.example.inventory.ui.AppViewModel
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.material.icons.filled.ArrowForward
+import com.example.inventory.InventoryApplication
+import com.example.inventory.ui.receipt.EditReceiptViewModel
 import com.example.inventory.ui.theme.CookingAssistantTheme
 import com.example.inventory.ui.theme.PrimaryGreen
 import com.example.inventory.ui.theme.LightGreen
+import com.example.inventory.ui.userdata.FakeItemsRepository
+import com.example.inventory.ui.userdata.FakeReceiptsRepository
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun RecipeRecommendationScreen(
     navController: NavController,
     modifier: Modifier = Modifier,
+    viewModel: RecipeViewModel? = null,
     appViewModel: AppViewModel
 ) {
     val userId = appViewModel.userId.value
     val context = androidx.compose.ui.platform.LocalContext.current
-    val appContainer = (context.applicationContext as com.example.inventory.InventoryApplication).container
-
-    val viewModel: RecipeViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
-        factory = object : androidx.lifecycle.ViewModelProvider.Factory {
-            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-                if (modelClass.isAssignableFrom(RecipeViewModel::class.java)) {
-                    @Suppress("UNCHECKED_CAST")
-                    return RecipeViewModel(
-                        itemsRepository = appContainer.itemsRepository,
-                        receiptsRepository = appContainer.receiptsRepository,
-                        appViewModel = appViewModel
-                    ) as T
-                }
-                throw IllegalArgumentException("Unknown ViewModel class")
-            }
+    val actualViewModel = viewModel ?: remember {
+        if (context.applicationContext is InventoryApplication) {
+            val appContainer = (context.applicationContext as InventoryApplication).container
+            RecipeViewModel(
+                itemsRepository = appContainer.itemsRepository,
+                receiptsRepository = appContainer.receiptsRepository,
+            )
+        } else {
+            // Fallback for preview environment
+            RecipeViewModel(
+                itemsRepository = FakeItemsRepository(),
+                receiptsRepository = FakeReceiptsRepository()
+            )
         }
-    )
+    }
+//    val viewModel: RecipeViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+//        factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+//            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+//                if (modelClass.isAssignableFrom(RecipeViewModel::class.java)) {
+//                    @Suppress("UNCHECKED_CAST")
+//                    return RecipeViewModel(
+//                        itemsRepository = appContainer.itemsRepository,
+//                        receiptsRepository = appContainer.receiptsRepository,
+//                        appViewModel = appViewModel
+//                    ) as T
+//                }
+//                throw IllegalArgumentException("Unknown ViewModel class")
+//            }
+//        }
+//    )
 
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by actualViewModel.uiState.collectAsState()
 
     CookingAssistantTheme {
         Scaffold(
@@ -95,7 +113,7 @@ fun RecipeRecommendationScreen(
             ) {
                 RecipeBody(
                     uiState = uiState,
-                    onFilterClick = viewModel::toggleFilter,
+                    onFilterClick = actualViewModel::toggleFilter,
                     navController = navController,
                     modifier = Modifier.fillMaxSize(),
                     appViewModel = appViewModel

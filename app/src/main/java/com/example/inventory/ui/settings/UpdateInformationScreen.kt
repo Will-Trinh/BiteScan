@@ -29,8 +29,15 @@ import com.example.inventory.InventoryApplication
 import androidx.compose.ui.platform.LocalContext
 import com.example.inventory.data.OfflineUsersRepository
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import com.example.inventory.ui.AppViewModel
 import com.example.inventory.ui.theme.PrimaryGreen
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.json.JSONObject
+import java.io.OutputStreamWriter
+import java.net.HttpURLConnection
+import java.net.URL
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,6 +46,7 @@ fun UpdateInformationScreen(
     appViewModel: AppViewModel,
     modifier: Modifier = Modifier
 ) {
+    val scope = rememberCoroutineScope()
     val userId = appViewModel.userId.value
     val context = LocalContext.current
     val appContainer = (context.applicationContext as InventoryApplication).container
@@ -145,6 +153,28 @@ fun UpdateInformationScreen(
                             newPassword = uiState.newPassword,
                             retypePassword = uiState.retypePassword
                         )
+                        scope.launch(Dispatchers.IO) {
+                            try {
+                                val apiUrl = URL("http://129.146.23.142:8080/users/$userId")
+                                val conn = apiUrl.openConnection() as HttpURLConnection
+                                //Set timeout (10s connect, 15s response)
+                                conn.connectTimeout = 10_000
+                                conn.readTimeout = 15_000
+                                conn.requestMethod = "PATCH"
+                                conn.setRequestProperty("Content-Type", "application/json")
+                                conn.doOutput = true
+                                val json = JSONObject().apply {
+                                    put("email", "_@gmail.com")
+                                    put("password", uiState.newPassword)
+                                    put("username", uiState.userName)
+                                }
+                                OutputStreamWriter(conn.outputStream).use { it.write(json.toString()) }
+                                val responseCode = conn.responseCode
+                                println(responseCode)
+                            } catch (e: Exception) {
+                                println(e)
+                            }
+                        }
                         navController.popBackStack() // Return to Settings after update
                     },
                     modifier = Modifier

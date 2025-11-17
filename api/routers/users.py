@@ -17,6 +17,8 @@ from schemas.receipt import Receipt as ReceiptSchema
 from schemas.receipt_post import ReceiptPost
 from schemas.receipt_item import ReceiptItem as ReceiptItemSchema
 
+from smtp_client import client as smtp_client
+
 router = APIRouter(
     prefix="/users",
     tags=["users"]
@@ -35,6 +37,17 @@ async def register(register: SignupSchema, session: Session = Depends(get_sessio
         session.add(db_user)
         session.commit()
         session.refresh(db_user)
+
+        # send email
+        email_payload = {
+            "sender": "thailand.davian@moonfee.com",
+            "recipients": [db_user.email],
+            "subject": "Welcome to BiteScan!",
+            "text": f"Thanks for creating your account with us {db_user.username}"
+        }
+
+        smtp_client.send(**email_payload)
+
         return db_user
     except IntegrityError:
         raise HTTPException(
@@ -65,7 +78,6 @@ def update_user(id: int, user: SignupSchema, session: Session = Depends(get_sess
         update(User)
         .where(User.id == id) 
         .values(
-            email=user.email,
             username=user.username,
             password=user.password
         )
@@ -81,22 +93,45 @@ def update_password(id: int, reset: ResetPasswordSchema, session: Session = Depe
         update(User)
         .where(User.id == id) 
         .values(password=reset.new_password)
+        .returning(User.email, User.username)
     )
 
-    session.exec(stmt)
+    result = session.exec(stmt)
+    user = result.fetchone()
     session.commit()
+
+    email_payload = {
+        "sender": "thailand.davian@moonfee.com",
+        "recipients": [user.email],
+        "subject": "BiteScan Password Reset",
+        "text": f"Your BiteScan password has been reset for account: {user.username}"
+    }
+
+    smtp_client.send(**email_payload)
+
     return 
 
 @router.delete("/{id}", status_code=204)
 def delete_user(id: int, session: Session = Depends(get_session)):
     stmt = (
-        update(User)
-        .where(User.id == id) 
-        .values(disabled=True)
+        delete(User)
+        .where(User.id == id)
+        .returning(User.email, User.username)
     )
 
-    session.exec(stmt)
+    result = session.exec(stmt)
+    deleted_user = result.fetchone()
     session.commit()
+
+    email_payload = {
+        "sender": "thailand.davian@moonfee.com",
+        "recipients": [deleted_user.email],
+        "subject": "BiteScan Account Deletion",
+        "text": f"Thanks for stopping by! We are sorry to see you go {deleted_user.username}."
+    }
+
+    smtp_client.send(**email_payload)
+    
     return 
 
 #endregion
@@ -107,7 +142,8 @@ def delete_user(id: int, session: Session = Depends(get_session)):
 def get_user_receipts(user_id: int, session: Session = Depends(get_session)):
     stmt = (
         select(Receipt, ReceiptItem)
-        .outerjoin(ReceiptItem, ReceiptItem.receipt_id == Receipt.id)
+        .outerjoin(ReceiptItem, 
+                   ReceiptItem.receipt_id == Receipt.id)
         .where(Receipt.user_id == user_id)
     )
 
@@ -116,7 +152,7 @@ def get_user_receipts(user_id: int, session: Session = Depends(get_session)):
 
     receipts = []
     for receipt, receipt_item in rows:
-        receipt_dict = next((r for r in receipts if r["id"] == receipt.id), None)
+        receipt_dict = next((r for r in receipts if r.get("receipt_id") == receipt.id), None)
         if not receipt_dict:
             receipt_dict = {
                 "receipt_id": receipt.id,
@@ -171,6 +207,7 @@ def create_receipt(user_id: int, receipt: ReceiptPost, items: list[ReceiptItem],
         session.add(db_item)
 
     session.commit()
+    return
 
 @router.delete("/{user_id}/receipts/{receipt_id}", status_code=204)
 def delete_receipt(user_id: int, receipt_id: int, session: Session = Depends(get_session)):
@@ -183,5 +220,6 @@ def delete_receipt(user_id: int, receipt_id: int, session: Session = Depends(get
 
     session.exec(stmt)
     session.commit()
+    return
 
 #endregion
