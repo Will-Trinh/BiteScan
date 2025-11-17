@@ -162,7 +162,7 @@ def create_receipt(user_id: int, receipt: ReceiptPost, items: list[ReceiptItem],
         # create
         db_receipt = Receipt(**receipt.model_dump())
         db_receipt.user_id = user_id
-        session.add()
+        session.add(db_receipt)
 
     for i in items:
         db_item = ReceiptItem(**i.model_dump())
