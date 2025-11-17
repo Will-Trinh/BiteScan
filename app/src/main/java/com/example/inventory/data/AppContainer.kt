@@ -27,6 +27,7 @@ interface AppContainer {
     val recipesRepository: RecipesRepository
     val usersRepository: UsersRepository
     val onlineReceiptsRepository: OnlineReceiptsRepository
+
 }
 
 /**
@@ -54,7 +55,6 @@ class AppDataContainer(private val context: Context) : AppContainer {
         OnlineReceiptsRepository.create(
             receiptsRepository = OfflineReceiptsRepository(database.receiptDao()),
             itemsRepository = itemsRepository,
-            appViewModel = appViewModel
         )
     }
 

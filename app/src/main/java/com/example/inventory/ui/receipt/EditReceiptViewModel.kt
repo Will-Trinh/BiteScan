@@ -155,7 +155,7 @@ class EditReceiptViewModel(
     }
 
     //save updated list item to database with the receipt id
-    fun saveUpdatedItems(receipt: Receipt) {
+    fun saveUpdatedItems(receipt: Receipt, userId: Int) {
         viewModelScope.launch {
             try {
                 //delete items
@@ -178,7 +178,7 @@ class EditReceiptViewModel(
                 val receiptID = receipt.receiptId
                 //syns client receipt to server
                 Log.d("EditReceiptVM", "Receipt ID $receiptID uploading to server")
-                onlineReceiptsRepository!!.uploadReceiptToServer(receiptID)
+                onlineReceiptsRepository!!.uploadReceiptToServer(receiptID, userId)
                 Log.d("EditReceiptVM", "Receipt ID $receiptID uploaded to server successfully")
                 _editUiState.value = _editUiState.value.copy(
                     receipt = receipt,

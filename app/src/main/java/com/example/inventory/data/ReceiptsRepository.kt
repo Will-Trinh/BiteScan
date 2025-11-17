@@ -30,4 +30,5 @@ interface ReceiptsRepository {
     suspend fun insertReceipt(receipt: Receipt): Long
     suspend fun deleteReceipt(receipt: Receipt)
     suspend fun updateReceipt(receipt: Receipt)
+    suspend fun fetchAndSyncReceipts(userId: Int): List<Receipt>
 }

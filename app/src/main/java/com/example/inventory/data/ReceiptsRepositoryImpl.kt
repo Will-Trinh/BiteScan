@@ -20,9 +20,9 @@ class ReceiptsRepositoryImpl(
     override suspend fun updateReceipt(receipt: Receipt) = offlineRepo.updateReceipt(receipt)
 
 
-    suspend fun fetchAndSyncReceipts(userId: Int): List<Receipt> {
+    override suspend fun fetchAndSyncReceipts(userId: Int): List<Receipt> {
         return if (isNetworkAvailable()) {
-            onlineRepo.syncReceiptsFromServer()
+            onlineRepo.syncReceiptsFromServer(userId)
             offlineRepo.getReceiptsForUser(userId).first()
         } else {
             offlineRepo.getReceiptsForUser(userId).first()

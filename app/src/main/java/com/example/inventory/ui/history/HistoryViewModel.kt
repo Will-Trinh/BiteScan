@@ -24,34 +24,34 @@ class ReceiptViewModel(
     private val _receiptUiState = MutableStateFlow(ReceiptUiState())
     val receiptUiState: StateFlow<ReceiptUiState> = _receiptUiState.asStateFlow()
 
+
     fun loadReceiptsUser(userId : Int) {
         viewModelScope.launch {
+            _receiptUiState.value = _receiptUiState.value.copy(syncStatus = SyncStatus.LOADING)
             Log.d("ReceiptViewModel", "Loading receipts for user $userId")
-            receiptsRepository.getReceiptsForUser(userId)
-                .collect { receipts ->
-                    println("Receipts for user $userId: $receipts")
-                    _receiptUiState.value = ReceiptUiState(receiptList = receipts)
-                    updateDayAndPrice(receipts)
+            try{
+            (receiptsRepository as? ReceiptsRepositoryImpl)?.fetchAndSyncReceipts(userId)
+            _receiptUiState.value = _receiptUiState.value.copy(syncStatus = SyncStatus.SUCCESS)}
+            catch (e: Exception) {
+                Log.d("History-OnlineReceipt", "failed to fetch and sync receipts for user $userId")
+                _receiptUiState.value = _receiptUiState.value.copy(syncStatus = SyncStatus.ERROR)
+            }
+            receiptsRepository.getReceiptsForUser(userId).collect { receipts ->
+                println("Receipts for user $userId: $receipts")
+
+                val newStatus = when {
+                    _receiptUiState.value.syncStatus == SyncStatus.ERROR -> SyncStatus.ERROR
+                    else -> _receiptUiState.value.syncStatus
                 }
+                _receiptUiState.value = _receiptUiState.value.copy(
+                    receiptList = receipts,
+                    syncStatus = newStatus
+                )
+                updateDayAndPrice(receipts)
+            }
 
         }
     }
-
-    //TODo: when api has done, use the online receipt data to replace the offline receipt data
-//    fun loadReceiptsUser() {
-//        viewModelScope.launch {
-//            // Syncs with online Receipt data
-//            try {
-//                val syncedReceipts = (receiptsRepository as? ReceiptsRepositoryImpl)?.fetchAndSyncReceipts(userId)
-//                    ?: receiptsRepository.getReceiptsForUser(userId).first()
-//                _receiptUiState.value = _receiptUiState.value.copy(receiptList = syncedReceipts)
-//                updateDayAndPrice(syncedReceipts)
-//            } catch (e: Exception) {
-//                println("Error loading receipts: $e")
-//                _receiptUiState.value = _receiptUiState.value.copy(receiptList = emptyList())
-//            }
-//        }
-//    }
 
     fun loadItems(receiptId: Int) {
         viewModelScope.launch {
@@ -131,7 +131,13 @@ class ReceiptViewModel(
 }
 
 data class ReceiptUiState(
+    val syncStatus: SyncStatus = SyncStatus.LOADING,
     val receiptList: List<Receipt> = emptyList(),
     val itemList: List<Item> = emptyList(),
     val dayAndPrice: List<Pair<String, Double>> = emptyList()
 )
+enum class SyncStatus {
+    LOADING,    // doing sync
+    SUCCESS,    // Sync OK
+    ERROR       // 404, server
+}

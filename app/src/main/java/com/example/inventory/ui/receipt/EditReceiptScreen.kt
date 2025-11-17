@@ -263,7 +263,7 @@ fun EditReceiptScreen(
                             if (receipt != null) {
                                 actualViewModel.viewModelScope.launch {
                                     actualViewModel.saveUpdatedItems(
-                                        receipt.copy(status = "Completed")
+                                        receipt.copy(status = "Completed"),userId!!
                                     )
                                     actualViewModel.processItems()
                                 }

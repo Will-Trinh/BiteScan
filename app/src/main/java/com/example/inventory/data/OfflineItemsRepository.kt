@@ -23,6 +23,7 @@ class OfflineItemsRepository (val itemDao: ItemDao) : ItemsRepository {
         return itemDao.insert(item)
     }
 
+
     /**
      * Retrieve items for a specific user (joined via receipts).
      */

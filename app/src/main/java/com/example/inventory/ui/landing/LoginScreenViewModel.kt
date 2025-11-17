@@ -16,9 +16,10 @@ import java.net.URL
 import com.example.inventory.data.UsersRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import com.example.inventory.data.ReceiptsRepository
 
 class LoginScreenViewModel(
-    private val usersRepository: UsersRepository
+
 ) : ViewModel() {
 
     private val _loginResult = MutableStateFlow<LoginResult?>(null)
@@ -61,20 +62,22 @@ class LoginScreenViewModel(
                         val raw = conn.inputStream.bufferedReader().use { it.readText() }
                         Log.d("API_RAW_RESPONSE", raw)
 
-                        // Phân tích JSON trả về
                         val jsonResponse = JSONObject(raw)
                         val userId = jsonResponse.getInt("id")
                         val username = jsonResponse.getString("username")
                         val email = jsonResponse.getString("email")
-                        // password không cần lấy, bỏ qua cho an toàn
-
+                        viewModelScope.launch {try {
+                            Log.d("LoginVM", "syns successfully")
+                        } catch (e: Exception) {
+                            Log.e("LoginVM", "Error during sync: ${e.message}")
+                        }}
                         return@withContext LoginResult(
                             success = true,
                             uid = userId,
                             username = username,
                             email = email,
-                            phone = null, // nếu backend có thì thêm
-                            errorMessage = "Login successful!" // hoặc để null
+                            phone = null,
+                            errorMessage = ""
                         )
                     } else if (responseCode == 422) {
 
@@ -112,6 +115,7 @@ class LoginScreenViewModel(
         }
     }
 }
+
 
 data class LoginResult(
     val success: Boolean,

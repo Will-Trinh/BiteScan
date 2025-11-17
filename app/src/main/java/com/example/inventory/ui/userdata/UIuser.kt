@@ -21,7 +21,9 @@ class FakeReceiptsRepository : ReceiptsRepository {
         Receipt(receiptId = 3, userId = 1, date = Date(System.currentTimeMillis() - 172800000), source = "Walmart", status = "Completed"),
         Receipt(receiptId = 4, userId = 1, date = Date(System.currentTimeMillis() - 259200000), source = "Target", status = "Completed")
     )
-
+    override suspend fun fetchAndSyncReceipts(userId: Int): List<Receipt> {
+        return fakeReceipts.filter { it.userId == userId }
+    }
     override fun getAllReceiptsStream(): Flow<List<Receipt>> = flowOf(fakeReceipts)
 
     override fun getReceiptsForUser(userId: Int): Flow<List<Receipt>> = flowOf(fakeReceipts.filter { it.userId == userId })
