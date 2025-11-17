@@ -30,6 +30,12 @@ import com.example.inventory.ui.AppViewModel
 import com.example.inventory.ui.navigation.BottomNavigationBar
 import com.example.inventory.ui.theme.CookingAssistantTheme
 import com.example.inventory.ui.theme.PrimaryGreen
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.net.HttpURLConnection
+import java.net.URL
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 
 data class SettingNav(
     val label: String,
@@ -284,6 +290,7 @@ fun SettingScreen(
     modifier: Modifier = Modifier,
     appViewModel: AppViewModel
 ) {
+    val scope = rememberCoroutineScope()
     val userId = appViewModel.userId.value
     val context = LocalContext.current
     val appContainer = if (context.applicationContext is InventoryApplication) {
@@ -458,12 +465,29 @@ fun SettingScreen(
                         DeleteAccountDialog(
                             onDismiss = { showDeleteAccountDialog = false },
                             onConfirmDelete = {
+                                scope.launch(Dispatchers.IO) {
+                                    try {
+                                        val apiUrl = URL("http://129.146.23.142:8080/users/$userId")
+                                        val conn = apiUrl.openConnection() as HttpURLConnection
+                                        //Set timeout (10s connect, 15s response)
+                                        conn.connectTimeout = 10_000
+                                        conn.readTimeout = 15_000
+                                        conn.requestMethod = "DELETE"
+                                        conn.setRequestProperty("Content-Type", "application/json")
+                                        conn.doOutput = true
+                                        val responseCode = conn.responseCode
+                                        println(responseCode)
+                                    } catch (e: Exception) {
+                                        println(e)
+                                    }
+                                }
                                 showDeleteAccountDialog = false
                                 Toast.makeText(
                                     context,
                                     "Account deletion initiated (Placeholder)",
                                     Toast.LENGTH_LONG
                                 ).show()
+                                navController.navigate("login")
                             }
                         )
                     }
