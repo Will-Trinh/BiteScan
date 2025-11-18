@@ -21,10 +21,8 @@ import androidx.navigation.NavController
 import com.example.inventory.ui.navigation.BottomNavigationBar
 import android.net.Uri
 import androidx.activity.result.PickVisualMediaRequest
-import androidx.compose.material.icons.Icons
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.ui.draw.shadow
@@ -32,6 +30,8 @@ import androidx.compose.ui.platform.LocalContext
 import com.example.inventory.InventoryApplication
 import com.example.inventory.ui.loading.LoadingScreen
 import android.util.Log
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import com.example.inventory.ui.navigation.UploadDestination
 import com.example.inventory.ui.AppViewModel
 import com.example.inventory.ui.theme.PrimaryGreen
@@ -39,7 +39,6 @@ import com.example.inventory.ui.theme.PrimaryGreen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UploadScreen(
-    paddingValues: PaddingValues = PaddingValues(0.dp),
     navController: NavController,
     appViewModel: AppViewModel,
 ) {
@@ -126,7 +125,7 @@ fun UploadScreen(
                     title = { Row(modifier = Modifier.fillMaxWidth().padding(end = 48.dp), horizontalArrangement = Arrangement.Center) { Text("") } },
                     navigationIcon = {
                         IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
+                            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
                     }
                 )
@@ -143,7 +142,6 @@ fun UploadScreen(
                     UploadArea(
                         galleryLauncher = galleryLauncher,
                         cameraPermissionLauncher = cameraPermissionLauncher,
-                        isProcessing = uploadProgress.isProcessing
                     )
 
                     if (ocrState is OcrState.Success && !uploadProgress.isProcessing) {
@@ -169,7 +167,6 @@ fun UploadScreen(
 fun UploadArea(
     galleryLauncher: androidx.activity.result.ActivityResultLauncher<PickVisualMediaRequest>,
     cameraPermissionLauncher: androidx.activity.result.ActivityResultLauncher<String>,
-    isProcessing: Boolean
 ) {
 
     Column(
@@ -304,8 +301,6 @@ fun UploadAreaPreview() {
         UploadArea(
             galleryLauncher = galleryLauncher,
             cameraPermissionLauncher = cameraPermissionLauncher,
-            isProcessing = isProcessing,
-
             )
     }
 }

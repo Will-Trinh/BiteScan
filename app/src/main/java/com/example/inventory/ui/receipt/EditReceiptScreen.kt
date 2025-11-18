@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -27,7 +26,6 @@ import com.example.inventory.InventoryApplication
 import androidx.navigation.compose.rememberNavController
 import com.example.inventory.ui.userdata.FakeItemsRepository
 import com.example.inventory.ui.userdata.FakeReceiptsRepository
-import com.example.inventory.ui.userdata.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.clickable
@@ -51,7 +49,7 @@ fun EditReceiptScreen(
 
     //var deleteItemList by remember { mutableStateOf<List<Item>?>(null) }
     var showEditDialog by remember { mutableStateOf(false) }
-    var selectedItemIndex by remember { mutableStateOf(-1) }
+    var selectedItemIndex by remember { mutableIntStateOf(-1) }
     var selectedItem by remember { mutableStateOf<Item?>(null) }
     var showEditSourceDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current

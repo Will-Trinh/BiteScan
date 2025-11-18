@@ -413,7 +413,7 @@ fun HistoryReceiptCard(
     }
 
     val receiptUiState by viewModel.receiptUiState.collectAsState()
-
+    //clean all the receiptUiState
     // Find the item list corresponding to this receipt ID
     val itemList = receiptUiState.itemList.filter { it.receiptId == receipt.receiptId }
 
