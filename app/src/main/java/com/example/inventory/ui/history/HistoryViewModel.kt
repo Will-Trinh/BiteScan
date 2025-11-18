@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 import com.example.inventory.data.ReceiptsRepositoryImpl
 import android.util.Log
-
+import com.example.inventory.data.OfflineReceiptsRepository
 
 
 class ReceiptViewModel(
@@ -25,31 +25,22 @@ class ReceiptViewModel(
     val receiptUiState: StateFlow<ReceiptUiState> = _receiptUiState.asStateFlow()
 
 
-    fun loadReceiptsUser(userId : Int) {
+    fun loadReceiptsUser(userId: Int) {
         viewModelScope.launch {
             _receiptUiState.value = _receiptUiState.value.copy(syncStatus = SyncStatus.LOADING)
-            Log.d("ReceiptViewModel", "Loading receipts for user $userId")
-            try{
-            (receiptsRepository as? ReceiptsRepositoryImpl)?.fetchAndSyncReceipts(userId)
-            _receiptUiState.value = _receiptUiState.value.copy(syncStatus = SyncStatus.SUCCESS)}
-            catch (e: Exception) {
-                Log.d("History-OnlineReceipt", "failed to fetch and sync receipts for user $userId $e")
-                _receiptUiState.value = _receiptUiState.value.copy(syncStatus = SyncStatus.ERROR)
-            }
-            receiptsRepository.getReceiptsForUser(userId).collect { receipts ->
-                println("Receipts for user $userId: $receipts")
-
-                val newStatus = when {
-                    _receiptUiState.value.syncStatus == SyncStatus.ERROR -> SyncStatus.ERROR
-                    else -> _receiptUiState.value.syncStatus
+            try {
+                receiptsRepository.getReceiptsForUser(userId).collect { receipts ->
+                    _receiptUiState.value = _receiptUiState.value.copy(
+                        receiptList = receipts,
+                        syncStatus = SyncStatus.SUCCESS
+                    )
+                    updateDayAndPrice(receipts)
                 }
+            } catch (e: Exception) {
                 _receiptUiState.value = _receiptUiState.value.copy(
-                    receiptList = receipts,
-                    syncStatus = newStatus
+                    syncStatus = SyncStatus.ERROR
                 )
-                updateDayAndPrice(receipts)
             }
-
         }
     }
 
@@ -143,6 +134,7 @@ data class ReceiptUiState(
     val itemList: List<Item> = emptyList(),
     val dayAndPrice: List<Pair<String, Double>> = emptyList()
 )
+
 enum class SyncStatus {
     LOADING,    // doing sync
     SUCCESS,    // Sync OK
