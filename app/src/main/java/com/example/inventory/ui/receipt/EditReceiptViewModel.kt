@@ -192,11 +192,10 @@ class EditReceiptViewModel(
         }
     }
     /** Delete receipt (placeholder for API DELETE) */
-    suspend fun deleteReceipt(receipt: Receipt) {
+    suspend fun deleteReceipt(receipt: Receipt, userId: Int) {
         receiptsRepository.deleteReceipt(receipt)
+        onlineReceiptsRepository!!.deleteReceiptFromServer(receipt.receiptId, userId)
     }
-
-
 
     suspend fun saveItems(nutritionData: MutableList<Item>) {
         nutritionData.forEach { item ->

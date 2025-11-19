@@ -237,7 +237,7 @@ fun EditReceiptScreen(
                                 actualViewModel.processItems()
                                 actualViewModel.viewModelScope.launch {
                                     actualViewModel.deleteReceipt(
-                                        receipt.copy(status = "Completed")
+                                        receipt.copy(status = "Completed"), userId!!
                                     )
                                 }
                                 Toast.makeText(
