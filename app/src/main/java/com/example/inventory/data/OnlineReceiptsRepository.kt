@@ -109,6 +109,39 @@ class OnlineReceiptsRepository(
         }
     }
 
+    suspend fun deleteReceiptFromServer(receiptId: Int, userId: Int) = withContext(Dispatchers.IO) {
+
+        Log.d("OnlineReceipts", "Deleting receiptId=$receiptId for userId=$userId")
+
+        val client = OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(20, TimeUnit.SECONDS)
+            .build()
+
+        val request = Request.Builder()
+            .url("http://129.146.23.142:8080/users/$userId/receipts/$receiptId")
+            .delete()
+            .addHeader("User-Agent", "AndroidApp/1.0")
+            .build()
+
+        val response = client.newCall(request).execute()
+        val responseBody = response.body?.string() ?: "{}"
+
+        Log.d("OnlineReceipts", "Delete response: ${response.code}, body: $responseBody")
+
+        try {
+            if (!response.isSuccessful) {
+                throw Exception("Delete failed: ${response.code} - ${response.message}")
+            }
+
+            Log.d("OnlineReceipts", "Delete receiptId=$receiptId completed.")
+
+        } finally {
+            response.close()
+        }
+    }
+
     // API UploadReceipt
     suspend fun uploadReceiptToServer(receiptId: Int, userId: Int) = withContext(Dispatchers.IO) {
         val receipt = receiptsRepository.getReceipt(receiptId)
