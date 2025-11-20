@@ -18,6 +18,7 @@ import com.example.inventory.ui.settings.LegalScreen
 import com.example.inventory.ui.NotFoundScreen
 import com.example.inventory.ui.dashboard.DashboardScreen
 import com.example.inventory.ui.AppViewModel
+import com.example.inventory.ui.landing.CreateAccountScreenPreview
 import com.example.inventory.ui.recipe.RecipeRecommendationScreen
 import com.example.inventory.ui.landing.LandingScreen
 import com.example.inventory.ui.landing.LoginScreen
@@ -53,10 +54,7 @@ fun InventoryNavHost(
                     navController.navigate(UploadDestination.route) {
                         popUpTo(LoginDestination.route) { inclusive = true }
                     }
-                },
-                onCreateAccountClick = {
-                    // TODO: Navigate to register or show create account flow
-                },
+                }
             )
         }
 
@@ -75,7 +73,7 @@ fun InventoryNavHost(
 
         // Dashboard
         composable(route = DashboardDestination.route) {
-            if (userId != 0) {
+            if (userId != 0 ) {
                 DashboardScreen(
                     navController = navController,
                     appViewModel = appViewModel

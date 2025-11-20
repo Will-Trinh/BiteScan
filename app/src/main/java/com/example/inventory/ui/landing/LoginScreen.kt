@@ -41,7 +41,6 @@ import com.example.inventory.ui.AppViewModel
 @Composable
 fun LoginScreen(
     onLoginClick: (Int) -> Unit = {},
-    onCreateAccountClick: () -> Unit = {},
     onBackClick: () -> Unit = {},
     appViewModel: AppViewModel,
     navController: NavController,
@@ -423,7 +422,6 @@ fun LoginScreenPreview() {
             viewModel = fakeViewModel,
             navController = rememberNavController(),
             onLoginClick = {},
-            onCreateAccountClick = {},
             onBackClick = {},
             appViewModel = AppViewModel()
         )
