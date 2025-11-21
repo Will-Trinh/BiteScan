@@ -16,10 +16,10 @@ import com.google.gson.Gson
 
 import com.example.inventory.BuildConfig
 
-object ApiConfig {
-    val BASE_URL = BuildConfig.SERVER_BASE_URL
-    val API_KEY = BuildConfig.API_KEY
-}
+//object ApiConfig {
+//    val BASE_URL = BuildConfig.SERVER_BASE_URL
+//    val API_KEY = BuildConfig.API_KEY
+//}
 
 class OnlineReceiptsRepository(
     private val receiptsRepository: OfflineReceiptsRepository,

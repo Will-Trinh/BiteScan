@@ -12,7 +12,7 @@ import androidx.navigation.NavController
 import com.example.inventory.ui.theme.CookingAssistantTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.ui.graphics.Color
@@ -66,11 +66,12 @@ fun NotFoundScreen(
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
                 ) {
-                    Text("Go to Dashboard  ", fontSize = 25.sp, color = Color.White)
+                    Text("Go to Upload  ", fontSize = 25.sp, color = Color.White)
                     Icon(
-                        imageVector = Icons.Default.Dashboard,
-                        contentDescription = "Dashboard",
-                        modifier = Modifier.size(24.dp)
+                        imageVector = Icons.Default.CameraAlt,
+                        contentDescription = "Upload",
+                        modifier = Modifier.size(30.dp),
+                        tint = Color.White
                     )
                 }
             }
