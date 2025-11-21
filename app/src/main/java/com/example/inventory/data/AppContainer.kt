@@ -54,7 +54,7 @@ class AppDataContainer(private val context: Context) : AppContainer {
     override val onlineReceiptsRepository: OnlineReceiptsRepository by lazy {
         OnlineReceiptsRepository.create(
             receiptsRepository = OfflineReceiptsRepository(database.receiptDao()),
-            itemsRepository = itemsRepository,
+            itemsRepository = itemsRepository
         )
     }
 

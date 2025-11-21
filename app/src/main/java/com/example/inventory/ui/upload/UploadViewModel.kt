@@ -170,23 +170,9 @@ class UploadViewModel(
                     date = parsedDate,
                     status = "Pending"
                 )
-                Log.d("UploadViewModel", "fetching And Sync Receipts")
-                try {
-                    withContext(viewModelScope.coroutineContext) {
-                        (receiptsRepository as? ReceiptsRepositoryImpl)?.fetchAndSyncReceipts(userId)
-                    }
-                    Log.d("UploadViewModel", "Receipts fetched and synced")
-                } catch (e: Exception) {
-                    Log.e("UploadViewModel", "Sync failed: ${e.message}")
-                    updateStep(5, StepStatus.FAILED)
-                    throw e
-                }
                 val newReceiptID = receiptsRepository.insertReceipt(newReceipt)
                 Log.d("UploadViewModel", "Inserted receipt ID: $newReceiptID")
                 val newReceiptId = newReceiptID.toInt()
-
-
-                Log.d("UploadViewModel", "Inserted receipt ID: $newReceiptId")
                 receiptData.line_items.forEach { lineItem ->
                     val newItem = Item(
                         id = 0,

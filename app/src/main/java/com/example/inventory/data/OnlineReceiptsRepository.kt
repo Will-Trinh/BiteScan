@@ -14,6 +14,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import com.google.gson.Gson
 
+
 import com.example.inventory.BuildConfig
 
 //object ApiConfig {
@@ -24,11 +25,11 @@ import com.example.inventory.BuildConfig
 class OnlineReceiptsRepository(
     private val receiptsRepository: OfflineReceiptsRepository,
     private val itemsRepository: ItemsRepository,
-) {
+    ) {
     companion object {
         fun create(
             receiptsRepository: OfflineReceiptsRepository,
-            itemsRepository: ItemsRepository,
+            itemsRepository: ItemsRepository
         ): OnlineReceiptsRepository {
             return OnlineReceiptsRepository(receiptsRepository, itemsRepository)
         }
@@ -59,7 +60,6 @@ class OnlineReceiptsRepository(
         try {
             if (response.isSuccessful) {
                 val jsonResponse = JSONObject(responseBody)
-                val gson = Gson()
                 //{ "receipts": [ { "receipt": {...}, "items": [...] }, ... ] }
                 for (i in 0 until jsonResponse.length()) {
                     val receiptsArray = jsonResponse.getJSONArray("receipts")
@@ -73,8 +73,8 @@ class OnlineReceiptsRepository(
                             source = receiptJson.optString("store", "Unknown"),
                             status = "null"
                         )
-                        receiptsRepository.insertReceipt(receipt)
-                        Log.d("OnlineReceipts", "Inserted receiptId=${receipt.receiptId}")
+                        receiptsRepository.upsertReceipt(receipt)
+                        Log.d("OnlineReceipts", "Upserted receiptId=${receipt.receiptId}")
 
                         for (j in 0 until itemsArray.length()) {
                             val itemJson = itemsArray.getJSONObject(j)
@@ -91,8 +91,8 @@ class OnlineReceiptsRepository(
                                 carbs = itemJson.optDouble("carbs", 0.0),
                                 fats = itemJson.optDouble("fats", 0.0)
                             )
-                            val itemId = itemsRepository.insertItem(item)
-                            Log.d("OnlineReceipts", "Inserted itemId=$itemId")
+                            val itemId = itemsRepository.upsertItem(item)
+                            Log.d("OnlineReceipts", "Upserted itemId=$itemId")
                         }
                     }
                     Log.d(

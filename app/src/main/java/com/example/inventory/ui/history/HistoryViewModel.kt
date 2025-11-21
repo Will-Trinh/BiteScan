@@ -15,7 +15,7 @@ import java.util.Calendar
 import com.example.inventory.data.ReceiptsRepositoryImpl
 import android.util.Log
 import com.example.inventory.data.OfflineReceiptsRepository
-
+import kotlinx.coroutines.Dispatchers
 
 class ReceiptViewModel(
     private val receiptsRepository: ReceiptsRepository,
@@ -23,29 +23,34 @@ class ReceiptViewModel(
 ) : ViewModel() {
     private val _receiptUiState = MutableStateFlow(ReceiptUiState())
     val receiptUiState: StateFlow<ReceiptUiState> = _receiptUiState.asStateFlow()
-
-
     fun loadReceiptsUser(userId: Int) {
-        viewModelScope.launch {
-            _receiptUiState.value = _receiptUiState.value.copy(syncStatus = SyncStatus.LOADING)
-            try {
-                receiptsRepository.getReceiptsForUser(userId).collect { receipts ->
-                    _receiptUiState.value = _receiptUiState.value.copy(
-                        receiptList = receipts,
-                        syncStatus = SyncStatus.SUCCESS
+        viewModelScope.launch(Dispatchers.IO) {
+            receiptsRepository.getReceiptsForUser(userId).collect { receipts ->
+                val summaryMap = mutableMapOf<Int, ReceiptSummary>()
+
+                receipts.forEach { receipt ->
+                    val items = itemsRepository.getItemsForReceipt(receipt.receiptId).first()
+                    val totalPrice = items.sumOf { it.price * it.quantity.toDouble() }
+                    val totalItems = items.size
+                    summaryMap[receipt.receiptId] = ReceiptSummary(
+                        totalPrice = totalPrice,
+                        itemCount = totalItems
                     )
-                    updateDayAndPrice(receipts)
+
                 }
-            } catch (e: Exception) {
-                _receiptUiState.value = _receiptUiState.value.copy(
-                    syncStatus = SyncStatus.ERROR
+                _receiptUiState.value = ReceiptUiState(
+                    syncStatus = SyncStatus.SUCCESS,
+                    receiptList = receipts,
+                    receiptSummary = summaryMap,
+                    dayAndPrice = _receiptUiState.value.dayAndPrice
                 )
+                calculateDayAndPrice(receipts, summaryMap)
             }
         }
     }
 
+
     private val _itemsByReceipt = MutableStateFlow<Map<Int, List<Item>>>(emptyMap())
-    val itemsByReceipt: StateFlow<Map<Int, List<Item>>> = _itemsByReceipt
 
     fun loadItems(receiptId: Int) {
         viewModelScope.launch {
@@ -57,82 +62,56 @@ class ReceiptViewModel(
         }
     }
 
-    fun prefetchItems(receiptIds: List<Int>) {
-        receiptIds.distinct().forEach { id -> loadItems(id) }
-    }
-
 
     fun calculateTotalPrice(items: List<Item>): Double {
         val totalPrice = items.sumOf { it.price * it.quantity.toDouble() }  // Calculate total price
         return totalPrice
     }
 
-    fun updateDayAndPrice(receiptList: List<Receipt>) {
+    private fun calculateDayAndPrice(
+        receiptList: List<Receipt>,
+        summaryMap: Map<Int, ReceiptSummary>
+    ) {
         viewModelScope.launch {
             val dayAndPrice = mutableListOf<Pair<String, Double>>()
             val calendar = Calendar.getInstance()
-
-            // set time to 00:00:00
             calendar.set(Calendar.HOUR_OF_DAY, 0)
             calendar.set(Calendar.MINUTE, 0)
             calendar.set(Calendar.SECOND, 0)
             calendar.set(Calendar.MILLISECOND, 0)
             val today = calendar.timeInMillis
 
-            // list 7 day
-            val days = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-            val dayOfWeekOrder = mapOf(
-                "Mon" to 1, "Tue" to 2, "Wed" to 3, "Thu" to 4,
-                "Fri" to 5, "Sat" to 6, "Sun" to 7
-            )
-
-            // only in recent 7 days
+            val dayNames = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
             for (i in 6 downTo 0) {
                 calendar.timeInMillis = today
                 calendar.add(Calendar.DAY_OF_MONTH, -i)
                 val dayStart = calendar.timeInMillis
-                val dayEnd = dayStart + (24 * 60 * 60 * 1000)
+                val dayEnd = dayStart + 24 * 60 * 60 * 1000
 
-                // get day of week
-                val dayOfWeekName = when (calendar.get(Calendar.DAY_OF_WEEK)) {
-                    Calendar.MONDAY -> "Mon"
-                    Calendar.TUESDAY -> "Tue"
-                    Calendar.WEDNESDAY -> "Wed"
-                    Calendar.THURSDAY -> "Thu"
-                    Calendar.FRIDAY -> "Fri"
-                    Calendar.SATURDAY -> "Sat"
-                    Calendar.SUNDAY -> "Sun"
-                    else -> ""
-                }
+                val dayName = dayNames[calendar.get(Calendar.DAY_OF_WEEK) - 1]
 
-                // caculate price for each day
                 val totalPrice = receiptList
                     .filter { it.date.time in dayStart until dayEnd }
-                    .sumOf { receipt ->
-                        val items = itemsRepository.getItemsForReceipt(receipt.receiptId).first()
-                        calculateTotalPrice(items)
-                    }
+                    .sumOf { summaryMap[it.receiptId]?.totalPrice ?: 0.0 }
 
-                dayAndPrice.add(Pair(dayOfWeekName, totalPrice))
+                dayAndPrice.add(Pair(dayName, totalPrice))
             }
 
-            //sort by day of week
-            val sortedDayAndPrice = dayAndPrice.sortedBy { dayOfWeekOrder[it.first] ?: 8 }
-            _receiptUiState.value = _receiptUiState.value.copy(dayAndPrice = sortedDayAndPrice)
+            val ordered = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+                .map { day -> dayAndPrice.find { it.first == day } ?: (day to 0.0) }
+
+            _receiptUiState.value = _receiptUiState.value.copy(
+                dayAndPrice = ordered
+            )
         }
     }
-
-    fun calculateTotalItem(items: List<Item>): Int {
-        return items.count()
-    }
-
 }
-
 data class ReceiptUiState(
     val syncStatus: SyncStatus = SyncStatus.LOADING,
     val receiptList: List<Receipt> = emptyList(),
     val itemList: List<Item> = emptyList(),
-    val dayAndPrice: List<Pair<String, Double>> = emptyList()
+    val dayAndPrice: List<Pair<String, Double>> = emptyList(),
+    val receiptSummary: Map<Int, ReceiptSummary> = emptyMap(),
 )
 
 enum class SyncStatus {
@@ -140,3 +119,7 @@ enum class SyncStatus {
     SUCCESS,    // Sync OK
     ERROR       // 404, server
 }
+data class ReceiptSummary(
+    val totalPrice: Double,
+    val itemCount: Int
+)

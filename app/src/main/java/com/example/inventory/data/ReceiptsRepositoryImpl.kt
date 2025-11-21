@@ -16,6 +16,7 @@ class ReceiptsRepositoryImpl(
     override fun getReceiptsForUser(userId: Int): Flow<List<Receipt>> = offlineRepo.getReceiptsForUser(userId)
     override fun searchReceipts(query: String): Flow<List<Receipt>> = offlineRepo.searchReceipts(query)
     override suspend fun insertReceipt(receipt: Receipt): Long = offlineRepo.insertReceipt(receipt)
+    override suspend fun upsertReceipt(receipt: Receipt): Long = offlineRepo.upsertReceipt(receipt)
     override suspend fun deleteReceipt(receipt: Receipt) = offlineRepo.deleteReceipt(receipt)
     override suspend fun updateReceipt(receipt: Receipt) = offlineRepo.updateReceipt(receipt)
 
