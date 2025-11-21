@@ -158,10 +158,7 @@ class UploadViewModel(
                 Log.d("UploadViewModel", "Saving receipt with userId=$userId")
 
                 val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-                val parsedDate = Date(
-                    sdf.parse(receiptData.transaction_date ?: "")?.time
-                        ?: System.currentTimeMillis()
-                )
+                val parsedDate = Date(System.currentTimeMillis())
                 if (userId <= 0) throw IllegalArgumentException("Invalid userId: $userId. Please log in first.")
                 val newReceipt = Receipt(
                     receiptId = 0,

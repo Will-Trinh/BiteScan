@@ -38,13 +38,13 @@ class ReceiptViewModel(
                     )
 
                 }
+
                 _receiptUiState.value = ReceiptUiState(
                     syncStatus = SyncStatus.SUCCESS,
                     receiptList = receipts,
-                    receiptSummary = summaryMap,
-                    dayAndPrice = _receiptUiState.value.dayAndPrice
+                    receiptSummary = summaryMap
                 )
-                calculateDayAndPrice(receipts, summaryMap)
+                updateDayAndPrice(receipts)
             }
         }
     }
@@ -68,42 +68,64 @@ class ReceiptViewModel(
         return totalPrice
     }
 
-    private fun calculateDayAndPrice(
-        receiptList: List<Receipt>,
-        summaryMap: Map<Int, ReceiptSummary>
-    ) {
+    fun updateDayAndPrice(receiptList: List<Receipt>) {
         viewModelScope.launch {
             val dayAndPrice = mutableListOf<Pair<String, Double>>()
             val calendar = Calendar.getInstance()
+
+            // set time to 00:00:00
             calendar.set(Calendar.HOUR_OF_DAY, 0)
             calendar.set(Calendar.MINUTE, 0)
             calendar.set(Calendar.SECOND, 0)
             calendar.set(Calendar.MILLISECOND, 0)
             val today = calendar.timeInMillis
 
-            val dayNames = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+            // list 7 day
+            val days = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+            val dayOfWeekOrder = mapOf(
+                "Mon" to 1, "Tue" to 2, "Wed" to 3, "Thu" to 4,
+                "Fri" to 5, "Sat" to 6, "Sun" to 7
+            )
+
+            // only in recent 7 days
             for (i in 6 downTo 0) {
                 calendar.timeInMillis = today
                 calendar.add(Calendar.DAY_OF_MONTH, -i)
                 val dayStart = calendar.timeInMillis
-                val dayEnd = dayStart + 24 * 60 * 60 * 1000
+                val dayEnd = dayStart + (24 * 60 * 60 * 1000)
 
-                val dayName = dayNames[calendar.get(Calendar.DAY_OF_WEEK) - 1]
+                // get day of week
+                val dayOfWeekName = when (calendar.get(Calendar.DAY_OF_WEEK)) {
+                    Calendar.MONDAY -> "Mon"
+                    Calendar.TUESDAY -> "Tue"
+                    Calendar.WEDNESDAY -> "Wed"
+                    Calendar.THURSDAY -> "Thu"
+                    Calendar.FRIDAY -> "Fri"
+                    Calendar.SATURDAY -> "Sat"
+                    Calendar.SUNDAY -> "Sun"
+                    else -> ""
+                }
 
+                // caculate price for each day
                 val totalPrice = receiptList
                     .filter { it.date.time in dayStart until dayEnd }
-                    .sumOf { summaryMap[it.receiptId]?.totalPrice ?: 0.0 }
+                    .sumOf { receipt ->
+                        val items = itemsRepository.getItemsForReceipt(receipt.receiptId).first()
+                        calculateTotalPrice(items)
+                    }
 
-                dayAndPrice.add(Pair(dayName, totalPrice))
+                dayAndPrice.add(Pair(dayOfWeekName, totalPrice))
             }
 
-            val ordered = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-                .map { day -> dayAndPrice.find { it.first == day } ?: (day to 0.0) }
-
-            _receiptUiState.value = _receiptUiState.value.copy(
-                dayAndPrice = ordered
-            )
+            //sort by day of week
+            val sortedDayAndPrice = dayAndPrice.sortedBy { dayOfWeekOrder[it.first] ?: 8 }
+            Log.d("ReceiptViewModel", "sortedDayAndPrice: $sortedDayAndPrice")
+            _receiptUiState.value = _receiptUiState.value.copy(dayAndPrice = sortedDayAndPrice)
         }
+    }
+
+    fun calculateTotalItem(items: List<Item>): Int {
+        return items.count()
     }
 }
 data class ReceiptUiState(
