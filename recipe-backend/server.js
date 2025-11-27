@@ -1,14 +1,99 @@
+
 // server.js
 const express = require("express");
 const dotenv = require("dotenv");
 const googleSearch = require("./services/googleSearch");
 const parseRecipe = require("./services/recipeParser");
 const { buildRecipeQuery } = require("./services/recipeSearchService");
+const swaggerUi = require("swagger-ui-express");
+const swaggerJsdoc = require("swagger-jsdoc");
 
 dotenv.config();
 const app = express();
 
+const swaggerOptions = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "Recipe Search API",
+      version: "1.0.0",
+      description: "API for searching recipes by ingredients and cuisine style"
+    }
+  },
+  // @swagger
+  apis: ["./server.js"]
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+
+// route Swagger UI
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 app.use(express.json());
+
+/**
+ * @swagger
+ * /search-recipe:
+ *   post:
+ *     summary: Search recipes by ingredients and style
+ *     tags:
+ *       - recipes
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - ingredients
+ *               - country
+ *               - style
+ *             properties:
+ *               ingredients:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["chicken", "garlic", "lemon"]
+ *               country:
+ *                 type: string
+ *                 example: "Italian"
+ *               style:
+ *                 type: string
+ *                 example: "healthy"
+ *     responses:
+ *       200:
+ *         description: List of matching recipes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 count:
+ *                   type: integer
+ *                 recipes:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       name:
+ *                         type: string
+ *                       url:
+ *                         type: string
+ *                       score:
+ *                         type: number
+ *                       ingredients:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                       steps:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *       400:
+ *         description: Missing or invalid fields
+ *       500:
+ *         description: Server error
+ */
 
 // POST /search-recipe
 app.post("/search-recipe", async (req, res) => {
