@@ -39,6 +39,11 @@ class FakeReceiptsRepository : ReceiptsRepository {
         fakeReceipts.add(newReceipt)
         return newReceipt.receiptId.toLong()
     }
+    override suspend fun upsertReceipt(receipt: Receipt): Long {
+        val newReceipt = receipt.copy(receiptId = receiptIdCounter.incrementAndGet())
+        fakeReceipts.add(newReceipt)
+        return newReceipt.receiptId.toLong()
+    }
 
     override suspend fun deleteReceipt(receipt: Receipt) {
         fakeReceipts.removeIf { it.receiptId == receipt.receiptId }
@@ -77,6 +82,11 @@ class FakeItemsRepository : ItemsRepository {
     )
     fun clear() = fakeItems.clear()
     override suspend fun insertItem(item: Item): Long {
+        val newItem = item.copy(id = idCounter.incrementAndGet())
+        fakeItems.add(newItem)
+        return newItem.id.toLong()
+    }
+    override suspend fun upsertItem(item: Item): Long {
         val newItem = item.copy(id = idCounter.incrementAndGet())
         fakeItems.add(newItem)
         return newItem.id.toLong()

@@ -158,10 +158,7 @@ class UploadViewModel(
                 Log.d("UploadViewModel", "Saving receipt with userId=$userId")
 
                 val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-                val parsedDate = Date(
-                    sdf.parse(receiptData.transaction_date ?: "")?.time
-                        ?: System.currentTimeMillis()
-                )
+                val parsedDate = Date(System.currentTimeMillis())
                 if (userId <= 0) throw IllegalArgumentException("Invalid userId: $userId. Please log in first.")
                 val newReceipt = Receipt(
                     receiptId = 0,
@@ -170,23 +167,9 @@ class UploadViewModel(
                     date = parsedDate,
                     status = "Pending"
                 )
-                Log.d("UploadViewModel", "fetching And Sync Receipts")
-                try {
-                    withContext(viewModelScope.coroutineContext) {
-                        (receiptsRepository as? ReceiptsRepositoryImpl)?.fetchAndSyncReceipts(userId)
-                    }
-                    Log.d("UploadViewModel", "Receipts fetched and synced")
-                } catch (e: Exception) {
-                    Log.e("UploadViewModel", "Sync failed: ${e.message}")
-                    updateStep(5, StepStatus.FAILED)
-                    throw e
-                }
                 val newReceiptID = receiptsRepository.insertReceipt(newReceipt)
                 Log.d("UploadViewModel", "Inserted receipt ID: $newReceiptID")
                 val newReceiptId = newReceiptID.toInt()
-
-
-                Log.d("UploadViewModel", "Inserted receipt ID: $newReceiptId")
                 receiptData.line_items.forEach { lineItem ->
                     val newItem = Item(
                         id = 0,

@@ -53,6 +53,8 @@ class LoginScreenViewModel(
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
                 try {
+                    usersRepository.deleteAllData()
+                    Log.d("LoginVM", "Delete all data")
                     val apiUrl = URL("http://129.146.23.142:8080/users/login")
                     val conn = apiUrl.openConnection() as HttpURLConnection
                     //Set timeout (10s connect, 15s response)
