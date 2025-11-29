@@ -32,7 +32,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.text.style.TextAlign
 import com.example.inventory.ui.AppViewModel
-
+import com.example.inventory.ui.recipe.RecipeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,11 +50,18 @@ fun DashboardScreen(
             itemsRepository = appContainer.itemsRepository as ItemsRepository
         )
     }
-
-
+    val recipeViewModel = remember {
+        RecipeViewModel(
+            onlineRecipesRepository = appContainer.onlineRecipesRepository,
+            myPantryViewModel = appContainer.myPantryViewModel,
+            appViewModel = appViewModel
+        )
+    }
     LaunchedEffect(userId) {
         viewModel.setCurrentUserId(userId?:0)
+        recipeViewModel.refreshRecommendations()
     }
+
 
     val metrics by viewModel.metrics.collectAsState()
     val macroBreakdown by viewModel.macroBreakdown.collectAsState()
