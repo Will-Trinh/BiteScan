@@ -33,7 +33,7 @@ interface RecipeDao {
     @Query("SELECT * from recipes ORDER BY dateSaved DESC")
     fun getAllRecipes(): Flow<List<Recipe>>
 
-    @Query("SELECT * from recipes WHERE id = :id")
+    @Query("SELECT * from recipes WHERE recipeId = :id")
     fun getRecipe(id: Int): Flow<Recipe>
 
     @Query("SELECT * FROM recipes WHERE title LIKE :query OR LOWER(description) LIKE LOWER(:query)")

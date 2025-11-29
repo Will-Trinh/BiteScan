@@ -5,10 +5,6 @@ import androidx.room.PrimaryKey
 import java.sql.Date
 import androidx.room.ForeignKey
 
-
-/**
- * Entity for receipts: Group nhiều items (thành phần do user cung cấp từ hóa đơn).
- */
 @Entity(
     tableName = "receipts",
     foreignKeys = [
