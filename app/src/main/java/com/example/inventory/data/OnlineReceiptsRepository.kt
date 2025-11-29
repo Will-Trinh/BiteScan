@@ -14,14 +14,22 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import com.google.gson.Gson
 
+
+import com.example.inventory.BuildConfig
+
+//object ApiConfig {
+//    val BASE_URL = BuildConfig.SERVER_BASE_URL
+//    val API_KEY = BuildConfig.API_KEY
+//}
+
 class OnlineReceiptsRepository(
     private val receiptsRepository: OfflineReceiptsRepository,
     private val itemsRepository: ItemsRepository,
-) {
+    ) {
     companion object {
         fun create(
             receiptsRepository: OfflineReceiptsRepository,
-            itemsRepository: ItemsRepository,
+            itemsRepository: ItemsRepository
         ): OnlineReceiptsRepository {
             return OnlineReceiptsRepository(receiptsRepository, itemsRepository)
         }
@@ -52,47 +60,82 @@ class OnlineReceiptsRepository(
         try {
             if (response.isSuccessful) {
                 val jsonResponse = JSONObject(responseBody)
-                val gson = Gson()
                 //{ "receipts": [ { "receipt": {...}, "items": [...] }, ... ] }
-                val receiptsArray = jsonResponse.getJSONArray("receipts")
-                for (i in 0 until receiptsArray.length()) {
-                    val receiptJson = receiptsArray.getJSONObject(i)
-                    val itemsArray = receiptJson.getJSONArray("items")
-
-                    val receipt = Receipt(
-                        userId = userId,
-                        date = Date.valueOf(receiptJson.getString("purchase_date")),
-                        source = receiptJson.optString("store", "Unknown"),
-                        status = "null"
-                    )
-                    val receiptIdLong = receiptsRepository.insertReceipt(receipt)
-                    val receiptId = receiptIdLong.toInt()
-                    Log.d("OnlineReceipts", "Inserted receiptId=$receiptId")
-
-                    for (j in 0 until itemsArray.length()) {
-                        val itemJson = itemsArray.getJSONObject(j)
-                        val item = Item(
-                            name = itemJson.optString("name", "Unknown"),
-                            price = itemJson.optDouble("price", 0.0),
-                            quantity = itemJson.optDouble("quantity", 1.0).toFloat(),
-                            store = itemJson.optString("store", "Unknown"),
-                            date = receipt.date,
-                            category = itemJson.optString("category", "Unknown"),
-                            receiptId = receiptId,
-                            calories = itemJson.optDouble("calories", 0.0),
-                            protein = itemJson.optDouble("protein", 0.0),
-                            carbs = itemJson.optDouble("carbs", 0.0),
-                            fats = itemJson.optDouble("fats", 0.0)
+                for (i in 0 until jsonResponse.length()) {
+                    val receiptsArray = jsonResponse.getJSONArray("receipts")
+                    for (i in 0 until receiptsArray.length()) {
+                        val receiptJson = receiptsArray.getJSONObject(i)
+                        val itemsArray = receiptJson.getJSONArray("items")
+                        val receipt = Receipt(
+                            userId = userId,
+                            receiptId = receiptJson.getInt("receipt_id"),
+                            date = Date.valueOf(receiptJson.getString("purchase_date")),
+                            source = receiptJson.optString("store", "Unknown"),
+                            status = "null"
                         )
-                        val itemId = itemsRepository.insertItem(item)
-                        Log.d("OnlineReceipts", "Inserted itemId=$itemId")
-                    }
-                }
-                Log.d("OnlineReceipts", "Sync completed. Receipts count: ${receiptsArray.length()}")
+                        receiptsRepository.upsertReceipt(receipt)
+                        Log.d("OnlineReceipts", "Upserted receiptId=${receipt.receiptId}")
 
+                        for (j in 0 until itemsArray.length()) {
+                            val itemJson = itemsArray.getJSONObject(j)
+                            val item = Item(
+                                name = itemJson.optString("name", "Unknown"),
+                                price = itemJson.optDouble("price", 0.0),
+                                quantity = itemJson.optDouble("quantity", 1.0).toFloat(),
+                                store = itemJson.optString("store", "Unknown"),
+                                date = receipt.date,
+                                category = itemJson.optString("category", "Unknown"),
+                                receiptId = receipt.receiptId,
+                                calories = itemJson.optDouble("calories", 0.0),
+                                protein = itemJson.optDouble("protein", 0.0),
+                                carbs = itemJson.optDouble("carbs", 0.0),
+                                fats = itemJson.optDouble("fats", 0.0)
+                            )
+                            val itemId = itemsRepository.upsertItem(item)
+                            Log.d("OnlineReceipts", "Upserted itemId=$itemId")
+                        }
+                    }
+                    Log.d(
+                        "OnlineReceipts",
+                        "Sync completed. Receipts count: ${receiptsArray.length()}"
+                    )
+                }
             } else {
                 throw Exception("Sync failed: ${response.code} - ${response.message}")
             }
+
+        } finally {
+            response.close()
+        }
+    }
+
+    suspend fun deleteReceiptFromServer(receiptId: Int, userId: Int) = withContext(Dispatchers.IO) {
+
+        Log.d("OnlineReceipts", "Deleting receiptId=$receiptId for userId=$userId")
+
+        val client = OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(20, TimeUnit.SECONDS)
+            .build()
+
+        val request = Request.Builder()
+            .url("http://129.146.23.142:8080/users/$userId/receipts/$receiptId")
+            .delete()
+            .addHeader("User-Agent", "AndroidApp/1.0")
+            .build()
+
+        val response = client.newCall(request).execute()
+        val responseBody = response.body?.string() ?: "{}"
+
+        Log.d("OnlineReceipts", "Delete response: ${response.code}, body: $responseBody")
+
+        try {
+            if (!response.isSuccessful) {
+                throw Exception("Delete failed: ${response.code} - ${response.message}")
+            }
+
+            Log.d("OnlineReceipts", "Delete receiptId=$receiptId completed.")
 
         } finally {
             response.close()
@@ -150,6 +193,7 @@ class OnlineReceiptsRepository(
             .toRequestBody("application/json; charset=utf-8".toMediaType())
 
         val request = Request.Builder()
+            //.url("${ApiConfig.BASE_URL}/users/$userId/receipts")
             .url("http://129.146.23.142:8080/users/$userId/receipts") // URL API upload receipt
             .post(body)
             .addHeader("User-Agent", "AndroidApp/1.0")

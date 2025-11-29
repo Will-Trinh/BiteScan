@@ -31,13 +31,14 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.material.icons.filled.ArrowForward
 import com.example.inventory.InventoryApplication
+import com.example.inventory.data.RecipesRepository
 import com.example.inventory.ui.receipt.EditReceiptViewModel
 import com.example.inventory.ui.theme.CookingAssistantTheme
 import com.example.inventory.ui.theme.PrimaryGreen
 import com.example.inventory.ui.theme.LightGreen
 import com.example.inventory.ui.userdata.FakeItemsRepository
 import com.example.inventory.ui.userdata.FakeReceiptsRepository
-
+import androidx.compose.ui.text.style.TextAlign
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun RecipeRecommendationScreen(
@@ -49,36 +50,16 @@ fun RecipeRecommendationScreen(
     val userId = appViewModel.userId.value
     val context = androidx.compose.ui.platform.LocalContext.current
     val actualViewModel = viewModel ?: remember {
-        if (context.applicationContext is InventoryApplication) {
-            val appContainer = (context.applicationContext as InventoryApplication).container
-            RecipeViewModel(
-                itemsRepository = appContainer.itemsRepository,
-                receiptsRepository = appContainer.receiptsRepository,
-            )
-        } else {
-            // Fallback for preview environment
-            RecipeViewModel(
-                itemsRepository = FakeItemsRepository(),
-                receiptsRepository = FakeReceiptsRepository()
-            )
-        }
-    }
-//    val viewModel: RecipeViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
-//        factory = object : androidx.lifecycle.ViewModelProvider.Factory {
-//            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-//                if (modelClass.isAssignableFrom(RecipeViewModel::class.java)) {
-//                    @Suppress("UNCHECKED_CAST")
-//                    return RecipeViewModel(
-//                        itemsRepository = appContainer.itemsRepository,
-//                        receiptsRepository = appContainer.receiptsRepository,
-//                        appViewModel = appViewModel
-//                    ) as T
-//                }
-//                throw IllegalArgumentException("Unknown ViewModel class")
-//            }
-//        }
-//    )
+        val app = context.applicationContext as InventoryApplication
+        val container = app.container
 
+        RecipeViewModel(
+            onlineRecipesRepository = container.onlineRecipesRepository,
+            myPantryViewModel = container.myPantryViewModel,
+            appViewModel = appViewModel
+        )
+
+    }
     val uiState by actualViewModel.uiState.collectAsState()
 
     CookingAssistantTheme {
@@ -129,40 +110,108 @@ fun RecipeBody(
     uiState: RecipeUiState,
     onFilterClick: (String) -> Unit,
     navController: NavController,
-    modifier: Modifier = Modifier,
-    appViewModel: AppViewModel
-
+    appViewModel: AppViewModel,
+    modifier: Modifier = Modifier
 ) {
     val userId = appViewModel.userId.value
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        item {
-            AvailableIngredientsCard(
-                ingredients = uiState.availableIngredients,
-                onCardClick = {
-                    navController.navigate(
-                        com.example.inventory.ui.navigation.MyPantryDestination.route
-                            .replace("{userId}", userId.toString())
+
+    Box(modifier = modifier.fillMaxSize()) {
+        when {
+            // 1. loading
+            uiState.isLoading -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    CircularProgressIndicator(color = PrimaryGreen, strokeWidth = 4.dp)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Loading recipes...",
+                        fontSize = 16.sp,
+                        color = Color.Gray,
+                        fontWeight = FontWeight.Medium
                     )
-                },
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-        }
+                }
+            }
 
-        item {
-            FiltersRow(
-                selectedFilters = uiState.selectedFilters,
-                allFilters = uiState.allFilters,
-                onFilterClick = onFilterClick,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-        }
+            // 2. No recipes found
+            uiState.recipes.isEmpty() && uiState.errorMessage != null -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .align(Alignment.Center)
+                        .padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Restaurant,
+                        contentDescription = null,
+                        tint = Color.LightGray,
+                        modifier = Modifier.size(80.dp)
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = "Check your ingredients",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.DarkGray
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = uiState.errorMessage ?: "No recipes found.",
+                        fontSize = 14.sp,
+                        color = Color.Gray,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Button(
+                        onClick = { navController.navigate("my_pantry/$userId") },
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
+                    ) {
+                        Text("Check Ingredients", color = Color.White)
+                    }
+                }
+            }
 
-        items(uiState.recipes) { recipe ->
-            RecipeCard(recipe = recipe)
+            // 3. Recipes found
+            else -> {
+                LazyColumn(
+                    contentPadding = PaddingValues(vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    item {
+                        AvailableIngredientsCard(
+                            ingredients = uiState.availableIngredients,
+                            onCardClick = {
+                                navController.navigate(
+                                    com.example.inventory.ui.navigation.MyPantryDestination.route
+                                        .replace("{userId}", userId.toString())
+                                )
+                            },
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+                    }
+
+                    item {
+                        FiltersRow(
+                            selectedFilters = uiState.selectedFilters,
+                            allFilters = uiState.allFilters,
+                            onFilterClick = onFilterClick,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                    }
+
+                    items(
+                        items = uiState.recipes,
+                        key = { it.id }
+                    ) { recipe ->
+                        RecipeCard(recipe = recipe)
+                    }
+                }
+            }
         }
     }
 }
@@ -284,7 +333,7 @@ fun FilterChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
 
 // --- Recipe Card ---
 @Composable
-fun RecipeCard(recipe: Recipe) {
+fun RecipeCard(recipe: RecipeUiModel) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable { /* TODO: Navigate to recipe details */ },
         shape = RoundedCornerShape(12.dp),

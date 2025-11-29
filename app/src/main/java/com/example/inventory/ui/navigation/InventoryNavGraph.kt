@@ -18,22 +18,41 @@ import com.example.inventory.ui.settings.LegalScreen
 import com.example.inventory.ui.NotFoundScreen
 import com.example.inventory.ui.dashboard.DashboardScreen
 import com.example.inventory.ui.AppViewModel
+import com.example.inventory.ui.landing.CreateAccountScreenPreview
 import com.example.inventory.ui.recipe.RecipeRecommendationScreen
 import com.example.inventory.ui.landing.LandingScreen
 import com.example.inventory.ui.landing.LoginScreen
 import com.example.inventory.ui.landing.RegistrationScreen
-
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+//for progress bar
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Alignment
+import android.util.Log
 @Composable
 fun InventoryNavHost(
     navController: NavHostController,
     appViewModel: AppViewModel,
     modifier: Modifier = Modifier,
 ) {
-    val userId = appViewModel.userId.value
+
+    val oldUserId: Int? by appViewModel.oldUserId.collectAsState()
+    val isReady by appViewModel.isReady.collectAsState()
+    if (!isReady) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+    Log.d("InventoryNavHost", "oldUserId: $oldUserId")
+
+    val startDestination = if (oldUserId != null) UploadDestination.route else LandingDestination.route
 
     NavHost(
         navController = navController,
-        startDestination = LandingDestination.route,
+        startDestination =startDestination,
         modifier = modifier
     ) {
         // Landing
@@ -46,6 +65,7 @@ fun InventoryNavHost(
 
         // Login
         composable(route = LoginDestination.route) {
+            Log.d("InventoryNavHost - Login", "oldUserId: $oldUserId")
             LoginScreen(
                 navController = navController,
                 appViewModel = appViewModel,
@@ -53,10 +73,7 @@ fun InventoryNavHost(
                     navController.navigate(UploadDestination.route) {
                         popUpTo(LoginDestination.route) { inclusive = true }
                     }
-                },
-                onCreateAccountClick = {
-                    // TODO: Navigate to register or show create account flow
-                },
+                }
             )
         }
 
@@ -75,14 +92,10 @@ fun InventoryNavHost(
 
         // Dashboard
         composable(route = DashboardDestination.route) {
-            if (userId != 0) {
                 DashboardScreen(
                     navController = navController,
                     appViewModel = appViewModel
                 )
-            } else {
-                NotFoundScreen(navController = navController)
-            }
         }
 
         // History
@@ -145,11 +158,7 @@ fun InventoryNavHost(
 
         // Legal
         composable(route = LegalDestination.route) {
-            if (userId != 0) {
                 LegalScreen(navController = navController)
-            } else {
-                NotFoundScreen(navController = navController)
-            }
         }
 
         // About

@@ -13,7 +13,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.example.inventory.BuildConfig
+import okhttp3.OkHttpClient
+import java.util.concurrent.TimeUnit
+import android.widget.Toast
+import okhttp3.Request
 
+//object ApiConfig {
+//    val BASE_URL = BuildConfig.SERVER_BASE_URL
+//    val API_KEY = BuildConfig.API_KEY
+//}
 class SettingsViewModel(
     private val repository: UsersRepository,
     private val appViewModel: AppViewModel
@@ -71,6 +80,7 @@ class SettingsViewModel(
             }
         }
     }
+
 
     fun launchUrl(context: Context, url: String) {
         viewModelScope.launch {

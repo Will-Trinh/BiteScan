@@ -17,7 +17,7 @@
 package com.example.inventory.data
 import com.example.inventory.ui.AppViewModel
 import android.content.Context
-
+import com.example.inventory.ui.settings.MyPantryViewModel
 /**
  * App container for Dependency injection.
  */
@@ -27,7 +27,9 @@ interface AppContainer {
     val recipesRepository: RecipesRepository
     val usersRepository: UsersRepository
     val onlineReceiptsRepository: OnlineReceiptsRepository
+    val onlineRecipesRepository: OnlineRecipesRepository
 
+    val myPantryViewModel: MyPantryViewModel
 }
 
 /**
@@ -54,7 +56,7 @@ class AppDataContainer(private val context: Context) : AppContainer {
     override val onlineReceiptsRepository: OnlineReceiptsRepository by lazy {
         OnlineReceiptsRepository.create(
             receiptsRepository = OfflineReceiptsRepository(database.receiptDao()),
-            itemsRepository = itemsRepository,
+            itemsRepository = itemsRepository
         )
     }
 
@@ -71,7 +73,17 @@ class AppDataContainer(private val context: Context) : AppContainer {
     override val recipesRepository: RecipesRepository by lazy {
         OfflineRecipesRepository(database.recipeDao())
     }
-
+    override val onlineRecipesRepository: OnlineRecipesRepository by lazy {
+        OnlineRecipesRepository.create(
+            recipesRepository = OfflineRecipesRepository(database.recipeDao()),
+            itemsRepository = itemsRepository
+        )
+    }
+    // 6. MyPantryViewModel
+    override val myPantryViewModel: MyPantryViewModel by lazy {
+        MyPantryViewModel(itemsRepository, receiptsRepository)
+    }
+    // 7. UsersRepository
     override val usersRepository: UsersRepository by lazy {
         OfflineUsersRepository(
             userDao = database.userDao(),

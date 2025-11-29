@@ -413,13 +413,13 @@ fun HistoryReceiptCard(
     }
 
     val receiptUiState by viewModel.receiptUiState.collectAsState()
-
+    //clean all the receiptUiState
     // Find the item list corresponding to this receipt ID
-    val itemList = receiptUiState.itemList.filter { it.receiptId == receipt.receiptId }
+
 
     // Calculate values using ViewModel logic
-    val totalPrice = viewModel.calculateTotalPrice(itemList)
-    val itemCount = viewModel.calculateTotalItem(itemList)
+    val totalPrice = receiptUiState.receiptSummary[receipt.receiptId]?.totalPrice
+    val itemCount = receiptUiState.receiptSummary[receipt.receiptId]?.itemCount
     val totalCalories = 2000 // Placeholder for calorie calculation
 
     // Function to format time ago (simplistic for UI)
@@ -592,7 +592,7 @@ fun ReceiptCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "${viewModel.calculateTotalItem(receiptUiState.itemList)} Items",
+                        text = "${receiptUiState.receiptSummary[receipt.receiptId]?.itemCount} Items",
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

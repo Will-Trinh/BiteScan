@@ -22,6 +22,9 @@ class OfflineItemsRepository (val itemDao: ItemDao) : ItemsRepository {
     override suspend fun insertItem(item: Item): Long {
         return itemDao.insert(item)
     }
+    override suspend fun upsertItem(item: Item): Long {
+        return itemDao.upsert(item)
+    }
 
 
     /**

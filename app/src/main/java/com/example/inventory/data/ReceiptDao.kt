@@ -22,6 +22,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -42,8 +43,14 @@ interface ReceiptDao {
     @Query("SELECT * FROM receipts WHERE userId = :userId")
     fun getReceiptsForUser(userId: Int): Flow<List<Receipt>>
 
+    @Query("DELETE FROM receipts WHERE userId = :userId")
+    suspend fun deleteReceiptsByUserId(userId: Int)
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertReceipt(receipt: Receipt): Long
+
+    @Upsert
+    suspend fun upsertReceipt(receipt: Receipt) : Long
+
 
     @Update
     suspend fun updateReceipt(receipt: Receipt)

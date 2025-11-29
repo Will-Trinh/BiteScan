@@ -12,14 +12,16 @@ import kotlinx.coroutines.launch
 import java.sql.Date
 import java.text.SimpleDateFormat
 import java.util.*
-
-
+import kotlinx.coroutines.flow.asStateFlow
+import android.util.Log
 class MyPantryViewModel(
     private val itemsRepository: ItemsRepository,
     private val receiptsRepository: ReceiptsRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PantryUiState())
     val uiState: StateFlow<PantryUiState> = _uiState
+    private val _availableIngredientNames = MutableStateFlow<List<String>>(emptyList())
+    val availableIngredientNames: StateFlow<List<String>> = _availableIngredientNames.asStateFlow()
 
     val PANTRY_CATEGORIES = listOf("Grocery", "Fruit", "Veggies", "Meat", "Fish", "Dairy", "Frozen", "Other")
     private fun expiryDaysForCategory(category: String): Int = when (category.lowercase(Locale.US)) {
@@ -92,10 +94,94 @@ class MyPantryViewModel(
             _uiState.value = _uiState.value.copy(
                 pantryItems = pantryItemsForUi.distinctBy { it.id }
             )
+
+            val validIngredients = pantryItemsForUi
+                .filter { it.daysLeft >= 0 }
+                .map { cleanIngredientName(it.name) }
+                .filter { it.isNotEmpty() }
+                .distinct()
+                .shuffled()
+                .take(15)
+            _availableIngredientNames.value = validIngredients
+            Log.d("MyPantryVM", "Available ingredients for recipe search: $validIngredients")
         }
     }
 
+    private fun cleanIngredientName(raw: String): String {
+        if (raw.isBlank()) return ""
 
+        var cleaned = raw.lowercase(Locale.ROOT)
+
+        // 1. Clean up numbers and units
+        cleaned = cleaned.replace(Regex("""\d+\s*(g|kg|lb|lbs|oz|ml|l|litre|liter|pack|can|jar|bag|box|ct|count|dozen|bunch|head|bulb|clove)"""), "")
+
+        // 2. Clean up common words
+        cleaned = cleaned.replace(Regex("""\b(365|local|organic|wild|free range|natural|fresh|frozen|frz|vf|lt|gluten free|non gmo|no sugar added|low fat|reduced fat|lite|light|premium|select|choice|prime|whole foods|trader joe|costco|kirkland|safeway|walmart|great value|store brand)\b"""), "")
+
+        // 3. Clean up common prefixes
+        cleaned = cleaned.replace(Regex("""\b(whole|half|quarter|sliced|diced|chopped|minced|ground|boneless|skinless|with skin|skin on|fillet|filet|breast|thigh|leg|wing|drumstick|chunk|chnk|piece|cut|canned|tin|tinned|frozen|fresh|raw|cooked)\b"""), "")
+
+        // 4. Clean up common suffixes
+        cleaned = cleaned.replace(Regex("""\b(extra virgin|virgin|pure|refined|unrefined|cold pressed|roasted|raw|blanched|toasted|unsalted|salted|sea salt|himalayan|kosher)\b"""), "")
+
+        // 5. Normalize common ingredients
+        cleaned = when {
+            cleaned.contains("chicken") || cleaned.contains("chkn") || cleaned.contains("poultry") -> "chicken"
+            cleaned.contains("tuna") -> "tuna"
+            cleaned.contains("salmon") -> "salmon"
+            cleaned.contains("shrimp") || cleaned.contains("prawn") -> "shrimp"
+            cleaned.contains("beef") || cleaned.contains("steak") || cleaned.contains("ground beef") -> "beef"
+            cleaned.contains("pork") || cleaned.contains("bacon") || cleaned.contains("ham") -> "pork"
+            cleaned.contains("egg") -> "egg"
+            cleaned.contains("milk") || cleaned.contains("dairy") -> "milk"
+            cleaned.contains("cheese") -> "cheese"
+            cleaned.contains("yogurt") || cleaned.contains("yoghurt") -> "yogurt"
+            cleaned.contains("butter") -> "butter"
+            cleaned.contains("rice") -> "rice"
+            cleaned.contains("pasta") || cleaned.contains("noodle") -> "pasta"
+            cleaned.contains("bread") -> "bread"
+            cleaned.contains("potato") -> "potato"
+            cleaned.contains("tomato") -> "tomato"
+            cleaned.contains("onion") || cleaned.contains("shallot") -> "onion"
+            cleaned.contains("green onion") || cleaned.contains("scallion") -> "scallion"
+            cleaned.contains("garlic") -> "garlic"
+            cleaned.contains("ginger") -> "ginger"
+            cleaned.contains("carrot") -> "carrot"
+            cleaned.contains("broccoli") -> "broccoli"
+            cleaned.contains("spinach") -> "spinach"
+            cleaned.contains("lettuce") || cleaned.contains("salad") || cleaned.contains("spring mix") -> "salad greens"
+            cleaned.contains("cucumber") -> "cucumber"
+            cleaned.contains("bell pepper") || cleaned.contains("capsicum") -> "bell pepper"
+            cleaned.contains("mushroom") -> "mushroom"
+            cleaned.contains("avocado") -> "avocado"
+            cleaned.contains("lime") || cleaned.contains("lemon") -> "lime"
+            cleaned.contains("banana") -> "banana"
+            cleaned.contains("apple") -> "apple"
+            cleaned.contains("orange") -> "orange"
+            cleaned.contains("strawberr") -> "strawberry"
+            cleaned.contains("blueberr") -> "blueberry"
+            cleaned.contains("blackberr") -> "blackberry"
+            cleaned.contains("fish sauce") -> "fish sauce"
+            cleaned.contains("soy sauce") -> "soy sauce"
+            cleaned.contains("olive oil") || cleaned.matches(Regex(".*oil.*")) -> "oil"
+            cleaned.contains("sugar") -> "sugar"
+            cleaned.contains("salt") -> "salt"
+            cleaned.contains("pepper") -> "pepper"
+            cleaned.contains("flour") -> "flour"
+            cleaned.contains("oat") -> "oats"
+            cleaned.contains("bean") -> "beans"
+            cleaned.contains("lentil") -> "lentils"
+            cleaned.contains("tofu") -> "tofu"
+            cleaned.contains("quinoa") -> "quinoa"
+            else -> cleaned
+        }
+
+        // 6. Trim and return
+        return cleaned.trim()
+            .replace(Regex("\\s+"), " ")  // nhiều khoảng trắng → 1
+            .takeIf { it.length >= 2 && it.matches(Regex("[a-z ]+")) } // chỉ giữ tên hợp lệ
+            ?: ""
+    }
     private fun determineUnit(name: String): String {
         val lowerName = name.lowercase()
         return when {
