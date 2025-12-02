@@ -11,8 +11,8 @@ import org.json.JSONObject
 import java.sql.Date
 import java.util.concurrent.TimeUnit
 
-class OnlineRecipesRepository(
-    private val recipesRepository: OfflineRecipesRepository,
+open class OnlineRecipesRepository(
+    private val recipesRepository: RecipesRepository,
     private val itemsRepository: ItemsRepository,
 ) {
     companion object {

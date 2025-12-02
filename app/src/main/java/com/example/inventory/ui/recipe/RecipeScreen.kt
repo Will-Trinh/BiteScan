@@ -1,6 +1,7 @@
 package com.example.inventory.ui.recipe
-
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -10,6 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.WbSunny
@@ -20,26 +22,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.example.inventory.ui.navigation.BottomNavigationBar
 import com.example.inventory.ui.AppViewModel
+import com.example.inventory.ui.navigation.BottomNavigationBar
+import com.example.inventory.ui.theme.CookingAssistantTheme
+import com.example.inventory.ui.theme.LightGreen
+import com.example.inventory.ui.theme.PrimaryGreen
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.ui.draw.drawBehind
 import com.example.inventory.InventoryApplication
-import com.example.inventory.data.RecipesRepository
-import com.example.inventory.ui.receipt.EditReceiptViewModel
-import com.example.inventory.ui.theme.CookingAssistantTheme
-import com.example.inventory.ui.theme.PrimaryGreen
-import com.example.inventory.ui.theme.LightGreen
-import com.example.inventory.ui.userdata.FakeItemsRepository
-import com.example.inventory.ui.userdata.FakeReceiptsRepository
-import androidx.compose.ui.text.style.TextAlign
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+import com.example.inventory.ui.userdata.FakeOnlineRecipesRepository
+import com.example.inventory.ui.userdata.FakeMyPantryViewModel
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun RecipeRecommendationScreen(
     navController: NavController,
@@ -50,39 +50,51 @@ fun RecipeRecommendationScreen(
     val userId = appViewModel.userId.value
     val context = androidx.compose.ui.platform.LocalContext.current
     val actualViewModel = viewModel ?: remember {
-        val app = context.applicationContext as InventoryApplication
-        val container = app.container
-
-        RecipeViewModel(
-            onlineRecipesRepository = container.onlineRecipesRepository,
-            myPantryViewModel = container.myPantryViewModel,
-            appViewModel = appViewModel
-        )
-
+        if (context.applicationContext is InventoryApplication) {
+            val appContainer = (context.applicationContext as InventoryApplication).container
+            RecipeViewModel(
+                onlineRecipesRepository = appContainer.onlineRecipesRepository,
+                myPantryViewModel = appContainer.myPantryViewModel,
+                appViewModel = appViewModel
+            )
+        } else {
+            RecipeViewModel(
+                onlineRecipesRepository = FakeOnlineRecipesRepository(),
+                myPantryViewModel = FakeMyPantryViewModel(),
+                appViewModel = appViewModel
+            )
+        }
     }
+
     val uiState by actualViewModel.uiState.collectAsState()
 
     CookingAssistantTheme {
         Scaffold(
             topBar = {
                 TopAppBar(
-                title = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(end = 48.dp),
-                        horizontalArrangement = Arrangement.Center
-                    )
-                    { Text( "Recipe Recommendations",
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black )
-                    } },
+                    title = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(end = 48.dp),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                "Recipe Recommendations",
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Black
+                            )
+                        }
+                    },
                     navigationIcon = {
-                        IconButton(onClick = { navController.popBackStack() })
-                        {
+                        IconButton(onClick = { navController.popBackStack() }) {
                             Icon(
                                 imageVector = Icons.Default.ArrowBack,
                                 contentDescription = "Back",
-                                tint = Color.Black )
-                        } }, ) },
+                                tint = Color.Black
+                            )
+                        }
+                    }
+                )
+            },
             bottomBar = { BottomNavigationBar(navController, appViewModel) }
         ) { innerPadding ->
             Column(
@@ -90,13 +102,14 @@ fun RecipeRecommendationScreen(
                     .fillMaxSize()
                     .padding(innerPadding)
                     .padding(horizontal = 16.dp)
-                    .then(modifier),
+                    .then(modifier)
             ) {
                 RecipeBody(
                     uiState = uiState,
                     onFilterClick = actualViewModel::toggleFilter,
+                    onIngredientToggle = actualViewModel::toggleIngredientExclusion,
+                    onFindRecipesClick = actualViewModel::findRecipesWithAI,
                     navController = navController,
-                    modifier = Modifier.fillMaxSize(),
                     appViewModel = appViewModel
                 )
             }
@@ -109,66 +122,50 @@ fun RecipeRecommendationScreen(
 fun RecipeBody(
     uiState: RecipeUiState,
     onFilterClick: (String) -> Unit,
+    onIngredientToggle: (String) -> Unit,
+    onFindRecipesClick: () -> Unit,
     navController: NavController,
     appViewModel: AppViewModel,
     modifier: Modifier = Modifier
 ) {
-    val userId = appViewModel.userId.value
-
     Box(modifier = modifier.fillMaxSize()) {
         when {
-            // 1. loading
+            // 1. Loading state
             uiState.isLoading -> {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .align(Alignment.Center),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                    modifier = Modifier.align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     CircularProgressIndicator(color = PrimaryGreen, strokeWidth = 4.dp)
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Loading recipes...",
-                        fontSize = 16.sp,
-                        color = Color.Gray,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Text("Loading recipes...", fontSize = 16.sp, color = Color.Gray)
                 }
             }
 
-            // 2. No recipes found
+            // 2. No ingredients or no recipes
             uiState.recipes.isEmpty() && uiState.errorMessage != null -> {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .align(Alignment.Center)
-                        .padding(32.dp),
+                    modifier = Modifier.align(Alignment.Center).padding(32.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Restaurant,
+                        Icons.Default.Restaurant,
                         contentDescription = null,
                         tint = Color.LightGray,
                         modifier = Modifier.size(80.dp)
                     )
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Text(
-                        text = "Check your ingredients",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.DarkGray
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(Modifier.height(24.dp))
+                    Text("Check your ingredients", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(12.dp))
                     Text(
                         text = uiState.errorMessage ?: "No recipes found.",
                         fontSize = 14.sp,
                         color = Color.Gray,
                         textAlign = TextAlign.Center
                     )
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(Modifier.height(24.dp))
                     Button(
-                        onClick = { navController.navigate("my_pantry/$userId") },
+                        onClick = { navController.navigate("my_pantry/${appViewModel.userId.value}") },
                         colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
                     ) {
                         Text("Check Ingredients", color = Color.White)
@@ -176,25 +173,24 @@ fun RecipeBody(
                 }
             }
 
-            // 3. Recipes found
+            // 3. Show recipes
             else -> {
                 LazyColumn(
                     contentPadding = PaddingValues(vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    // Available Ingredients Card with checkboxes
                     item {
                         AvailableIngredientsCard(
                             ingredients = uiState.availableIngredients,
-                            onCardClick = {
-                                navController.navigate(
-                                    com.example.inventory.ui.navigation.MyPantryDestination.route
-                                        .replace("{userId}", userId.toString())
-                                )
-                            },
+                            excludedIngredients = uiState.excludedIngredients,
+                            onIngredientToggle = onIngredientToggle,
+                            onFindRecipesClick = onFindRecipesClick,
                             modifier = Modifier.padding(bottom = 16.dp)
                         )
                     }
 
+                    // Filter chips
                     item {
                         FiltersRow(
                             selectedFilters = uiState.selectedFilters,
@@ -204,10 +200,8 @@ fun RecipeBody(
                         )
                     }
 
-                    items(
-                        items = uiState.recipes,
-                        key = { it.id }
-                    ) { recipe ->
+                    // Recipe list
+                    items(items = uiState.recipes, key = { it.id }) { recipe ->
                         RecipeCard(recipe = recipe)
                     }
                 }
@@ -216,18 +210,18 @@ fun RecipeBody(
     }
 }
 
-
+// New: Ingredients card with checkboxes + AI button
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AvailableIngredientsCard(
     ingredients: List<String>,
-    onCardClick: () -> Unit,
+    excludedIngredients: Set<String>,
+    onIngredientToggle: (String) -> Unit,
+    onFindRecipesClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onCardClick),
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
@@ -240,55 +234,112 @@ fun AvailableIngredientsCard(
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                ingredients.forEach { ingredient ->
-                    ReadOnlyIngredientChip(label = ingredient)
+            if (ingredients.isEmpty()) {
+                Text(
+                    text = "Your pantry is empty. Add ingredients to get recipe suggestions!",
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
+            } else {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+//                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    ingredients.forEach { ingredient ->
+                        IngredientWithCheckbox(
+                            name = ingredient,
+                            isExcluded = excludedIngredients.contains(ingredient),
+                            onToggle = { onIngredientToggle(ingredient) }
+                        )
+                    }
                 }
             }
 
-            TextButton(
-                onClick = onCardClick,
-                modifier = Modifier.padding(top = 8.dp),
-                contentPadding = PaddingValues(0.dp)
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // AI Search Button - Only triggers search when clicked
+            Button(
+                onClick = onFindRecipesClick,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen),
+                shape = RoundedCornerShape(12.dp),
+                enabled = ingredients.isNotEmpty() && ingredients.any { it !in excludedIngredients }
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "Go To Pantry",
-                        color = PrimaryGreen,
-                        fontSize = 14.sp
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Icon(
-                        imageVector = Icons.Default.ArrowForward,
-                        contentDescription = "Go To Pantry",
-                        tint = PrimaryGreen,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+                Text("Find my recipe with AI", color = Color.White, fontSize = 16.sp)
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Only unchecked ingredients will be used for recipe search",
+                fontSize = 12.sp,
+                color = Color.Gray,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
         }
     }
 }
 
+// Single ingredient chip with checkbox and strikethrough effect when excluded
 @Composable
-fun ReadOnlyIngredientChip(label: String) {
+fun IngredientWithCheckbox(
+    name: String,
+    isExcluded: Boolean,
+    onToggle: () -> Unit
+) {
     Row(
+        verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(LightGreen)
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .clip(RoundedCornerShape(20.dp))
+            .border(
+                width = 1.8.dp,
+                color = if (isExcluded) Color.Gray else PrimaryGreen,
+                shape = RoundedCornerShape(20.dp)
+            )
+            .background(
+                color = if (isExcluded) Color.LightGray.copy(alpha = 0.3f) else LightGreen.copy(alpha = 0.4f)
+            )
+            .clickable { onToggle() }
+            .padding(horizontal = 10.dp, vertical = 6.dp)
     ) {
-        Text(text = label, fontSize = 14.sp, color = Color.Black)
+        // Check box
+        Checkbox(
+            checked = isExcluded,
+            onCheckedChange = { onToggle() },
+            modifier = Modifier.size(18.dp),
+            colors = CheckboxDefaults.colors(
+                checkedColor = PrimaryGreen,
+                uncheckedColor = Color.Gray,
+                checkmarkColor = Color.White
+            )
+        )
+
+        Spacer(modifier = Modifier.width(6.dp))
+
+        // Strikethrough effect when excluded
+        Text(
+            text = name,
+            fontSize = 14.sp,
+            color = if (isExcluded) Color.Gray else Color.Black,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier
+                .drawBehind {
+                    if (isExcluded) {
+                        val strokeWidth = 1.5.dp.toPx()
+                        val y = size.height / 2
+                        drawLine(
+                            color = Color.Gray.copy(alpha = 0.8f),
+                            start = Offset(0f, y),
+                            end = Offset(size.width, y),
+                            strokeWidth = strokeWidth
+                        )
+                    }
+                }
+        )
     }
 }
 
-
-// --- Filters Row ---
+// Filter chips row
 @Composable
 fun FiltersRow(
     selectedFilters: Set<String>,
@@ -315,124 +366,92 @@ fun FiltersRow(
 
 @Composable
 fun FilterChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
-    val backgroundColor = if (isSelected) PrimaryGreen else Color.White
-    val contentColor = if (isSelected) Color.White else Color.Black
-    val borderColor = if (isSelected) PrimaryGreen else Color.LightGray
-
     Button(
         onClick = onClick,
-        colors = ButtonDefaults.buttonColors(containerColor = backgroundColor),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isSelected) PrimaryGreen else Color.White
+        ),
         shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(1.dp, borderColor),
+        border = BorderStroke(1.dp, if (isSelected) PrimaryGreen else Color.LightGray),
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-        elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+        elevation = ButtonDefaults.buttonElevation(0.dp)
     ) {
-        Text(text = label, color = contentColor, fontSize = 14.sp)
+        Text(
+            text = label,
+            color = if (isSelected) Color.White else Color.Black,
+            fontSize = 14.sp
+        )
     }
 }
 
-// --- Recipe Card ---
+// Recipe card (unchanged)
 @Composable
 fun RecipeCard(recipe: RecipeUiModel) {
     Card(
-        modifier = Modifier.fillMaxWidth().clickable { /* TODO: Navigate to recipe details */ },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { /* TODO: Navigate to recipe detail */ },
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Recipe Image/Icon (Placeholder)
             Box(
                 modifier = Modifier
                     .size(64.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(LightGreen), // Placeholder background
+                    .background(LightGreen),
                 contentAlignment = Alignment.Center
             ) {
-                // Using a generic icon as a placeholder
                 Icon(
-                    imageVector = Icons.Default.Restaurant,
-                    contentDescription = "Recipe Image",
+                    Icons.Default.Restaurant,
+                    contentDescription = null,
                     tint = PrimaryGreen,
                     modifier = Modifier.size(32.dp)
                 )
             }
-            Spacer(modifier = Modifier.width(16.dp))
+
+            Spacer(Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = recipe.name,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
-                Text(
-                    text = recipe.subtitle,
-                    fontSize = 14.sp,
-                    color = Color.Gray,
-                    modifier = Modifier.padding(bottom = 4.dp)
-                )
+                Text(recipe.name, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(recipe.subtitle, fontSize = 14.sp, color = Color.Gray, modifier = Modifier.padding(bottom = 4.dp))
 
-                // Details Row: Time and Servings
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Schedule,
-                        contentDescription = "Time",
-                        tint = Color.Gray,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = recipe.time, fontSize = 14.sp, color = Color.Black)
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Icon(
-                        imageVector = Icons.Default.WbSunny, // Used as a placeholder for people/servings icon
-                        contentDescription = "Servings",
-                        tint = Color.Gray,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = recipe.servings, fontSize = 14.sp, color = Color.Black)
+                    Icon(Icons.Default.Schedule, null, tint = Color.Gray, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text(recipe.time, fontSize = 14.sp)
+                    Spacer(Modifier.width(16.dp))
+                    Icon(Icons.Default.WbSunny, null, tint = Color.Gray, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text(recipe.servings, fontSize = 14.sp)
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(Modifier.height(8.dp))
 
-                // Nutrition Row (Cal, P, C, F)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    NutritionValue(label = "cal", value = recipe.calories)
-                    NutritionValue(label = "P:", value = recipe.protein)
-                    NutritionValue(label = "C:", value = recipe.carbs)
-                    NutritionValue(label = "F:", value = recipe.fat)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    NutritionValue("cal", recipe.calories)
+                    NutritionValue("P:", recipe.protein)
+                    NutritionValue("C:", recipe.carbs)
+                    NutritionValue("F:", recipe.fat)
                 }
             }
 
-            // Uses Ingredients Badge
-            Column(
-                horizontalAlignment = Alignment.End,
-                modifier = Modifier.fillMaxHeight(),
-                verticalArrangement = Arrangement.SpaceBetween
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(LightGreen)
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
-                Spacer(modifier = Modifier.height(2.dp)) // Alignment offset
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(LightGreen)
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = recipe.ingredientUsage,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = PrimaryGreen
-                    )
-                }
+                Text(
+                    text = recipe.ingredientUsage,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = PrimaryGreen
+                )
             }
         }
     }
@@ -441,20 +460,19 @@ fun RecipeCard(recipe: RecipeUiModel) {
 @Composable
 fun NutritionValue(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = value, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-        Text(text = label, fontSize = 12.sp, color = Color.Gray)
+        Text(value, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        Text(label, fontSize = 12.sp, color = Color.Gray)
     }
 }
 
-// --- Preview ---
-@OptIn(ExperimentalLayoutApi::class)
+// Preview
 @Preview(showBackground = true)
 @Composable
 fun RecipeRecommendationScreenPreview() {
-    val navController = rememberNavController()
     CookingAssistantTheme {
         RecipeRecommendationScreen(
-            navController = navController,
+            modifier = Modifier,
+            navController = rememberNavController(),
             appViewModel = AppViewModel()
         )
     }

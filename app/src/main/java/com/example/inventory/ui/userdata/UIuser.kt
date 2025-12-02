@@ -11,6 +11,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import java.sql.Date
 import java.util.concurrent.atomic.AtomicInteger
+import com.example.inventory.data.OnlineRecipesRepository
+import com.example.inventory.data.Recipe
+import com.example.inventory.ui.settings.MyPantryViewModel
+import com.example.inventory.ui.recipe.RecipeUiModel
+import com.example.inventory.data.RecipesRepository
+
 
 // Fake ReceiptsRepository for preview (updated userId to 1 for consistency)
 class FakeReceiptsRepository : ReceiptsRepository {
@@ -146,8 +152,77 @@ class FakeUsersRepository : UsersRepository {
         fakeItemsRepo.clear()
     }
 }
+class FakeRecipeRepository : RecipesRepository {
+    override fun getAllRecipesStream(): Flow<List<Recipe>> = flowOf(emptyList())
+    override fun getRecipeStream(id: Int): Flow<Recipe?> = flowOf(null)
+    override fun searchRecipes(query: String): Flow<List<Recipe>> = flowOf(emptyList())
+    override suspend fun insertRecipe(recipe: Recipe) {}
+    override suspend fun deleteRecipe(recipe: Recipe) {}
+    override suspend fun updateRecipe(recipe: Recipe) {}
+}
+class FakeOnlineRecipesRepository : OnlineRecipesRepository(
+    recipesRepository = FakeRecipeRepository(),
+    itemsRepository = FakeItemsRepository(),
+    // nếu OnlineRecipesRepository có thêm usersRepository thì thêm FakeUsersRepository()
+    // usersRepository = FakeUsersRepository()
+) {
+    suspend fun searchRecipes(
+        ingredients: List<String>,
+        excludedIngredients: List<String>,
+        filters: Set<String>
+    ): List<RecipeUiModel> {
 
-
+        return listOf(
+            RecipeUiModel(
+                id = 1,
+                name = "Tomato Egg Stir-Fry",
+                subtitle = "10-minute classic comfort food",
+                time = "10 mins",
+                servings = "2 servings",
+                calories = "280 cal",
+                protein = "15g",
+                carbs = "12g",
+                fat = "18g",
+                ingredientUsage = "Uses 4/5 ingredients",
+            ),
+            RecipeUiModel(
+                id = 2,
+                name = "Chicken Fried Rice",
+                subtitle = "Better than takeout",
+                time = "20 mins",
+                servings = "3 servings",
+                calories = "580 cal",
+                protein = "28g",
+                carbs = "78g",
+                fat = "22g",
+                ingredientUsage = "Uses 8/10 ingredients",
+            ),
+            RecipeUiModel(
+                id = 3,
+                name = "Lemongrass Chili Chicken",
+                subtitle = "Aromatic Vietnamese favorite",
+                time = "25 mins",
+                servings = "4 servings",
+                calories = "420 cal",
+                protein = "38g",
+                carbs = "8g",
+                fat = "24g",
+                ingredientUsage = "Uses 6/8 ingredients",
+            )
+        )
+    }
+}
+class FakeMyPantryViewModel: MyPantryViewModel(FakeItemsRepository(), FakeReceiptsRepository()) {
+    override val availableIngredientNames: Flow<List<String>> = flowOf(
+        listOf(
+            "chicken", "tomato", "onion", "garlic", "rice", "egg", "potato",
+            "carrot", "broccoli", "bell pepper", "spinach", "milk", "cheese",
+            "butter", "bread", "beef", "pork", "shrimp", "pasta", "olive oil",
+            "salt", "pepper", "sugar", "banana", "apple", "orange", "avocado",
+            "cucumber", "ginger", "soy sauce", "lime", "coconut milk", "yogurt"
+        )
+    )
+}
 
 // Fake UI user (updated to userId = 1 for consistency)
 val fakeUIuser = User(userId = 1, username = "previewUser", email = "TranXinhDep@gmail.com", phone = "1234567890")
