@@ -3,14 +3,13 @@ package com.example.inventory.ui.recipe
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.inventory.data.OnlineRecipesRepository
-import com.example.inventory.data.Recipe
 import com.example.inventory.ui.AppViewModel
 import com.example.inventory.ui.settings.MyPantryViewModel
 import android.util.Log
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class RecipeViewModel(
     private val onlineRecipesRepository: OnlineRecipesRepository,
@@ -18,29 +17,23 @@ class RecipeViewModel(
     private val appViewModel: AppViewModel
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(
-        RecipeUiState(
-            allFilters = listOf("High Protein", "Vegetarian", "Vegan", "Low Carb", "Quick (<30m)", "Italian", "Asian", "Healthy"),
-            selectedFilters = emptySet(),
-            excludedIngredients = emptySet()
-        )
-    )
+    private val _uiState = MutableStateFlow(RecipeUiState())
     val uiState = _uiState.asStateFlow()
 
-    // Lưu toàn bộ ingredients hiện tại từ pantry
     private var currentAllIngredients: List<String> = emptyList()
 
     init {
-        _uiState.update { it.copy(isLoading = true) }
         observeAvailableIngredients()
     }
-
+    fun refreshRecommendations() {
+        val userId = appViewModel.userId.value ?: 0
+        myPantryViewModel.loadPantryItems(userId)
+    }
     private fun observeAvailableIngredients() {
         viewModelScope.launch {
             myPantryViewModel.availableIngredientNames.collect { ingredients ->
                 currentAllIngredients = ingredients
 
-                // Tự động loại bỏ những ingredient đã exclude nhưng không còn trong pantry
                 val currentExcluded = _uiState.value.excludedIngredients
                 val validExcluded = currentExcluded.intersect(ingredients.toSet())
 
@@ -48,39 +41,11 @@ class RecipeViewModel(
                     it.copy(
                         availableIngredients = ingredients,
                         excludedIngredients = validExcluded,
-                        recipes = emptyList(), // reset khi pantry thay đổi
-                        errorMessage = null,
-                        isLoading = false
+                        recipes = emptyList(),
+                        errorMessage = null
                     )
                 }
             }
-        }
-    }
-
-    fun refreshRecommendations() {
-        val userId = appViewModel.userId.value ?: 0
-        myPantryViewModel.loadPantryItems(userId)
-    }
-
-    // button search
-    fun findRecipesWithAI() {
-        val includedIngredients = currentAllIngredients.filter {
-            it !in _uiState.value.excludedIngredients
-        }
-
-        if (includedIngredients.isEmpty()) {
-            _uiState.update {
-                it.copy(
-                    recipes = emptyList(),
-                    isLoading = false,
-                    errorMessage = "Please select at least one ingredient to find recipes."
-                )
-            }
-            return
-        }
-
-        viewModelScope.launch {
-            searchAndDisplayRecipes(includedIngredients)
         }
     }
 
@@ -93,62 +58,12 @@ class RecipeViewModel(
         }
     }
 
-    private suspend fun searchAndDisplayRecipes(availableIngredients: List<String>) {
-        try {
-            Log.d("RecipeViewModel", "Searching recipes for: $availableIngredients")
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+    fun selectCountry(country: String) {
+        _uiState.update { it.copy(selectedCountry = country) }
+    }
 
-            val foundRecipes = onlineRecipesRepository?.searchRecipes(
-                ingredients = availableIngredients,
-                country = "Hong Kong",
-                style = "healthy"
-            )
-
-            if (foundRecipes?.isEmpty() ?: true) {
-                _uiState.update {
-                    it.copy(
-                        recipes = emptyList(),
-                        availableIngredients = availableIngredients.take(25),
-                        isLoading = false,
-                        errorMessage = "No recipes found. Try adding more common ingredients like chicken, rice, eggs..."
-                    )
-                }
-                return
-            }
-
-            val uiRecipes = foundRecipes.mapIndexed { index, recipe ->
-                RecipeUiModel(
-                    id = index.toLong(),
-                    name = recipe.title,
-                    subtitle = recipe.source.ifBlank { "AI Suggested Recipe" },
-                    time = "25–45 min",
-                    servings = "4",
-                    calories = "N/A",
-                    protein = "N/A",
-                    carbs = "N/A",
-                    fat = "N/A",
-                    ingredientUsage = "Suggested",
-                    sourceUrl = recipe.source
-                )
-            }
-
-            _uiState.update {
-                it.copy(
-                    recipes = uiRecipes,
-                    availableIngredients = availableIngredients.take(25),
-                    isLoading = false
-                )
-            }
-
-        } catch (e: Exception) {
-            Log.e("RecipeViewModel", "Error searching recipes", e)
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    errorMessage = "Network error. Please check your connection and try again."
-                )
-            }
-        }
+    fun selectStyle(style: String) {
+        _uiState.update { it.copy(selectedStyle = style) }
     }
 
     fun toggleFilter(filter: String) {
@@ -159,21 +74,101 @@ class RecipeViewModel(
         }
     }
 
-    fun clearError() = _uiState.update { it.copy(errorMessage = null) }
+    fun findRecipesWithAI() {
+        val includedIngredients = currentAllIngredients.filter {
+            it !in _uiState.value.excludedIngredients
+        }
 
-    fun refresh() {
-        _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-        val included = currentAllIngredients.filter { it !in _uiState.value.excludedIngredients }
-        if (included.isNotEmpty()) {
-            viewModelScope.launch { searchAndDisplayRecipes(included) }
+        if (includedIngredients.isEmpty()) {
+            _uiState.update {
+                it.copy(
+                    recipes = emptyList(),
+                    errorMessage = "Please keep at least one ingredient to search."
+                )
+            }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+
+            val country = _uiState.value.selectedCountry
+            val style = _uiState.value.selectedStyle
+
+            try {
+                Log.d("RecipeViewModel", "Searching recipes with ingredients: $includedIngredients")
+                val foundRecipes = onlineRecipesRepository.searchRecipes(
+                    ingredients = includedIngredients,
+                    country = country,
+                    style = style
+                )
+                Log.d("RecipeViewModel", "Found recipes: $foundRecipes")
+
+                if (foundRecipes.isNullOrEmpty()) {
+                    _uiState.update {
+                        it.copy(
+                            recipes = emptyList(),
+                            isLoading = false,
+                            errorMessage = "No recipes found. Try different ingredients or remove some filters."
+                        )
+                    }
+                    return@launch
+                }
+
+                val uiRecipes = foundRecipes.mapIndexed { index, recipe ->
+                    RecipeUiModel(
+                        id = index.toLong(),
+                        name = recipe.title,
+                        subtitle = recipe.source.ifBlank { "AI Suggested Recipe" },
+                        time = "25–45 min",
+                        servings = "4",
+                        calories = "N/A",
+                        protein = "N/A",
+                        carbs = "N/A",
+                        fat = "N/A",
+                        ingredientUsage = "Suggested",
+                        sourceUrl = recipe.source
+                    )
+                }
+
+                _uiState.update {
+                    it.copy(recipes = uiRecipes, isLoading = false)
+                }
+
+            } catch (e: Exception) {
+                Log.e("RecipeViewModel", "Error searching recipes", e)
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = "Network error. Please check your connection. I'm Old"
+                    )
+                }
+            }
         }
     }
+
+    fun clearError() = _uiState.update { it.copy(errorMessage = null) }
 }
 
 data class RecipeUiState(
+    val allCountries: List<String> = listOf("Any") + listOf(
+        "Vietnamese", "Chinese", "Japanese", "Korean",
+        "Thai", "Indian", "Italian", "Mexican", "French", "American"
+    ),
+    val selectedCountry: String = "Any",
+
+    val allStyles: List<String> = listOf("Any") + listOf(
+        "Stir-fry", "Grilled", "Steamed", "Soup",
+        "Salad", "Baked", "Fried", "One-pot", "No-cook"
+    ),
+    val selectedStyle: String = "Any",
+
     val availableIngredients: List<String> = emptyList(),
-    val excludedIngredients: Set<String> = emptySet(), // MỚI
-    val allFilters: List<String> = emptyList(),
+    val excludedIngredients: Set<String> = emptySet(),
+    val allFilters: List<String> = listOf(
+        "High Protein", "Vegetarian", "Vegan", "Low Carb",
+        "Quick (<30m)", "Healthy"
+    ),
     val selectedFilters: Set<String> = emptySet(),
     val recipes: List<RecipeUiModel> = emptyList(),
     val isLoading: Boolean = false,

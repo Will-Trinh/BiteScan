@@ -1,26 +1,26 @@
 package com.example.inventory.ui.recipe
-import androidx.compose.ui.geometry.Offset
+
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Restaurant
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.WbSunny
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -28,17 +28,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.inventory.InventoryApplication
 import com.example.inventory.ui.AppViewModel
 import com.example.inventory.ui.navigation.BottomNavigationBar
 import com.example.inventory.ui.theme.CookingAssistantTheme
 import com.example.inventory.ui.theme.LightGreen
 import com.example.inventory.ui.theme.PrimaryGreen
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.ui.draw.drawBehind
-import com.example.inventory.InventoryApplication
-import com.example.inventory.ui.userdata.FakeOnlineRecipesRepository
 import com.example.inventory.ui.userdata.FakeMyPantryViewModel
+import com.example.inventory.ui.userdata.FakeOnlineRecipesRepository
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun RecipeRecommendationScreen(
@@ -47,8 +45,7 @@ fun RecipeRecommendationScreen(
     viewModel: RecipeViewModel? = null,
     appViewModel: AppViewModel
 ) {
-    val userId = appViewModel.userId.value
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
     val actualViewModel = viewModel ?: remember {
         if (context.applicationContext is InventoryApplication) {
             val appContainer = (context.applicationContext as InventoryApplication).container
@@ -86,11 +83,7 @@ fun RecipeRecommendationScreen(
                     },
                     navigationIcon = {
                         IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "Back",
-                                tint = Color.Black
-                            )
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.Black)
                         }
                     }
                 )
@@ -102,14 +95,13 @@ fun RecipeRecommendationScreen(
                     .fillMaxSize()
                     .padding(innerPadding)
                     .padding(horizontal = 16.dp)
-                    .then(modifier)
             ) {
                 RecipeBody(
                     uiState = uiState,
-                    onFilterClick = actualViewModel::toggleFilter,
                     onIngredientToggle = actualViewModel::toggleIngredientExclusion,
                     onFindRecipesClick = actualViewModel::findRecipesWithAI,
                     navController = navController,
+                    viewModel = actualViewModel,
                     appViewModel = appViewModel
                 )
             }
@@ -117,20 +109,19 @@ fun RecipeRecommendationScreen(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun RecipeBody(
     uiState: RecipeUiState,
-    onFilterClick: (String) -> Unit,
     onIngredientToggle: (String) -> Unit,
     onFindRecipesClick: () -> Unit,
     navController: NavController,
+    viewModel: RecipeViewModel,
     appViewModel: AppViewModel,
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         when {
-            // 1. Loading state
             uiState.isLoading -> {
                 Column(
                     modifier = Modifier.align(Alignment.Center),
@@ -138,69 +129,56 @@ fun RecipeBody(
                 ) {
                     CircularProgressIndicator(color = PrimaryGreen, strokeWidth = 4.dp)
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("Loading recipes...", fontSize = 16.sp, color = Color.Gray)
+                    Text("Finding delicious recipes...", fontSize = 16.sp, color = Color.Gray)
                 }
             }
 
-            // 2. No ingredients or no recipes
             uiState.recipes.isEmpty() && uiState.errorMessage != null -> {
                 Column(
                     modifier = Modifier.align(Alignment.Center).padding(32.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(
-                        Icons.Default.Restaurant,
-                        contentDescription = null,
-                        tint = Color.LightGray,
-                        modifier = Modifier.size(80.dp)
-                    )
+                    Icon(Icons.Default.Restaurant, null, tint = Color.LightGray, modifier = Modifier.size(80.dp))
                     Spacer(Modifier.height(24.dp))
-                    Text("Check your ingredients", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    Text("No recipes found", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(12.dp))
-                    Text(
-                        text = uiState.errorMessage ?: "No recipes found.",
-                        fontSize = 14.sp,
-                        color = Color.Gray,
-                        textAlign = TextAlign.Center
-                    )
+                    Text(uiState.errorMessage ?: "", textAlign = TextAlign.Center, color = Color.Gray)
                     Spacer(Modifier.height(24.dp))
                     Button(
                         onClick = { navController.navigate("my_pantry/${appViewModel.userId.value}") },
                         colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
                     ) {
-                        Text("Check Ingredients", color = Color.White)
+                        Text("Go to My Pantry", color = Color.White)
                     }
                 }
             }
 
-            // 3. Show recipes
             else -> {
                 LazyColumn(
                     contentPadding = PaddingValues(vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Available Ingredients Card with checkboxes
+                    // 1. Ingredients + AI Button
                     item {
                         AvailableIngredientsCard(
                             ingredients = uiState.availableIngredients,
                             excludedIngredients = uiState.excludedIngredients,
                             onIngredientToggle = onIngredientToggle,
-                            onFindRecipesClick = onFindRecipesClick,
-                            modifier = Modifier.padding(bottom = 16.dp)
+                            onFindRecipesClick = onFindRecipesClick
                         )
                     }
 
-                    // Filter chips
+                    // 2. Filters Card (Country, Style, Diet)
                     item {
-                        FiltersRow(
-                            selectedFilters = uiState.selectedFilters,
-                            allFilters = uiState.allFilters,
-                            onFilterClick = onFilterClick,
-                            modifier = Modifier.padding(bottom = 8.dp)
+                        FiltersCard(
+                            uiState = uiState,
+                            onSelectCountry = viewModel::selectCountry,
+                            onSelectStyle = viewModel::selectStyle,
+                            onToggleFilter = viewModel::toggleFilter
                         )
                     }
 
-                    // Recipe list
+                    // 3. Recipe List
                     items(items = uiState.recipes, key = { it.id }) { recipe ->
                         RecipeCard(recipe = recipe)
                     }
@@ -210,7 +188,6 @@ fun RecipeBody(
     }
 }
 
-// New: Ingredients card with checkboxes + AI button
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AvailableIngredientsCard(
@@ -235,16 +212,9 @@ fun AvailableIngredientsCard(
             )
 
             if (ingredients.isEmpty()) {
-                Text(
-                    text = "Your pantry is empty. Add ingredients to get recipe suggestions!",
-                    color = Color.Gray,
-                    fontSize = 14.sp
-                )
+                Text("Your pantry is empty. Add ingredients to get suggestions!", color = Color.Gray)
             } else {
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-//                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     ingredients.forEach { ingredient ->
                         IngredientWithCheckbox(
                             name = ingredient,
@@ -257,7 +227,6 @@ fun AvailableIngredientsCard(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // AI Search Button - Only triggers search when clicked
             Button(
                 onClick = onFindRecipesClick,
                 modifier = Modifier.fillMaxWidth(),
@@ -269,9 +238,8 @@ fun AvailableIngredientsCard(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-
             Text(
-                text = "Only unchecked ingredients will be used for recipe search",
+                text = "Only unchecked ingredients will be used",
                 fontSize = 12.sp,
                 color = Color.Gray,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -280,7 +248,6 @@ fun AvailableIngredientsCard(
     }
 }
 
-// Single ingredient chip with checkbox and strikethrough effect when excluded
 @Composable
 fun IngredientWithCheckbox(
     name: String,
@@ -291,127 +258,123 @@ fun IngredientWithCheckbox(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .clip(RoundedCornerShape(20.dp))
-            .border(
-                width = 1.8.dp,
-                color = if (isExcluded) Color.Gray else PrimaryGreen,
-                shape = RoundedCornerShape(20.dp)
-            )
-            .background(
-                color = if (isExcluded) Color.LightGray.copy(alpha = 0.3f) else LightGreen.copy(alpha = 0.4f)
-            )
+            .border(1.8.dp, if (isExcluded) Color.Gray else PrimaryGreen, RoundedCornerShape(20.dp))
+            .background(if (isExcluded) Color.LightGray.copy(0.3f) else LightGreen.copy(0.4f))
             .clickable { onToggle() }
             .padding(horizontal = 10.dp, vertical = 6.dp)
     ) {
-        // Check box
         Checkbox(
             checked = isExcluded,
             onCheckedChange = { onToggle() },
             modifier = Modifier.size(18.dp),
-            colors = CheckboxDefaults.colors(
-                checkedColor = PrimaryGreen,
-                uncheckedColor = Color.Gray,
-                checkmarkColor = Color.White
-            )
+            colors = CheckboxDefaults.colors(checkedColor = PrimaryGreen, checkmarkColor = Color.White)
         )
-
-        Spacer(modifier = Modifier.width(6.dp))
-
-        // Strikethrough effect when excluded
+        Spacer(Modifier.width(6.dp))
         Text(
             text = name,
             fontSize = 14.sp,
             color = if (isExcluded) Color.Gray else Color.Black,
             fontWeight = FontWeight.Medium,
-            modifier = Modifier
-                .drawBehind {
-                    if (isExcluded) {
-                        val strokeWidth = 1.5.dp.toPx()
-                        val y = size.height / 2
-                        drawLine(
-                            color = Color.Gray.copy(alpha = 0.8f),
-                            start = Offset(0f, y),
-                            end = Offset(size.width, y),
-                            strokeWidth = strokeWidth
-                        )
-                    }
+            modifier = Modifier.drawBehind {
+                if (isExcluded) {
+                    val y = size.height / 2
+                    drawLine(Color.Gray.copy(0.8f), Offset(0f, y), Offset(size.width, y), 1.5.dp.toPx())
                 }
+            }
         )
     }
 }
 
-// Filter chips row
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun FiltersRow(
-    selectedFilters: Set<String>,
-    allFilters: List<String>,
-    onFilterClick: (String) -> Unit,
+fun FiltersCard(
+    uiState: RecipeUiState,
+    onSelectCountry: (String) -> Unit,
+    onSelectStyle: (String) -> Unit,
+    onToggleFilter: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(2.dp)
     ) {
-        allFilters.forEach { filter ->
-            val isSelected = selectedFilters.contains(filter)
-            FilterChip(
-                label = filter,
-                isSelected = isSelected,
-                onClick = { onFilterClick(filter) }
-            )
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Filters", fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
+
+            // Country - Single Select
+            Text("Country", fontWeight = FontWeight.Medium, fontSize = 14.sp, modifier = Modifier.padding(bottom = 8.dp))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 12.dp)) {
+                uiState.allCountries.forEach { country ->
+                    FilterCheckboxChip(
+                        label = country,
+                        isSelected = uiState.selectedCountry == country,
+                        onClick = { onSelectCountry(country) }
+                    )
+                }
+            }
+
+            // Cooking Style - Single Select
+            Text("Cooking Style", fontWeight = FontWeight.Medium, fontSize = 14.sp, modifier = Modifier.padding(bottom = 8.dp))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 12.dp)) {
+                uiState.allStyles.forEach { style ->
+                    FilterCheckboxChip(
+                        label = style,
+                        isSelected = uiState.selectedStyle == style,
+                        onClick = { onSelectStyle(style) }
+                    )
+                }
+            }
+
+            // Diet & Time - Multi Select
+            Text("Diet & Time", fontWeight = FontWeight.Medium, fontSize = 14.sp, modifier = Modifier.padding(bottom = 8.dp))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                uiState.allFilters.forEach { filter ->
+                    FilterCheckboxChip(
+                        label = filter,
+                        isSelected = uiState.selectedFilters.contains(filter),
+                        onClick = { onToggleFilter(filter) }
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-fun FilterChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
-    Button(
+fun FilterCheckboxChip(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    FilterChip(
+        selected = isSelected,
         onClick = onClick,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (isSelected) PrimaryGreen else Color.White
+        label = { Text(label, fontSize = 14.sp) },
+        colors = FilterChipDefaults.filterChipColors(
+            selectedContainerColor = PrimaryGreen,
+            selectedLabelColor = Color.White,
+            containerColor = Color(0xFFF1F8E9),
+            labelColor = Color.Black
         ),
-        shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(1.dp, if (isSelected) PrimaryGreen else Color.LightGray),
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-        elevation = ButtonDefaults.buttonElevation(0.dp)
-    ) {
-        Text(
-            text = label,
-            color = if (isSelected) Color.White else Color.Black,
-            fontSize = 14.sp
-        )
-    }
+    )
 }
 
-// Recipe card (unchanged)
 @Composable
 fun RecipeCard(recipe: RecipeUiModel) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { /* TODO: Navigate to recipe detail */ },
+        modifier = Modifier.fillMaxWidth().clickable { /* Navigate to detail */ },
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(LightGreen),
+                modifier = Modifier.size(64.dp).clip(RoundedCornerShape(8.dp)).background(LightGreen),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    Icons.Default.Restaurant,
-                    contentDescription = null,
-                    tint = PrimaryGreen,
-                    modifier = Modifier.size(32.dp)
-                )
+                Icon(Icons.Default.Restaurant, null, tint = PrimaryGreen, modifier = Modifier.size(32.dp))
             }
 
             Spacer(Modifier.width(16.dp))
@@ -441,17 +404,9 @@ fun RecipeCard(recipe: RecipeUiModel) {
             }
 
             Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(LightGreen)
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(LightGreen).padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
-                Text(
-                    text = recipe.ingredientUsage,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = PrimaryGreen
-                )
+                Text(recipe.ingredientUsage, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = PrimaryGreen)
             }
         }
     }
@@ -465,13 +420,11 @@ fun NutritionValue(label: String, value: String) {
     }
 }
 
-// Preview
 @Preview(showBackground = true)
 @Composable
 fun RecipeRecommendationScreenPreview() {
     CookingAssistantTheme {
         RecipeRecommendationScreen(
-            modifier = Modifier,
             navController = rememberNavController(),
             appViewModel = AppViewModel()
         )
