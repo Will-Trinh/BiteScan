@@ -73,8 +73,10 @@ class RecipeViewModel(
             it.copy(selectedFilters = set)
         }
     }
-
-    fun findRecipesWithAI() {
+    fun findRecipesWithAi() {
+        return
+    }
+    fun findRecipesWithGg() {
         val includedIngredients = currentAllIngredients.filter {
             it !in _uiState.value.excludedIngredients
         }

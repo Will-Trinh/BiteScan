@@ -99,7 +99,8 @@ fun RecipeRecommendationScreen(
                 RecipeBody(
                     uiState = uiState,
                     onIngredientToggle = actualViewModel::toggleIngredientExclusion,
-                    onFindRecipesClick = actualViewModel::findRecipesWithAI,
+                    onFindRecipesClick = actualViewModel::findRecipesWithGg,
+                    onFindRecipesAIClick = actualViewModel::findRecipesWithAi,
                     navController = navController,
                     viewModel = actualViewModel,
                     appViewModel = appViewModel
@@ -115,6 +116,7 @@ fun RecipeBody(
     uiState: RecipeUiState,
     onIngredientToggle: (String) -> Unit,
     onFindRecipesClick: () -> Unit,
+    onFindRecipesAIClick: () -> Unit,
     navController: NavController,
     viewModel: RecipeViewModel,
     appViewModel: AppViewModel,
@@ -164,7 +166,8 @@ fun RecipeBody(
                             ingredients = uiState.availableIngredients,
                             excludedIngredients = uiState.excludedIngredients,
                             onIngredientToggle = onIngredientToggle,
-                            onFindRecipesClick = onFindRecipesClick
+                            onFindRecipesClick = onFindRecipesClick,
+                            onFindRecipesAIClick = onFindRecipesAIClick
                         )
                     }
 
@@ -195,6 +198,7 @@ fun AvailableIngredientsCard(
     excludedIngredients: Set<String>,
     onIngredientToggle: (String) -> Unit,
     onFindRecipesClick: () -> Unit,
+    onFindRecipesAIClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -226,16 +230,27 @@ fun AvailableIngredientsCard(
             }
 
             Spacer(modifier = Modifier.height(20.dp))
-
-            Button(
-                onClick = onFindRecipesClick,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen),
-                shape = RoundedCornerShape(12.dp),
-                enabled = ingredients.isNotEmpty() && ingredients.any { it !in excludedIngredients }
-            ) {
-                Text("Find my recipe with AI", color = Color.White, fontSize = 16.sp)
+            Column(modifier = modifier.fillMaxWidth()) {
+                Button(
+                    onClick = onFindRecipesClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen),
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = ingredients.isNotEmpty() && ingredients.any { it !in excludedIngredients }
+                ) {
+                    Text("Find my recipe with Google", color = Color.White, fontSize = 16.sp)
+                }
+                Button(
+                    onClick = onFindRecipesAIClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen),
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = ingredients.isNotEmpty() && ingredients.any { it !in excludedIngredients }
+                ) {
+                    Text("Find my recipe with AI", color = Color.White, fontSize = 16.sp)
+                }
             }
+
 
             Spacer(modifier = Modifier.height(8.dp))
             Text(
@@ -427,6 +442,19 @@ fun RecipeRecommendationScreenPreview() {
         RecipeRecommendationScreen(
             navController = rememberNavController(),
             appViewModel = AppViewModel()
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun FiltersCardPreview() {
+    CookingAssistantTheme {
+        FiltersCard(
+            uiState = RecipeUiState(),
+            onSelectCountry = {},
+            onSelectStyle = {},
+            onToggleFilter = {}
         )
     }
 }

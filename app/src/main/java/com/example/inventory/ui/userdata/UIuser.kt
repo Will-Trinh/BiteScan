@@ -225,4 +225,4 @@ class FakeMyPantryViewModel: MyPantryViewModel(FakeItemsRepository(), FakeReceip
 }
 
 // Fake UI user (updated to userId = 1 for consistency)
-val fakeUIuser = User(userId = 1, username = "previewUser", email = "TranXinhDep@gmail.com", phone = "1234567890")
+val fakeUIuser = User(userId = 1, username = "previewUser", email = "TranXinhDep@gmail.com", phone = "1234567890", diet = "veteran")
