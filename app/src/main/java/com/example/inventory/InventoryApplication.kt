@@ -30,7 +30,6 @@ class InventoryApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        OpenRouterClient.init(this)
         container = AppDataContainer(this)
     }
 }
