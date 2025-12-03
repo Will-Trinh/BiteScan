@@ -25,7 +25,7 @@ import androidx.room.TypeConverters
 /**
  * Database class with a singleton Instance object.
  */
-@Database(entities = [Item::class, Receipt::class, Recipe::class, User::class], version = 14, exportSchema = false)
+@Database(entities = [Item::class, Receipt::class, Recipe::class, User::class], version = 15, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class InventoryDatabase : RoomDatabase() {
 
