@@ -41,6 +41,10 @@ google-services.json
 # Ignore NDK build folders
 obj/
 
+#bin and
+*.bin
+*.lock
+
 # Ignore profiling files
 *.hprof
 
