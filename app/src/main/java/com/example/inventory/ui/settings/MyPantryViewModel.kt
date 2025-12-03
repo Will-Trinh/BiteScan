@@ -14,14 +14,16 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.flow.asStateFlow
 import android.util.Log
-class MyPantryViewModel(
+import kotlinx.coroutines.flow.Flow
+
+open class MyPantryViewModel(
     private val itemsRepository: ItemsRepository,
     private val receiptsRepository: ReceiptsRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PantryUiState())
     val uiState: StateFlow<PantryUiState> = _uiState
     private val _availableIngredientNames = MutableStateFlow<List<String>>(emptyList())
-    val availableIngredientNames: StateFlow<List<String>> = _availableIngredientNames.asStateFlow()
+    open val availableIngredientNames: Flow<List<String>> = _availableIngredientNames.asStateFlow()
 
     val PANTRY_CATEGORIES = listOf("Grocery", "Fruit", "Veggies", "Meat", "Fish", "Dairy", "Frozen", "Other")
     private fun expiryDaysForCategory(category: String): Int = when (category.lowercase(Locale.US)) {

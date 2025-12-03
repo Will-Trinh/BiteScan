@@ -88,7 +88,7 @@ class LoginScreenViewModel(
                             Log.e("LoginVM", "Error during sync: ${e.message}")
                             _loginResult.value = _loginResult.value.copy(success = false, errorMessage = "Error during sync: ${e.message}")
                         }}
-                        viewModelScope.launch { usersRepository.insertUser(User(userId = userId, username = username, email = email, phone =""))}
+                        viewModelScope.launch { usersRepository.insertUser(User(userId = userId, username = username, email = email, phone ="", diet = ""))}
                         return@withContext LoginResult(
                             success = true,
                             uid = userId,
