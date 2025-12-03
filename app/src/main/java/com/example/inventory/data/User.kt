@@ -22,8 +22,8 @@ import java.sql.Date
 
 /**
  * Entity data class represents a single row in the database.
- * receipts.kt để group nhiều items thành một receipt
- * Receipts: Một receipt có nhiều products (items).
+ * each user will have a list of recipes
+ * each user will have a list of recipe
  */
 @Entity(tableName = "users")
 data class User(
@@ -31,4 +31,5 @@ data class User(
     val username: String,
     val email: String,
     val phone: String,
+    val diet: String,
 )

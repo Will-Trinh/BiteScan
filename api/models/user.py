@@ -7,3 +7,5 @@ class User(SQLModel, table=True):
     username: str = Field(nullable=False)
     password: str = Field(nullable=False)
     disabled: bool = Field(default=False, nullable=False)
+    phone: str | None = Field(default=None, nullable=True)
+    diet: str | None = Field(default=None, nullable=True)
