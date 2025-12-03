@@ -36,6 +36,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
+import com.example.inventory.data.OnlineUsersRepository
 
 data class SettingNav(
     val label: String,
@@ -303,6 +304,7 @@ fun SettingScreen(
     val viewModel = remember {
         SettingsViewModel(
             repository = appContainer?.usersRepository!!,
+            onlineUserRepository = appContainer.onlineUsersRepository!!,
             appViewModel = appViewModel
         )
     }
