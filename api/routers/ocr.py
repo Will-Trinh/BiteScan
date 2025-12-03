@@ -42,6 +42,11 @@ async def ocr_receipt(data: dict):
         for item in parsed_result["line_items"]:
             if not item.get("item_quantity"):
                 item["item_quantity"] = 1
+            if item.get("item_description"):
+                item["item_name"] = item["item_description"]
+            if item.get("item_total_price"):
+                item["item_price"] = item["item_total_price"] / item["item_quantity"]
+                item["item_total"] = item["item_total_pricee"]
 
         print(f"CLI output parsed: {parsed_result}")
 
