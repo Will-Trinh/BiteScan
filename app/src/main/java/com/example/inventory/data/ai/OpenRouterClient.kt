@@ -1,54 +1,8 @@
-//package com.example.inventory.data.ai
-//
-//import kotlinx.serialization.json.Json
-//import okhttp3.Interceptor
-//import okhttp3.OkHttpClient
-//import okhttp3.logging.HttpLoggingInterceptor
-//import retrofit2.Retrofit
-//import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
-//import okhttp3.MediaType.Companion.toMediaType
-//import retrofit2.converter.gson.GsonConverterFactory
-//
-//object OpenRouterClient {
-//
-//    private const val BASE_URL = "https://openrouter.ai/api/v1/"
-//    private val API_KEY = "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"
-//
-//    private val json = Json {
-//        ignoreUnknownKeys = true
-//        encodeDefaults = true
-//    }
-//
-//    private val authInterceptor = Interceptor { chain ->
-//        val newRequest = chain.request().newBuilder()
-//            .header("Authorization", "Bearer $API_KEY")
-//            .header("HTTP-Referer", "https://github.com/tnguyen4513")
-//            .header("X-Title", "PantryRecipesApp")
-//            .build()
-//        chain.proceed(newRequest)
-//    }
-//
-//    private val logging = HttpLoggingInterceptor().apply {
-//        level = HttpLoggingInterceptor.Level.BODY
-//    }
-//
-//    private val okHttpClient = OkHttpClient.Builder()
-//        .addInterceptor(authInterceptor)
-//        .addInterceptor(logging)
-//        .build()
-//
-//    val api: OpenRouterApi by lazy {
-//        val contentType = "application/json".toMediaType()
-//        Retrofit.Builder()
-//            .baseUrl(BASE_URL)
-//            .client(okHttpClient)
-//            .addConverterFactory((GsonConverterFactory.create())
-//            .build()
-//            .create(OpenRouterApi::class.java)
-//    }
-//}
 package com.example.inventory.data.ai
 
+import android.content.Context
+import android.content.pm.PackageManager
+import android.util.Log
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -56,33 +10,53 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object OpenRouterClient {
+    private var apiKey: String? = null
+    private var isInitialized = false
+    private const val TAG = "OpenRouterClient"
 
-    private const val BASE_URL = "https://openrouter.ai/api/v1/"
-    private const val API_KEY = "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" // TODO: move to BuildConfig
-
-    private val authInterceptor = Interceptor { chain ->
-        val newRequest = chain.request().newBuilder()
-            .header("Authorization", "Bearer $API_KEY")
-            .header("HTTP-Referer", "https://github.com/tnguyen4513") // required by OpenRouter
-            .header("X-Title", "PantryRecipesApp")
-            .build()
-        chain.proceed(newRequest)
+    fun init(context: Context) {
+        if (isInitialized) return
+        try {
+            val appInfo = context.packageManager.getApplicationInfo(
+                context.packageName, PackageManager.GET_META_DATA
+            )
+            apiKey = appInfo.metaData?.getString("openRouterApiKey")
+            if (apiKey.isNullOrBlank()) {
+                Log.e(TAG, "API key not found in manifest!")
+                return
+            }
+            isInitialized = true
+            Log.d(TAG, "OpenRouterClient initialized.")
+        } catch (e: PackageManager.NameNotFoundException) {
+            Log.e(TAG, "Failed to load metadata", e)
+        }
     }
 
-    private val logging = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY
+    private val authInterceptor = Interceptor { chain ->
+        val key = apiKey ?: throw IllegalStateException("Not initialized! Call init(context).")
+        val request = chain.request().newBuilder()
+            .addHeader("Authorization", "Bearer $key")
+            .addHeader("HTTP-Referer", "https://github.com/yourusername")  // Your GitHub
+            .addHeader("X-Title", "InventoryApp")
+            .build()
+        chain.proceed(request)
+    }
+
+    private val loggingInterceptor = HttpLoggingInterceptor().apply {
+        level = HttpLoggingInterceptor.Level.BODY  // Change to NONE for release
     }
 
     private val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(authInterceptor)
-        .addInterceptor(logging)
+        .addInterceptor(loggingInterceptor)
         .build()
 
     val api: OpenRouterApi by lazy {
+        if (!isInitialized) throw IllegalStateException("Init first!")
         Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl("https://openrouter.ai/api/v1/")
             .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create())  // ✅ Gson converter
+            .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(OpenRouterApi::class.java)
     }

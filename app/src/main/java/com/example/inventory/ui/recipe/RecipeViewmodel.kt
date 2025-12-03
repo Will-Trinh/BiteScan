@@ -113,7 +113,7 @@ class RecipeViewModel(
 
                 Log.d("RecipeViewModel", "AI prompt: $prompt")
 
-                // 1) Build request for OpenRouter
+                // 1) Build request for OpenRouter (unchanged)
                 val request = OrChatRequest(
                     model = "openai/gpt-3.5-turbo",  // or another model you like
                     messages = listOf(
@@ -130,21 +130,29 @@ class RecipeViewModel(
                     temperature = 0.7
                 )
 
-                // 2) Call API
+                // 2) Call API (unchanged)
                 val response = OpenRouterClient.api.chatCompletion(request)
 
                 val content = response.choices.firstOrNull()?.message?.content
                     ?: throw IllegalStateException("No content in AI response")
 
-                // 3) Parse JSON the model returns
-                val json = Json { ignoreUnknownKeys = true }
+                Log.d("RecipeViewModel", "Raw AI content (first 200 chars): ${content.take(200)}")  // Debug: Log raw to verify wrapping
 
-                // This line was red for you – make sure AiRecipeList is @Serializable and imported
-//                val aiList = json.decodeFromString<AiRecipeList>(content)
-                val aiList = Gson().fromJson(content, AiRecipeList::class.java)
+                // 3) NEW: Clean markdown wrappers (handles ```json
+                val cleanJson = content
+                    .replace("```json", "")   // Remove opening fence
+                    .replace("```", "")       // Remove closing fence (handles ``` or ```json)
+                    .replace("json", "")      // Extra: If just "json" without ```
+                    .trim()                   // Remove leading/trailing whitespace
 
+                Log.d("RecipeViewModel", "Cleaned JSON (first 200 chars): ${cleanJson.take(200)}")  // Debug: Verify it's now { ...
 
-                if (aiList.recipes.isEmpty()) {
+                // 4) Parse JSON (using your Gson fallback)
+                val gson = Gson()
+                val aiList = gson.fromJson(cleanJson, AiRecipeList::class.java)
+
+                if (aiList == null || aiList.recipes.isEmpty()) {
+                    Log.w("RecipeViewModel", "Parsed aiList is null or empty after cleaning")
                     _uiState.update {
                         it.copy(
                             recipes = emptyList(),
@@ -155,7 +163,7 @@ class RecipeViewModel(
                     return@launch
                 }
 
-                // 4) Map to your UI model
+                // 5) Map to UI model (unchanged)
                 val uiRecipes = aiList.recipes.mapIndexed { index, recipe ->
                     RecipeUiModel(
                         id = index.toLong(),
@@ -176,6 +184,14 @@ class RecipeViewModel(
                     it.copy(recipes = uiRecipes, isLoading = false)
                 }
 
+            } catch (e: com.google.gson.JsonSyntaxException) {
+                // NEW: Specific catch for JSON issues
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = "AI response format error. Try again or refine prompt."
+                    )
+                }
             } catch (e: Exception) {
                 Log.e("RecipeViewModel", "Error generating AI recipes", e)
                 _uiState.update {

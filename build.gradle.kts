@@ -15,6 +15,14 @@
  */
 
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
+import java.util.Properties
+
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        load(localPropertiesFile.reader())
+    }
+}
 buildscript {
     extra.apply {
         set("room_version", "2.5.0")

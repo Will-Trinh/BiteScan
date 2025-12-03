@@ -26,6 +26,7 @@ import kotlinx.coroutines.launch
 import com.example.inventory.ui.navigation.*
 import com.example.inventory.ui.AppViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.inventory.data.ai.OpenRouterClient
 
 
 class MainActivity : ComponentActivity() {
@@ -33,6 +34,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        OpenRouterClient.init(this)
 //
 //        val db = InventoryDatabase.getDatabase(this)
 //        val usersRepo = OfflineUsersRepository(db.userDao(), db.receiptDao(), db.itemDao(), db.recipeDao())
