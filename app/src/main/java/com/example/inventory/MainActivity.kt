@@ -32,18 +32,12 @@ import com.example.inventory.data.ai.OpenRouterClient
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        OpenRouterClient.init(this)
-//
-//        val db = InventoryDatabase.getDatabase(this)
-//        val usersRepo = OfflineUsersRepository(db.userDao(), db.receiptDao(), db.itemDao(), db.recipeDao())
-//        val receiptsRepo = OfflineReceiptsRepository(db.receiptDao())
-//        val itemsRepo = OfflineItemsRepository(db.itemDao())
-//        lifecycleScope.launch(Dispatchers.IO) {
-//            DatabaseSeeder.seedDatabase(usersRepo, receiptsRepo, itemsRepo)
-//        }
+        lifecycleScope.launch {
+            OpenRouterClient.init(this@MainActivity)
+        }
 
+        enableEdgeToEdge()
         setContent {
             val navController = rememberNavController()
             val appViewModel: AppViewModel = viewModel()
@@ -76,101 +70,9 @@ class MainActivity : ComponentActivity() {
 
             InventoryTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-//                    Text(text = "API Key: ${BuildConfig.apikeysafe}")
                     InventoryNavHost(navController = navController, appViewModel = appViewModel)
                 }
             }
         }
     }
 }
-
-//for testing only
-//class DatabaseSeeder {
-//    companion object {
-//        suspend fun seedDatabase(
-//            usersRepo: UsersRepository,
-//            receiptsRepo: ReceiptsRepository,
-//            itemsRepo: ItemsRepository
-//        ) {
-//            // Chèn User
-//
-//            val userId = usersRepo.insertUser(
-//                User(
-//                    userId = 0,
-//                    username = "testuser",
-//                    phone = "1234567890",
-//                    email = "TranXinhDep@gmail.com",
-//                )
-//            )
-//            if (userId <= 0) {
-//                println("Error can not add new User.")
-//                return
-//            }
-//
-//            // Chèn Receipt
-//            val receiptId = receiptsRepo.insertReceipt(
-//                Receipt(
-//                    receiptId = 1,
-//                    userId = userId.toInt(),
-//                    source = "Walmart, 123 Main St, CA",
-//                    date = java.sql.Date(System.currentTimeMillis()),
-//                    status = "Completed"
-//                )
-//            )
-//            if (receiptId <= 0) {
-//                println("Error can not add new Receipt.")
-//                return
-//            }
-//
-//            // Chèn Items
-//            val items = listOf(
-//                Item(
-//                    id = 0,
-//                    name = "Apple",
-//                    price = 0.5,
-//                    quantity = 2f,
-//                    date = java.sql.Date(System.currentTimeMillis()),
-//                    store = "Walmart",
-//                    category = "Fruit",
-//                    receiptId = receiptId.toInt()
-//                ),
-//                Item(
-//                    id = 0,
-//                    name = "Banana",
-//                    price = 0.3,
-//                    quantity = 3f,
-//                    date = java.sql.Date(System.currentTimeMillis()),
-//                    store = "Walmart",
-//                    category = "Fruit",
-//                    receiptId = receiptId.toInt()
-//                ),
-//                Item(
-//                    id = 0,
-//                    name = "Milk",
-//                    price = 2.99,
-//                    quantity = 1f,
-//                    date = java.sql.Date(System.currentTimeMillis()),
-//                    store = "Walmart",
-//                    category = "Dairy",
-//                    receiptId = receiptId.toInt()
-//                ),
-//                Item(
-//                    id = 0,
-//                    name = "Chicken breast",
-//                    price = 4.99,
-//                    quantity = 1f,
-//                    date = java.sql.Date(System.currentTimeMillis()),
-//                    store = "Walmart",
-//                    category = "Meat",
-//                    receiptId = receiptId.toInt()
-//                )
-//            )
-//            items.forEach {
-//                val itemId = itemsRepo.insertItem(it)
-//                if (itemId<= 0) {
-//                    println("error: can not add new Item: ${it.name}")
-//                }
-//            }
-//        }
-//    }
-//}
