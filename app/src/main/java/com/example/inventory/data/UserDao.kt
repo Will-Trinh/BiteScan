@@ -48,6 +48,8 @@ interface UserDao {
     @Query("DELETE FROM users")
     suspend fun deleteAllUsers()
 
+    @Query("UPDATE users SET diet = :diet WHERE userId = :userId")
+    suspend fun updateUserDiet(userId: Int, diet: String?)
 
 
     @Update

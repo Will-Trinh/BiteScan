@@ -15,6 +15,14 @@
  */
 
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
+import java.util.Properties
+
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        load(localPropertiesFile.reader())
+    }
+}
 buildscript {
     extra.apply {
         set("room_version", "2.5.0")
@@ -26,6 +34,7 @@ plugins {
     id("com.android.library") version "8.6.0" apply false
     id("org.jetbrains.kotlin.android") version "2.1.0" apply false
     id("org.jetbrains.kotlin.plugin.compose") version "2.1.0" apply false
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.1.0" apply false
 }
 
 tasks.register("clean", Delete::class) {
