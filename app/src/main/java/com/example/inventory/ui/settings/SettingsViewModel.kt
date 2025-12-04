@@ -13,18 +13,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.example.inventory.BuildConfig
-import okhttp3.OkHttpClient
-import java.util.concurrent.TimeUnit
-import android.widget.Toast
-import okhttp3.Request
+import com.example.inventory.data.OnlineUsersRepository
 
-//object ApiConfig {
-//    val BASE_URL = BuildConfig.SERVER_BASE_URL
-//    val API_KEY = BuildConfig.API_KEY
-//}
 class SettingsViewModel(
     private val repository: UsersRepository,
+    private val onlineUserRepository: OnlineUsersRepository,
     private val appViewModel: AppViewModel
 ) : ViewModel() {
 
@@ -39,6 +32,9 @@ class SettingsViewModel(
 
     private val _userEmail = MutableStateFlow<String?>(null)
     val userEmail: StateFlow<String?> = _userEmail
+    private val _selectedDiet = MutableStateFlow<String?>(null)
+    val selectedDiet: StateFlow<String?> = _selectedDiet
+
 
 
     init {
@@ -47,6 +43,7 @@ class SettingsViewModel(
             if (uid != null) {
                 _userId.value = uid.toString()
                 loadUserDetails(uid)
+                loadUserDiet(uid)
             } else {
                 _userId.value = null
                 _logoutCompleted.value = true
@@ -60,7 +57,12 @@ class SettingsViewModel(
             val uid = appViewModel.userId.value ?: 0
             _userId.value = uid.toString()
             loadUserDetails(uid)
+            loadUserDiet(userId)
         }
+    }
+    private suspend fun loadUserDiet(userId: Int) {
+        val user = repository.getUser(userId).firstOrNull()
+        _selectedDiet.value = user?.diet
     }
 
     private suspend fun loadUserDetails(userId: Int) {
@@ -69,9 +71,20 @@ class SettingsViewModel(
         _userEmail.value = user?.email ?: appViewModel.email.value ?: "unknown@example.com"
     }
 
+    fun isDietSelected(diet: String) = _selectedDiet.value == diet
+
+    fun selectDiet(diet: String?) {
+        _selectedDiet.value = diet
+        viewModelScope.launch(Dispatchers.IO) {
+            val uid = appViewModel.userId.value ?: return@launch
+            repository.updateUserDiet(uid, diet)
+        }
+    }
+
     fun logout() {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
+                onlineUserRepository.updateUserToServer(appViewModel.userId.value ?: 0)
                 appViewModel.clearUserId()
                 android.util.Log.d("SettingsViewModel", "Cleared UID")
                 repository.deleteAllData()
@@ -80,6 +93,9 @@ class SettingsViewModel(
             }
         }
     }
+
+
+    // set user diet
 
 
     fun launchUrl(context: Context, url: String) {

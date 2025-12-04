@@ -143,6 +143,7 @@ class FakeUsersRepository : UsersRepository {
     override suspend fun deleteUser(user: User) {  }
     // 6. updateUser
     override suspend fun updateUser(user: User) {  }
+    override suspend fun updateUserDiet(userId: Int, diet: String?) {  }
 
     override fun getReceiptsForUser(userId: Int): Flow<List<Receipt>> {
         return FakeReceiptsRepository().getReceiptsForUser(userId)

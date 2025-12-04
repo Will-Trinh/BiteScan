@@ -28,8 +28,9 @@ interface AppContainer {
     val usersRepository: UsersRepository
     val onlineReceiptsRepository: OnlineReceiptsRepository
     val onlineRecipesRepository: OnlineRecipesRepository
-
+    val onlineUsersRepository: OnlineUsersRepository
     val myPantryViewModel: MyPantryViewModel
+
 }
 
 /**
@@ -90,6 +91,11 @@ class AppDataContainer(private val context: Context) : AppContainer {
             itemDao = database.itemDao(),
             receiptDao = database.receiptDao(),
             recipeDao = database.recipeDao()
+        )
+    }
+    override val onlineUsersRepository: OnlineUsersRepository by lazy {
+        OnlineUsersRepository(
+            userDao = database.userDao()
         )
     }
 }

@@ -12,6 +12,7 @@ from models.receipt_item import ReceiptItem
 
 from schemas.signup import Signup as SignupSchema
 from schemas.login import Login as LoginSchema
+from schemas.user_patch import UserPatch
 from schemas.reset_password import ResetPassowrd as ResetPasswordSchema
 from schemas.receipt import Receipt as ReceiptSchema
 from schemas.receipt_post import ReceiptPost
@@ -73,13 +74,15 @@ async def login(login: LoginSchema, session: Session = Depends(get_session)):
 
 # use same subset of properties from signup to perform update
 @router.patch("/{id}", status_code=204)
-def update_user(id: int, user: SignupSchema, session: Session = Depends(get_session)):
+def update_user(id: int, user: UserPatch, session: Session = Depends(get_session)):
     stmt = (
         update(User)
         .where(User.id == id) 
         .values(
             username=user.username,
-            password=user.password
+            password=user.password if user.password else User.password,
+            phone=user.password,
+            diet=user.diet
         )
     )
 
@@ -170,7 +173,8 @@ def get_user_receipts(user_id: int, session: Session = Depends(get_session)):
                 "category": receipt_item.category,
                 "protein": receipt_item.protein,
                 "fats": receipt_item.fats,
-                "calories": receipt_item.calories
+                "calories": receipt_item.calories,
+                "price": receipt_item.price
             })
     
     return {"receipts": receipts}

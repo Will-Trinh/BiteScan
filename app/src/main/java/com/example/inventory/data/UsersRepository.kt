@@ -12,6 +12,7 @@ interface UsersRepository {
     suspend fun insertUser(user: User): Long
     suspend fun deleteUser(user: User)
     suspend fun updateUser(user: User)
+    suspend fun updateUserDiet(userId: Int, diet: String?)
     fun getReceiptsForUser(userId: Int): Flow<List<Receipt>>
 
     suspend fun deleteAllData()

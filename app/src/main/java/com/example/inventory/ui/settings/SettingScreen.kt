@@ -36,6 +36,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
+import com.example.inventory.data.OnlineUsersRepository
 
 data class SettingNav(
     val label: String,
@@ -303,6 +304,7 @@ fun SettingScreen(
     val viewModel = remember {
         SettingsViewModel(
             repository = appContainer?.usersRepository!!,
+            onlineUserRepository = appContainer.onlineUsersRepository!!,
             appViewModel = appViewModel
         )
     }
@@ -378,10 +380,27 @@ fun SettingScreen(
 
                 // Dietary Preferences
                 SectionCard(title = "Dietary Preferences") {
-                    CheckboxWithLabel("Vegetarian", vegetarian) { vegetarian = it }
-                    CheckboxWithLabel("Vegan", vegan) { vegan = it }
-                    CheckboxWithLabel("Gluten-Free", glutenFree) { glutenFree = it }
-                    CheckboxWithLabel("Low Carb", lowCarb) { lowCarb = it }
+                    val selectedDiet by viewModel.selectedDiet.collectAsState()
+
+                    val diets = listOf("None", "Vegetarian", "Vegan", "Gluten-Free", "Low Carb")
+
+                    diets.forEach { diet ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp)
+                                .clickable { viewModel.selectDiet(diet) }
+                                .padding(horizontal = 16.dp)
+                        ) {
+                            RadioButton(
+                                selected = (selectedDiet == diet) || (diet == "None" && selectedDiet == null),
+                                onClick = null
+                            )
+                            Spacer(Modifier.width(16.dp))
+                            Text(diet, fontSize = 16.sp)
+                        }
+                    }
                 }
 
                 // App Settings
