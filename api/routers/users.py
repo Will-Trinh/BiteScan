@@ -173,7 +173,8 @@ def get_user_receipts(user_id: int, session: Session = Depends(get_session)):
                 "category": receipt_item.category,
                 "protein": receipt_item.protein,
                 "fats": receipt_item.fats,
-                "calories": receipt_item.calories
+                "calories": receipt_item.calories,
+                "price": receipt_item.price
             })
     
     return {"receipts": receipts}

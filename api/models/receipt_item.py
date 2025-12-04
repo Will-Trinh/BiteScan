@@ -11,3 +11,5 @@ class ReceiptItem(SQLModel, table=True):
     protein: float = Field(nullable=True)
     fats: float = Field(nullable=True)
     calories: float = Field(nullable=True)
+    price: float = Field(nullable=True)
+    carbs: float = Field(nullable=True)
