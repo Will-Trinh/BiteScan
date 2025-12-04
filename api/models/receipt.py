@@ -1,11 +1,9 @@
-from pydantic import BaseModel
+from sqlmodel import SQLModel, Field
+from datetime import date
 
-class ReceiptItem(BaseModel):
-    sequence: int
-    name: str
-    price: float | None
-    quantity: int
-    category: str
-    protein: float | None
-    fats: float | None
-    calories: float | None
+class Receipt(SQLModel, table=True):
+    __tablename__ = "receipts"
+    id: int = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key='users.id', nullable=False)
+    store: str = Field()
+    purchase_date: date = Field()
