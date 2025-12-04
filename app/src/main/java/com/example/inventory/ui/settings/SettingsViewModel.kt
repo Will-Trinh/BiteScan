@@ -36,6 +36,9 @@ class SettingsViewModel(
     val selectedDiet: StateFlow<String?> = _selectedDiet
 
 
+    private val _diet = MutableStateFlow<String?>(null)
+    val diet: StateFlow<String?> = _diet
+
 
     init {
         viewModelScope.launch {
@@ -80,6 +83,8 @@ class SettingsViewModel(
             repository.updateUserDiet(uid, diet)
         }
     }
+
+
 
     fun logout() {
         viewModelScope.launch {

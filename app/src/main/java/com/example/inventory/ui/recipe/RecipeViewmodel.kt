@@ -82,6 +82,7 @@ class RecipeViewModel(
         }
     }
     fun findRecipesWithAi() {
+        Log.d("RecipeViewModel", "findRecipesWithAi() called")
         val includedIngredients = currentAllIngredients.filter {
             it !in _uiState.value.excludedIngredients
         }
@@ -145,7 +146,7 @@ class RecipeViewModel(
                     .replace("json", "")      // Extra: If just "json" without ```
                     .trim()                   // Remove leading/trailing whitespace
 
-                Log.d("RecipeViewModel", "Cleaned JSON (first 200 chars): ${cleanJson.take(200)}")  // Debug: Verify it's now { ...
+                Log.d("RecipeViewModel", "Cleaned JSON (first 2000 chars): ${cleanJson.take(2000)}")  // Debug: Verify it's now { ...
 
                 // 4) Parse JSON (using your Gson fallback)
                 val gson = Gson()
@@ -176,7 +177,10 @@ class RecipeViewModel(
                         carbs = recipe.carbs ?: "N/A",
                         fat = recipe.fat ?: "N/A",
                         ingredientUsage = "AI from your pantry",
-                        sourceUrl = "" // no URL for AI recipes
+                        sourceUrl = "", // no URL for AI recipes
+                        ingredients = recipe.ingredients ?: emptyList(),
+                        instructions = recipe.instructions ?: emptyList()
+
                     )
                 }
 
@@ -304,7 +308,16 @@ class RecipeViewModel(
               "calories": "approx, like '450 kcal'",
               "protein": "e.g. '25g'",
               "carbs": "e.g. '40g'",
-              "fat": "e.g. '15g'"
+              "fat": "e.g. '15g'",
+              "ingredients": [
+                "quantity unit ingredient, like 3 pounds russet potatoes",
+                "quantity unit ingredient, like 1 cup mayonnaise",
+              ],
+              "instructions": [
+                "Step 1: ...",
+                "Step 2: ...",
+                "Step 3: ..."
+              ],
             }
           ]
         }
@@ -328,6 +341,10 @@ class RecipeViewModel(
         sb.appendLine("Rules:")
         sb.appendLine("- Only use ingredients from the pantry list where possible.")
         sb.appendLine("- If something is missing, assume basic staples like salt, pepper, oil, water are available.")
+        sb.appendLine("- Return ONLY valid JSON. No extra text, no explanations.")
+        sb.appendLine("- For each recipe, include an 'ingredients' array with one string per ingredient, starting with a quantity and unit (e.g. '1 cup milk', '2 tbsp oil').")
+        sb.appendLine("- For each recipe, include 4–10 clear steps in the 'instructions' array.")
+        sb.appendLine("- Every ingredient used in 'instructions' must appear in 'ingredients', and vice versa.")
         sb.appendLine("- Return ONLY valid JSON. No extra text, no explanations.")
 
         return sb.toString()
@@ -373,5 +390,7 @@ data class RecipeUiModel(
     val carbs: String,
     val fat: String,
     val ingredientUsage: String,
-    val sourceUrl: String = ""
+    val sourceUrl: String = "",
+    val ingredients: List<String> = emptyList(),
+    val instructions: List<String> = emptyList()
 )

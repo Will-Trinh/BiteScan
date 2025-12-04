@@ -18,19 +18,25 @@ import com.example.inventory.ui.settings.LegalScreen
 import com.example.inventory.ui.NotFoundScreen
 import com.example.inventory.ui.dashboard.DashboardScreen
 import com.example.inventory.ui.AppViewModel
-import com.example.inventory.ui.landing.CreateAccountScreenPreview
 import com.example.inventory.ui.recipe.RecipeRecommendationScreen
 import com.example.inventory.ui.landing.LandingScreen
 import com.example.inventory.ui.landing.LoginScreen
 import com.example.inventory.ui.landing.RegistrationScreen
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-//for progress bar
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Alignment
 import android.util.Log
+import com.example.inventory.ui.recipe.RecipeDetailScreen
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.remember
+import com.example.inventory.InventoryApplication
+import com.example.inventory.ui.recipe.RecipeViewModel
+import com.example.inventory.ui.userdata.FakeOnlineRecipesRepository
+import com.example.inventory.ui.userdata.FakeMyPantryViewModel
+
 @Composable
 fun InventoryNavHost(
     navController: NavHostController,
@@ -40,6 +46,25 @@ fun InventoryNavHost(
 
     val oldUserId: Int? by appViewModel.oldUserId.collectAsState()
     val isReady by appViewModel.isReady.collectAsState()
+
+    val context = LocalContext.current
+    val recipeViewModel = remember {
+        if (context.applicationContext is InventoryApplication) {
+            val appContainer = (context.applicationContext as InventoryApplication).container
+            RecipeViewModel(
+                onlineRecipesRepository = appContainer.onlineRecipesRepository,
+                myPantryViewModel = appContainer.myPantryViewModel,
+                appViewModel = appViewModel
+            )
+        } else {
+            RecipeViewModel(
+                onlineRecipesRepository = FakeOnlineRecipesRepository(),
+                myPantryViewModel = FakeMyPantryViewModel(),
+                appViewModel = appViewModel
+            )
+        }
+    }
+
     if (!isReady) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
@@ -175,7 +200,24 @@ fun InventoryNavHost(
         composable(route = RecipeDestination.route) {
             RecipeRecommendationScreen(
                 navController = navController,
-                appViewModel = appViewModel
+                appViewModel = appViewModel,
+                viewModel = recipeViewModel
+            )
+        }
+
+        composable(
+            route = "recipe_detail/{recipeId}",
+            arguments = listOf(
+                navArgument("recipeId") { type = NavType.LongType }
+            )
+        ) { backStackEntry ->
+            val recipeId = backStackEntry.arguments?.getLong("recipeId") ?: 0L
+
+            RecipeDetailScreen(
+                navController = navController,
+                appViewModel = appViewModel,
+                recipeId = recipeId,
+                viewModel = recipeViewModel
             )
         }
     }

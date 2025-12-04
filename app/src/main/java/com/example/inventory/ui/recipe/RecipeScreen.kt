@@ -36,34 +36,18 @@ import com.example.inventory.ui.theme.LightGreen
 import com.example.inventory.ui.theme.PrimaryGreen
 import com.example.inventory.ui.userdata.FakeMyPantryViewModel
 import com.example.inventory.ui.userdata.FakeOnlineRecipesRepository
+import android.util.Log
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun RecipeRecommendationScreen(
     navController: NavController,
+    appViewModel: AppViewModel,
+    viewModel: RecipeViewModel,
     modifier: Modifier = Modifier,
-    viewModel: RecipeViewModel? = null,
-    appViewModel: AppViewModel
 ) {
-    val context = LocalContext.current
-    val actualViewModel = viewModel ?: remember {
-        if (context.applicationContext is InventoryApplication) {
-            val appContainer = (context.applicationContext as InventoryApplication).container
-            RecipeViewModel(
-                onlineRecipesRepository = appContainer.onlineRecipesRepository,
-                myPantryViewModel = appContainer.myPantryViewModel,
-                appViewModel = appViewModel
-            )
-        } else {
-            RecipeViewModel(
-                onlineRecipesRepository = FakeOnlineRecipesRepository(),
-                myPantryViewModel = FakeMyPantryViewModel(),
-                appViewModel = appViewModel
-            )
-        }
-    }
+    val uiState by viewModel.uiState.collectAsState()
 
-    val uiState by actualViewModel.uiState.collectAsState()
 
     CookingAssistantTheme {
         Scaffold(
@@ -98,11 +82,11 @@ fun RecipeRecommendationScreen(
             ) {
                 RecipeBody(
                     uiState = uiState,
-                    onIngredientToggle = actualViewModel::toggleIngredientExclusion,
-                    onFindRecipesClick = actualViewModel::findRecipesWithGg,
-                    onFindRecipesAIClick = actualViewModel::findRecipesWithAi,
+                    onIngredientToggle = viewModel::toggleIngredientExclusion,
+                    onFindRecipesClick = viewModel::findRecipesWithGg,
+                    onFindRecipesAIClick = viewModel::findRecipesWithAi,
                     navController = navController,
-                    viewModel = actualViewModel,
+                    viewModel = viewModel,
                     appViewModel = appViewModel
                 )
             }
@@ -147,7 +131,7 @@ fun RecipeBody(
                     Text(uiState.errorMessage ?: "", textAlign = TextAlign.Center, color = Color.Gray)
                     Spacer(Modifier.height(24.dp))
                     Button(
-                        onClick = { navController.navigate("my_pantry/${appViewModel.userId.value}") },
+                        onClick = { navController.navigate("my_pantry") },
                         colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
                     ) {
                         Text("Go to My Pantry", color = Color.White)
@@ -183,7 +167,7 @@ fun RecipeBody(
 
                     // 3. Recipe List
                     items(items = uiState.recipes, key = { it.id }) { recipe ->
-                        RecipeCard(recipe = recipe)
+                        RecipeCard(recipe = recipe, navController = navController)
                     }
                 }
             }
@@ -377,9 +361,14 @@ fun FilterCheckboxChip(
 }
 
 @Composable
-fun RecipeCard(recipe: RecipeUiModel) {
+fun RecipeCard(
+    recipe: RecipeUiModel,
+    navController: NavController
+) {
     Card(
-        modifier = Modifier.fillMaxWidth().clickable { /* Navigate to detail */ },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { navController.navigate("recipe_detail/${recipe.id}") },
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
@@ -410,41 +399,43 @@ fun RecipeCard(recipe: RecipeUiModel) {
 
                 Spacer(Modifier.height(8.dp))
 
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    NutritionValue("cal", recipe.calories)
-                    NutritionValue("P:", recipe.protein)
-                    NutritionValue("C:", recipe.carbs)
-                    NutritionValue("F:", recipe.fat)
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    NutritionValue(label = "Calories:", value = recipe.calories)
+                    NutritionValue(label = "Protein:", value = recipe.protein)
+                    NutritionValue(label = "Carbs:", value = recipe.carbs)
+                    NutritionValue(label = "Fat:", value = recipe.fat)
                 }
             }
 
             Box(
-                modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(LightGreen).padding(horizontal = 8.dp, vertical = 4.dp)
+                modifier = Modifier
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(LightGreen)
+                    .padding(horizontal = 1.dp, vertical = 1.dp)
             ) {
-                Text(recipe.ingredientUsage, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = PrimaryGreen)
+                Text(
+                    recipe.ingredientUsage,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = PrimaryGreen
+                )
             }
         }
     }
 }
 
+
 @Composable
 fun NutritionValue(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, fontSize = 14.sp, fontWeight = FontWeight.Bold)
         Text(label, fontSize = 12.sp, color = Color.Gray)
+        Text(value, fontSize = 14.sp, fontWeight = FontWeight.Bold)
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun RecipeRecommendationScreenPreview() {
-    CookingAssistantTheme {
-        RecipeRecommendationScreen(
-            navController = rememberNavController(),
-            appViewModel = AppViewModel()
-        )
-    }
-}
 
 @Preview(showBackground = true)
 @Composable
