@@ -79,3 +79,8 @@ object EditReceiptDestination : NavigationDestination {
     override val route = "edit_receipt/{receiptId}"
     override val titleRes = R.string.edit_receipt_title
 }
+
+object RecipeInstructionDestination : NavigationDestination {
+    override val route = "recipe_instruction/{id}"
+    override val titleRes = R.string.recipe_instruction
+}

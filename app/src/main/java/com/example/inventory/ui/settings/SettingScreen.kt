@@ -311,6 +311,7 @@ fun SettingScreen(
 
     val userName by viewModel.userName.collectAsState()
     val userEmail by viewModel.userEmail.collectAsState()
+    val diet by viewModel.diet.collectAsState()
 
 
     val isLoggedOut by viewModel.logoutCompleted.collectAsState()

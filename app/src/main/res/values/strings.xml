@@ -80,6 +80,8 @@
     <string name="dashboard_title">Nutrition Dashboard</string>
     <string name="landing">Landing</string>
     <string name="recipe_recommendations_title">Recipe Recommendations</string>
+    <string name="recipe_instruction">Recipe Instructions</string>
+
 
 
 </resources>
