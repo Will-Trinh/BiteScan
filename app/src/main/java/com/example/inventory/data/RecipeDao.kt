@@ -22,6 +22,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -40,10 +41,12 @@ interface RecipeDao {
     fun searchRecipes(query: String): Flow<List<Recipe>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertRecipe(recipe: Recipe)
+    suspend fun insertRecipe(recipe: Recipe) : Long
 
     @Update
     suspend fun updateRecipe(recipe: Recipe)
+    @Upsert
+    suspend fun upsertRecipe(recipe: Recipe) : Long
 
     @Delete
     suspend fun deleteRecipe(recipe: Recipe)

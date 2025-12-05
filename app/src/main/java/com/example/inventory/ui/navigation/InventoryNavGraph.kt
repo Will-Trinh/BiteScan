@@ -211,13 +211,12 @@ fun InventoryNavHost(
                 navArgument("recipeId") { type = NavType.LongType }
             )
         ) { backStackEntry ->
-            val recipeId = backStackEntry.arguments?.getLong("recipeId") ?: 0L
+            val recipeId = backStackEntry.arguments?.getInt("recipeId") ?: 0
 
             RecipeDetailScreen(
                 navController = navController,
                 appViewModel = appViewModel,
                 recipeId = recipeId,
-                viewModel = recipeViewModel
             )
         }
     }

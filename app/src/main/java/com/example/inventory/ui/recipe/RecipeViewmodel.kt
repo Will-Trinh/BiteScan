@@ -232,6 +232,7 @@ class RecipeViewModel(
             try {
                 Log.d("RecipeViewModel", "Searching recipes with ingredients: $includedIngredients")
                 val foundRecipes = onlineRecipesRepository.searchRecipes(
+                    userId = appViewModel.userId.value ?: 0,
                     ingredients = includedIngredients,
                     country = country,
                     style = style

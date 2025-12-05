@@ -32,5 +32,6 @@ data class Recipe(
     val instructions: String, // step-by-step with the time for each step
     val nutrition: String,    // JSON for calories, protein, etc.
     val totalTime: Int,       // minutes
-    val dateSaved: Date
+    val dateSaved: Date,
+    val servings: Int
 )
