@@ -213,6 +213,7 @@ fun SimpleInstructions(instructions: String) {
         lines.forEachIndexed { index, rawStep ->
             var stepText = rawStep
             // remove leading dots
+            stepText = stepText.replaceFirst(Regex("^\\s*\\d+\\s*\\.?\\s*"), "").trim()
             stepText = stepText
                 .removePrefix("•")
                 .removePrefix("·")

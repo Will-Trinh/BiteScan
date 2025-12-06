@@ -1,6 +1,11 @@
 package com.example.inventory.data
 
 import android.util.Log
+import com.example.inventory.data.ai.AiRecipeList
+import com.example.inventory.data.ai.OpenRouterClient
+import com.example.inventory.data.ai.OrChatRequest
+import com.example.inventory.data.ai.OrMessage
+import com.example.inventory.data.ai.OrResponseFormat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.*
@@ -11,7 +16,12 @@ import org.json.JSONObject
 import java.sql.Date
 import java.util.concurrent.TimeUnit
 import com.example.inventory.ui.AppViewModel
+import com.google.gson.Gson
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
+import kotlinx.serialization.json.Json
+import kotlin.collections.emptyList
+
 
 open class OnlineRecipesRepository(
     private val recipesRepository: RecipesRepository,
@@ -96,7 +106,10 @@ open class OnlineRecipesRepository(
             return@withContext emptyList()
         }
         Log.d("OnlineRecipes", "Start search recipes for userId=$userId")
-        Log.d("OnlineRecipes", "Searching recipes with ingredients: $ingredients, country=$country, style=$style")
+        Log.d(
+            "OnlineRecipes",
+            "Searching recipes with ingredients: $ingredients, country=$country, style=$style"
+        )
 
         val jsonBody = JSONObject().apply {
             put("ingredients", JSONArray(ingredients))
@@ -137,7 +150,13 @@ open class OnlineRecipesRepository(
                         ?.let { arr -> (0 until arr.length()).joinToString("\n") { arr.getString(it) } }
                         ?: "",
                     instructions = item.optJSONArray("steps")
-                        ?.let { arr -> (0 until arr.length()).joinToString("\n") { "• " + arr.getString(it) } }
+                        ?.let { arr ->
+                            (0 until arr.length()).joinToString("\n") {
+                                "• " + arr.getString(
+                                    it
+                                )
+                            }
+                        }
                         ?: "",
                     nutrition = "",
                     servings = 0,
@@ -157,5 +176,178 @@ open class OnlineRecipesRepository(
             Log.d("OnlineRecipes", "Search completed, found ${savedRecipes.size} recipes")
             return@withContext savedRecipes
         }
+    }
+
+
+    suspend fun searchRecipeAi(
+        userId: Int,
+        ingredients: List<String>,
+        country: String? = null,
+        style: String? = null,
+        filters: List<String> = emptyList(),
+    ): List<Recipe> = withContext(Dispatchers.IO) {
+        require(ingredients.isNotEmpty()) { "Ingredients cannot be empty" }
+        if (userId == 0) {
+            Log.w("OnlineRecipes", "AI search aborted: userId is not available.")
+            return@withContext emptyList()
+        }
+
+        Log.d("OnlineRecipes", "Starting AI recipe search for userId=$userId")
+        Log.d(
+            "OnlineRecipes",
+            "Ingredients: $ingredients, country=$country, style=$style, filters=$filters"
+        )
+
+        val prompt = buildAiPrompt(
+            ingredients = ingredients,
+            country = if (country == "Any") null else country,
+            style = if (style == "Any") null else style,
+            filters = filters
+        )
+
+        Log.d("RecipeViewModel", "AI prompt:\n$prompt")
+
+        // 1. Gọi OpenRouter
+        val request = OrChatRequest(
+            model = "openai/gpt-3.5-turbo", // hoặc model mạnh hơn nếu bạn muốn
+            messages = listOf(
+                OrMessage(role = "system", content = "You are a helpful cooking assistant."),
+                OrMessage(role = "user", content = prompt)
+            ),
+            responseFormat = OrResponseFormat(type = "json_object"),
+            temperature = 0.7
+        )
+
+        val response = try {
+            OpenRouterClient.api.chatCompletion(request)
+        } catch (e: Exception) {
+            Log.e("OnlineRecipes", "OpenRouter API error", e)
+            throw e
+        }
+
+        val rawContent = response.choices.firstOrNull()?.message?.content
+            ?: throw IllegalStateException("Empty response from AI")
+
+        Log.d("RecipeViewModel", "Raw AI response (first 500 chars):\n${rawContent.take(500)}")
+
+        // 2. Làm sạch ```json ... ```
+        val cleanJson = rawContent
+            .removeSurrounding("```json", "```")   // Xử lý cả ```json và ```
+            .removePrefix("json")
+            .trim()
+
+        if (!cleanJson.startsWith("{")) {
+            Log.e("RecipeViewModel", "Cleaned JSON is still invalid:\n$cleanJson")
+            throw IllegalStateException("AI did not return valid JSON")
+        }
+
+        // 3. Parse JSON by Gson
+        val gson = Gson()
+        val aiResponse = gson.fromJson(cleanJson, AiRecipeList::class.java)
+
+        if (aiResponse.recipes.isNullOrEmpty()) {
+            Log.w("OnlineRecipes", "AI returned empty recipe list")
+            return@withContext emptyList()
+        }
+
+        val savedRecipes = mutableListOf<Recipe>()
+
+        // 4. Map to Recipe
+        aiResponse.recipes.forEachIndexed { index, aiRecipe ->
+            val recipe = Recipe(
+                recipeId = 0, // Room sẽ tự generate
+                dateSaved = Date(System.currentTimeMillis()),
+                userId = userId,
+                source = aiRecipe.sourceUrl ?: "",
+                title = aiRecipe.name ?: "AI Recipe ${index + 1}",
+                description = aiRecipe.description ?: "",
+                ingredients = aiRecipe.ingredients?.joinToString("\n") { "• $it" } ?: "",
+                instructions = aiRecipe.instructions?.mapIndexed { i, step -> "${i + 1}. $step" }
+                    ?.joinToString("\n") ?: "",
+                nutrition = buildString {
+                    aiRecipe.calories?.let { append("Calories: $it\n") }
+                    aiRecipe.protein?.let { append("Protein: $it\n") }
+                    aiRecipe.carbs?.let { append("Carbs: $it\n") }
+                    aiRecipe.fat?.let { append("Fat: $it") }
+                }.trim(),
+                servings = aiRecipe.servings ?: 4,
+                totalTime = aiRecipe.time_minutes ?: 30
+            )
+
+            val newId = recipesRepository.insertRecipe(recipe)
+            savedRecipes.add(recipe.copy(recipeId = newId.toInt()))
+            Log.d("OnlineRecipes", "Saved AI recipe: ${recipe.title} (id=$newId)")
+        }
+        Log.d("OnlineRecipes", "AI search completed, saved ${savedRecipes.size} recipes")
+        return@withContext savedRecipes
+    }
+
+
+    private fun buildAiPrompt(
+        ingredients: List<String>,
+        country: String?,
+        style: String?,
+        filters: List<String>
+    ): String {
+        val sb = StringBuilder()
+        sb.appendLine("You are helping a home cook plan meals using only ingredients from their pantry.")
+        sb.appendLine()
+        sb.appendLine("Available ingredients:")
+        ingredients.forEach { sb.appendLine("- $it") }
+        sb.appendLine()
+        sb.appendLine("Generate 4 creative recipes in JSON format with this schema:")
+        sb.appendLine(
+            """
+        {
+          "recipes": [
+            {
+              "name": "string",
+              "description": "short description",
+              "time_minutes": 30,
+              "servings": 4,
+              "sourceUrl": "example.com",
+              "calories": "approx, like '450 kcal'",
+              "protein": "e.g. '25g'",
+              "carbs": "e.g. '40g'",
+              "fat": "e.g. '15g'",
+              "ingredients": [
+                "quantity unit ingredient, like 3 pounds russet potatoes",
+                "quantity unit ingredient, like 1 cup mayonnaise",
+              ],
+              "instructions": [
+                "...",
+                "...",
+                "..."
+              ],
+            }
+          ]
+        }
+        """.trimIndent()
+        )
+
+        country?.let {
+            sb.appendLine()
+            sb.appendLine("Preferred cuisine: $it.")
+        }
+
+        style?.let {
+            sb.appendLine("Preferred cooking style: $it.")
+        }
+
+        if (filters.isNotEmpty()) {
+            sb.appendLine("Additional preferences: ${filters.joinToString(", ")}.")
+        }
+
+        sb.appendLine()
+        sb.appendLine("Rules:")
+        sb.appendLine("- Only use ingredients from the pantry list where possible.")
+        sb.appendLine("- If something is missing, assume basic staples like salt, pepper, oil, water are available.")
+        sb.appendLine("- Return ONLY valid JSON. No extra text, no explanations.")
+        sb.appendLine("- For each recipe, include an 'ingredients' array with one string per ingredient, starting with a quantity and unit (e.g. '1 cup milk', '2 tbsp oil').")
+        sb.appendLine("- For each recipe, include 4–10 clear steps in the 'instructions' array.")
+        sb.appendLine("- Every ingredient used in 'instructions' must appear in 'ingredients', and vice versa.")
+        sb.appendLine("- Return ONLY valid JSON. No extra text, no explanations.")
+
+        return sb.toString()
     }
 }
