@@ -80,7 +80,7 @@ object EditReceiptDestination : NavigationDestination {
     override val titleRes = R.string.edit_receipt_title
 }
 
-object RecipeInstructionDestination : NavigationDestination {
-    override val route = "recipe_instruction/{id}"
-    override val titleRes = R.string.recipe_instruction
+object RecipeDetailDestination : NavigationDestination {
+    override val route = "recipe_detail/{recipeId}"
+    override val titleRes = R.string.recipe_detail
 }

@@ -31,7 +31,19 @@ import com.example.inventory.ui.userdata.FakeRecipeRepository
 import com.example.inventory.ui.userdata.FakeMyPantryViewModel
 import com.example.inventory.data.Recipe
 import com.example.inventory.ui.recipe.RecipeDetailViewModel
+import androidx.compose.foundation.lazy.LazyColumn
+import org.w3c.dom.Text
 import java.sql.Date
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.text.style.TextDecoration
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,6 +52,7 @@ fun RecipeDetailScreen(
     appViewModel: AppViewModel,
     recipeId: Int,
 ) {
+    Log.d("RecipeDetailScreen", "Check in RecipeDetailScreen, recipeId: $recipeId")
     val context = LocalContext.current
     val viewModel: RecipeDetailViewModel = remember(recipeId) {
         val appContainer = (context.applicationContext as InventoryApplication).container
@@ -106,7 +119,9 @@ fun RecipeDetailContent(
     recipe: Recipe,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier) {
+    val uriHandler = LocalUriHandler.current
+    val context = LocalContext.current
+    Column(modifier = modifier.verticalScroll(rememberScrollState())) {
         Text(recipe.title, fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Text(
             recipe.description,
@@ -148,21 +163,94 @@ fun RecipeDetailContent(
         Text("Instructions", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(8.dp))
         if (recipe.instructions.isEmpty()) {
-            Text("No instructions available.", color = Color.Gray, fontSize = 14.sp)
+            Text("Please visit the source to see the instructions. ${recipe.source}", color = Color.Gray, fontSize = 14.sp)
         } else {
-            recipe.instructions.split(",")
-                .map { it.trim() }
-                .filter { it.isNotEmpty() }.forEachIndexed { index, step ->
-                    Text(
-                        text = "${index + 1}. $step",
-                        fontSize = 14.sp,
-                        modifier = Modifier.padding(vertical = 2.dp)
-                    )
-                }
+            SimpleInstructions(recipe.instructions)
+            Text(
+                text = "Please visit the source to see more instructions:",
+                color = Color.Gray,
+                fontSize = 14.sp,)
+            Text(
+                text = recipe.source,
+                color = Color.Blue,
+                fontSize = 14.sp,
+                modifier = Modifier
+                    .clickable {
+                        try {
+                            uriHandler.openUri(recipe.source)
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Cannot open link", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    textDecoration = TextDecoration.Underline
+                )
+            )
         }
     }
 }
 
+@Composable
+fun SimpleInstructions(instructions: String) {
+    Log.d("RecipeDetailScreen", "Raw instructions:\n$instructions")
+
+    if (instructions.isBlank()) {
+        Text("Please visit the source to see the instructions.", color = Color.Gray)
+        return
+    }
+
+    // Split instructions by line and filter out empty lines
+    val lines = instructions
+        .split("\n", ".")
+        .map { it.trim() }
+        .filter { it.isNotBlank() }
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.padding(vertical = 8.dp)
+    ) {
+        lines.forEachIndexed { index, rawStep ->
+            var stepText = rawStep
+            // remove leading dots
+            stepText = stepText
+                .removePrefix("•")
+                .removePrefix("·")
+                .removePrefix("-")
+                .removePrefix("–")
+                .removePrefix("—")
+                .removePrefix("Step")
+                .removePrefix("1)")
+                .removePrefix("2)")
+                .removePrefix("3)")
+                .removePrefix("4)")
+                .removePrefix("5)")
+                .removePrefix("6)")
+                .removePrefix("7)")
+                .removePrefix("8)")
+                .removePrefix("9)")
+                .trim()
+
+            // remove trailing dots
+            if (stepText.endsWith(".")) {
+                stepText = stepText.dropLast(1)
+            }
+
+            // capitalize first letter
+            if (stepText.isNotEmpty()) {
+                stepText = stepText.replaceFirstChar { it.uppercase() }
+            }
+
+            if (stepText.isNotEmpty()) {
+                Text(
+                    text = "${index + 1}. $stepText",
+                    fontSize = 15.sp,
+                    lineHeight = 24.sp
+                )
+            }
+        }
+    }
+}
 @Preview(showBackground = true)
 @Composable
 fun RecipeDetailScreenPreview() {
@@ -180,10 +268,7 @@ fun RecipeDetailScreenPreview() {
                 ingredients = "Spaghetti, Ground beef, Tomato sauce, Onion, Garlic",
                 dateSaved = Date(System.currentTimeMillis()),
                 instructions =
-                    "Cook the spaghetti according to package instructions.,"
-                            + "In a large pot, sauté the onion and garlic until softened."
-                            + "Add the ground beef, tomato sauce, and sauté for another 5 minutes."
-                            + "Drain the spaghetti and add it to the sauce."
+                    "Cook the spaghetti according to package instructions. In a large pot, sauté the onion and garlic until softened. Add the ground beef, tomato sauce, and sauté for another 5 minutes. Drain the spaghetti and add it to the sauce."
             ),
 
             )

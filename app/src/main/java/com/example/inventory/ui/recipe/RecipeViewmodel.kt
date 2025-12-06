@@ -165,9 +165,9 @@ class RecipeViewModel(
                 }
 
                 // 5) Map to UI model (unchanged)
-                val uiRecipes = aiList.recipes.mapIndexed { index, recipe ->
+                val uiRecipes = aiList.recipes.map { recipe ->
                     RecipeUiModel(
-                        id = index.toLong(),
+                        id = recipe.id.toInt(),
                         name = recipe.name,
                         subtitle = recipe.description,
                         time = "${recipe.time_minutes} min",
@@ -178,7 +178,7 @@ class RecipeViewModel(
                         fat = recipe.fat ?: "N/A",
                         ingredientUsage = "AI from your pantry",
                         sourceUrl = "", // no URL for AI recipes
-                        ingredients = recipe.ingredients ?: emptyList(),
+                        ingredients = recipe.ingredients,
                         instructions = recipe.instructions ?: emptyList()
 
                     )
@@ -186,15 +186,6 @@ class RecipeViewModel(
 
                 _uiState.update {
                     it.copy(recipes = uiRecipes, isLoading = false)
-                }
-
-            } catch (e: com.google.gson.JsonSyntaxException) {
-                // NEW: Specific catch for JSON issues
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        errorMessage = "AI response format error. Try again or refine prompt."
-                    )
                 }
             } catch (e: Exception) {
                 Log.e("RecipeViewModel", "Error generating AI recipes", e)
@@ -239,7 +230,7 @@ class RecipeViewModel(
                 )
                 Log.d("RecipeViewModel", "Found recipes: $foundRecipes")
 
-                if (foundRecipes.isNullOrEmpty()) {
+                if (foundRecipes.isEmpty()) {
                     _uiState.update {
                         it.copy(
                             recipes = emptyList(),
@@ -250,9 +241,9 @@ class RecipeViewModel(
                     return@launch
                 }
 
-                val uiRecipes = foundRecipes.mapIndexed { index, recipe ->
+                val uiRecipes = foundRecipes.map{ recipe ->
                     RecipeUiModel(
-                        id = index.toLong(),
+                        id = recipe.recipeId,
                         name = recipe.title,
                         subtitle = recipe.source.ifBlank { "AI Suggested Recipe" },
                         time = "25–45 min",
@@ -282,7 +273,7 @@ class RecipeViewModel(
         }
     }
 
-    fun clearError() = _uiState.update { it.copy(errorMessage = null) }
+    //fun clearError() = _uiState.update { it.copy(errorMessage = null) }
 
     private fun buildAiPrompt(
         ingredients: List<String>,
@@ -381,7 +372,7 @@ data class RecipeUiState(
 
 
 data class RecipeUiModel(
-    val id: Long,
+    val id: Int,
     val name: String,
     val subtitle: String,
     val time: String,

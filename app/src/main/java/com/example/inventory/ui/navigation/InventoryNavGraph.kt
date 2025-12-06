@@ -200,19 +200,24 @@ fun InventoryNavHost(
         composable(route = RecipeDestination.route) {
             RecipeRecommendationScreen(
                 navController = navController,
+                navigateToRecipeDetail = { recipeId ->
+                    Log.d("Nav", "Navigating to recipe detail with ID: $recipeId")
+                    navController.navigate("recipe_detail/$recipeId")
+                },
                 appViewModel = appViewModel,
                 viewModel = recipeViewModel
             )
         }
 
         composable(
-            route = "recipe_detail/{recipeId}",
+            route = RecipeDetailDestination.route,
             arguments = listOf(
-                navArgument("recipeId") { type = NavType.LongType }
+                navArgument("recipeId") { type = NavType.IntType }
             )
         ) { backStackEntry ->
+            Log.d("Nav", "RecipeDetailDestination called")
             val recipeId = backStackEntry.arguments?.getInt("recipeId") ?: 0
-
+            Log.d("Nav", "RecipeDetailDestination called with recipeId: ${recipeId}")
             RecipeDetailScreen(
                 navController = navController,
                 appViewModel = appViewModel,

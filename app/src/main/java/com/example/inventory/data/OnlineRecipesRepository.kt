@@ -11,6 +11,8 @@ import org.json.JSONObject
 import java.sql.Date
 import java.util.concurrent.TimeUnit
 import com.example.inventory.ui.AppViewModel
+import kotlinx.coroutines.flow.first
+
 open class OnlineRecipesRepository(
     private val recipesRepository: RecipesRepository,
 ) {
@@ -143,6 +145,8 @@ open class OnlineRecipesRepository(
                 )
                 Log.d("OnlineRecipes", "inserting recipe: ${recipe.title}")
                 val newRecipeId = recipesRepository.insertRecipe(recipe)
+                recipesRepository.getRecipeStream(newRecipeId.toInt()).first()
+                recipe.recipeId = newRecipeId.toInt()
                 Log.d("OnlineRecipes", "inserted recipe: ${newRecipeId}")
 
                 savedRecipes.add(recipe)

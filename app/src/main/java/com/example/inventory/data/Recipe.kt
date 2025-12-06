@@ -23,7 +23,7 @@ import java.sql.Date
     ]
 )
 data class Recipe(
-    @PrimaryKey(autoGenerate = true) val recipeId: Long = 0L,
+    @PrimaryKey(autoGenerate = true) var recipeId: Int = 0,
     val userId: Int,
     val source: String,
     val title: String,
