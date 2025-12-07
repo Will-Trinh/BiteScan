@@ -264,12 +264,14 @@ open class OnlineRecipesRepository(
                 ingredients = aiRecipe.ingredients?.joinToString("\n") { "• $it" } ?: "",
                 instructions = aiRecipe.instructions?.mapIndexed { i, step -> "${i + 1}. $step" }
                     ?.joinToString("\n") ?: "",
-                nutrition = buildString {
-                    aiRecipe.calories?.let { append("Calories: $it\n") }
-                    aiRecipe.protein?.let { append("Protein: $it\n") }
-                    aiRecipe.carbs?.let { append("Carbs: $it\n") }
-                    aiRecipe.fat?.let { append("Fat: $it") }
-                }.trim(),
+                nutrition = Gson().toJson(
+                    Nutrition(
+                        calories = aiRecipe.calories ?: "",
+                        protein  = aiRecipe.protein  ?: "",
+                        carbs    = aiRecipe.carbs    ?: "",
+                        fat      = aiRecipe.fat      ?: ""
+                    )
+                ),
                 servings = aiRecipe.servings ?: 4,
                 totalTime = aiRecipe.time_minutes ?: 30
             )

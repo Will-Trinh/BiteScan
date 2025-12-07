@@ -10,13 +10,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import com.example.inventory.data.ai.OrChatRequest
-import com.example.inventory.data.ai.OrMessage
-import com.example.inventory.data.ai.OrResponseFormat
-import com.example.inventory.data.ai.AiRecipeList
-import kotlinx.serialization.json.Json
-import com.example.inventory.data.ai.OpenRouterClient
 import com.google.gson.Gson
+import com.example.inventory.data.Nutrition
 
 
 class RecipeViewModel(
@@ -126,21 +121,22 @@ class RecipeViewModel(
                 }
                 // 5) Map to UI model (unchanged)
                 val uiRecipes = aiList.map { recipe ->
+                    val nutrition = parseNutrition(recipe.nutrition)
                     RecipeUiModel(
                         id = recipe.recipeId,
                         name = recipe.title,
                         subtitle = recipe.description,
                         time = "${recipe.totalTime} min",
                         servings = recipe.servings.toString(),
-                        calories = recipe.nutrition,
-                        protein = recipe.nutrition,
-                        carbs = recipe.nutrition,
-                        fat = recipe.nutrition,
+                        calories = nutrition.calories.ifBlank { "N/A" },
+                        protein  = nutrition.protein.ifBlank { "N/A" },
+                        carbs    = nutrition.carbs.ifBlank { "N/A" },
+                        fat      = nutrition.fat.ifBlank { "N/A" },
                         ingredientUsage = "AI from your pantry",
-                        sourceUrl = recipe.source, // no URL for AI recipes???
+                        sourceUrl = recipe.source,
                     )
                 }
-
+                
                 _uiState.update {
                     it.copy(recipes = uiRecipes, isLoading = false)
                 }
@@ -259,6 +255,18 @@ data class RecipeUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
+
+private fun parseNutrition(json: String?): Nutrition {
+    if (json.isNullOrBlank()) {
+        return Nutrition("N/A", "N/A", "N/A", "N/A")
+    }
+
+    return try {
+        Gson().fromJson(json, Nutrition::class.java)
+    } catch (e: Exception) {
+        Nutrition("N/A", "N/A", "N/A", "N/A")
+    }
+}
 
 
 

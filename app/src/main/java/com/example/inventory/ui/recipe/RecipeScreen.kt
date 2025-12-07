@@ -1,15 +1,12 @@
 package com.example.inventory.ui.recipe
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -20,23 +17,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import com.example.inventory.InventoryApplication
 import com.example.inventory.ui.AppViewModel
 import com.example.inventory.ui.navigation.BottomNavigationBar
 import com.example.inventory.ui.theme.CookingAssistantTheme
 import com.example.inventory.ui.theme.LightGreen
 import com.example.inventory.ui.theme.PrimaryGreen
-import com.example.inventory.ui.userdata.FakeMyPantryViewModel
-import com.example.inventory.ui.userdata.FakeOnlineRecipesRepository
-import android.util.Log
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -56,7 +47,7 @@ fun RecipeRecommendationScreen(
                 TopAppBar(
                     title = {
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(end = 48.dp),
+                            modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.Center
                         ) {
                             Text(
@@ -66,11 +57,6 @@ fun RecipeRecommendationScreen(
                             )
                         }
                     },
-                    navigationIcon = {
-                        IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.Black)
-                        }
-                    }
                 )
             },
             bottomBar = { BottomNavigationBar(navController, appViewModel) }
@@ -154,7 +140,8 @@ fun RecipeBody(
                             excludedIngredients = uiState.excludedIngredients,
                             onIngredientToggle = onIngredientToggle,
                             onFindRecipesClick = onFindRecipesClick,
-                            onFindRecipesAIClick = onFindRecipesAIClick
+                            onFindRecipesAIClick = onFindRecipesAIClick,
+                            onGoToPantry = { navController.navigate("my_pantry") }
                         )
                     }
 
@@ -188,6 +175,7 @@ fun AvailableIngredientsCard(
     onIngredientToggle: (String) -> Unit,
     onFindRecipesClick: () -> Unit,
     onFindRecipesAIClick: () -> Unit,
+    onGoToPantry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -217,9 +205,18 @@ fun AvailableIngredientsCard(
                     }
                 }
             }
-
             Spacer(modifier = Modifier.height(20.dp))
+
             Column(modifier = modifier.fillMaxWidth()) {
+                Button(
+                    onClick = onGoToPantry,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen),
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = true
+                ) {
+                    Text("Manage my pantry", color = Color.White, fontSize = 16.sp)
+                }
                 Button(
                     onClick = onFindRecipesClick,
                     modifier = Modifier.fillMaxWidth(),
@@ -414,20 +411,6 @@ fun RecipeCard(
                     NutritionValue(label = "Fat:", value = recipe.fat)
                 }
             }
-
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(LightGreen)
-                    .padding(horizontal = 1.dp, vertical = 1.dp)
-            ) {
-                Text(
-                    recipe.ingredientUsage,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = PrimaryGreen
-                )
-            }
         }
     }
 }
@@ -452,5 +435,32 @@ fun FiltersCardPreview() {
             onSelectStyle = {},
             onToggleFilter = {}
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun RecipeCardPreview() {
+    CookingAssistantTheme {
+        Surface(color = Color(0xFFF5F5F5)) {
+            Box(modifier = Modifier.padding(16.dp)) {
+                RecipeCard(
+                    onRecipeClick = { /* no-op for preview */ },
+                    recipe = RecipeUiModel(
+                        id = 1,
+                        name = "Cabbage Stir-Fry with Egg",
+                        subtitle = "A simple and delicious stir-fry using cabbage and eggs",
+                        time = "20 min",
+                        servings = "4",
+                        calories = "250 kcal",
+                        protein = "12g",
+                        carbs = "15g",
+                        fat = "10g",
+                        ingredientUsage = "AI",
+                        sourceUrl = ""
+                    )
+                )
+            }
+        }
     }
 }

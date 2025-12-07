@@ -347,19 +347,10 @@ fun SettingScreen(
                     title = {
                         Row(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(end = 48.dp),
+                                .fillMaxWidth(),
                             horizontalArrangement = Arrangement.Center
                         ) { Text("Settings", fontWeight = FontWeight.Bold) }
                     },
-                    navigationIcon = {
-                        IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "Back"
-                            )
-                        }
-                    }
                 )
             },
             bottomBar = { BottomNavigationBar(navController, appViewModel) }

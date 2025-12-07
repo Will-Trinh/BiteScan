@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material3.*
@@ -85,8 +84,7 @@ fun HistoryScreen(
                     title = {
                         Row(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(end = 48.dp),
+                                .fillMaxWidth(),
                             horizontalArrangement = Arrangement.Center
                         ) {
                             Text(
@@ -94,17 +92,6 @@ fun HistoryScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = Color.Black
                             )
-                        }
-                    },
-                    navigationIcon = {
-                        if (canNavigateBack) {
-                            IconButton(onClick = { navController.popBackStack() }) {
-                                Icon(
-                                    imageVector = Icons.Default.ArrowBack,
-                                    contentDescription = stringResource(R.string.back_button),
-                                    tint = Color.Black
-                                )
-                            }
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(

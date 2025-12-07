@@ -35,3 +35,10 @@ data class Recipe(
     val dateSaved: Date,
     val servings: Int
 )
+
+data class Nutrition(
+    val calories: String,
+    val protein: String,
+    val carbs: String,
+    val fat: String
+)

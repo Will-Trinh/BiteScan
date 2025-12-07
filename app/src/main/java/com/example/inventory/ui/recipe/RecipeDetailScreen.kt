@@ -21,18 +21,8 @@ import com.example.inventory.ui.theme.PrimaryGreen
 import android.util.Log
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.navigation.compose.rememberNavController
 import com.example.inventory.InventoryApplication
-import com.example.inventory.data.RecipesRepository
-import com.example.inventory.ui.settings.MyPantryViewModel
-import com.example.inventory.ui.userdata.FakeItemsRepository
-import com.example.inventory.ui.userdata.FakeReceiptsRepository
-import com.example.inventory.ui.userdata.FakeRecipeRepository
-import com.example.inventory.ui.userdata.FakeMyPantryViewModel
 import com.example.inventory.data.Recipe
-import com.example.inventory.ui.recipe.RecipeDetailViewModel
-import androidx.compose.foundation.lazy.LazyColumn
-import org.w3c.dom.Text
 import java.sql.Date
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -40,9 +30,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.ui.text.style.TextDecoration
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -135,7 +122,6 @@ fun RecipeDetailContent(
             Spacer(Modifier.width(4.dp))
             Text("${recipe.totalTime} • ${recipe.servings} servings", fontSize = 14.sp)
             Spacer(Modifier.width(8.dp))
-            Text(recipe.nutrition, fontSize = 14.sp, color = PrimaryGreen)
         }
 
         Spacer(Modifier.height(16.dp))
@@ -145,18 +131,20 @@ fun RecipeDetailContent(
         if (recipe.ingredients.isEmpty()) {
             Text("No ingredients available.", color = Color.Gray, fontSize = 14.sp)
         } else {
-            recipe.ingredients
-                .split(",")
-                .map { it.trim() }
+            val ingredientLines = recipe.ingredients
+                .lines() // same as split("\n")
+                .map { it.trim().removePrefix("•").trim() }
                 .filter { it.isNotEmpty() }
-                .forEach { ingredient ->
-                    Text(
-                        "• $ingredient",
-                        fontSize = 15.sp,
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    )
-                }
+
+            ingredientLines.forEach { ingredient ->
+                Text(
+                    text = "• $ingredient",
+                    fontSize = 15.sp,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+            }
         }
+
 
         Spacer(Modifier.height(16.dp))
 
@@ -200,9 +188,9 @@ fun SimpleInstructions(instructions: String) {
         return
     }
 
-    // Split instructions by line and filter out empty lines
+    // Split instructions by line only
     val lines = instructions
-        .split("\n", ".")
+        .lines()
         .map { it.trim() }
         .filter { it.isNotBlank() }
 
@@ -212,32 +200,21 @@ fun SimpleInstructions(instructions: String) {
     ) {
         lines.forEachIndexed { index, rawStep ->
             var stepText = rawStep
-            // remove leading dots
+
+            // Remove leading numbering / bullets / 'Step'
             stepText = stepText.replaceFirst(Regex("^\\s*\\d+\\s*\\.?\\s*"), "").trim()
             stepText = stepText
-                .removePrefix("•")
-                .removePrefix("·")
-                .removePrefix("-")
-                .removePrefix("–")
-                .removePrefix("—")
-                .removePrefix("Step")
-                .removePrefix("1)")
-                .removePrefix("2)")
-                .removePrefix("3)")
-                .removePrefix("4)")
-                .removePrefix("5)")
-                .removePrefix("6)")
-                .removePrefix("7)")
-                .removePrefix("8)")
-                .removePrefix("9)")
+                .removePrefix("•").removePrefix("·")
+                .removePrefix("-").removePrefix("–").removePrefix("—")
+                .removePrefix("Step").removePrefix("step")
                 .trim()
 
-            // remove trailing dots
+            // Remove trailing dot
             if (stepText.endsWith(".")) {
                 stepText = stepText.dropLast(1)
             }
 
-            // capitalize first letter
+            // Capitalize first letter
             if (stepText.isNotEmpty()) {
                 stepText = stepText.replaceFirstChar { it.uppercase() }
             }
@@ -252,6 +229,7 @@ fun SimpleInstructions(instructions: String) {
         }
     }
 }
+
 @Preview(showBackground = true)
 @Composable
 fun RecipeDetailScreenPreview() {
