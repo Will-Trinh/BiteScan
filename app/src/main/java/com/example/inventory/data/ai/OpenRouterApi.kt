@@ -59,6 +59,7 @@ data class AiRecipe(
     val id: Long,
     val name: String,
     val description: String,
+    val sourceUrl: String? = null,
     val time_minutes: Int,
     val servings: Int,
     val calories: String? = null,

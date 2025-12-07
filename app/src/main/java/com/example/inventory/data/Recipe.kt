@@ -23,7 +23,7 @@ import java.sql.Date
     ]
 )
 data class Recipe(
-    @PrimaryKey(autoGenerate = true) val recipeId: Long = 0L,
+    @PrimaryKey(autoGenerate = true) var recipeId: Int = 0,
     val userId: Int,
     val source: String,
     val title: String,
@@ -32,5 +32,6 @@ data class Recipe(
     val instructions: String, // step-by-step with the time for each step
     val nutrition: String,    // JSON for calories, protein, etc.
     val totalTime: Int,       // minutes
-    val dateSaved: Date
+    val dateSaved: Date,
+    val servings: Int
 )

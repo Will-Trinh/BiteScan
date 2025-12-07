@@ -81,6 +81,8 @@
     <string name="landing">Landing</string>
     <string name="recipe_recommendations_title">Recipe Recommendations</string>
     <string name="recipe_instruction">Recipe Instructions</string>
+    <string name="recipe_detail">Recipe Detail</string>
+
 
 
 

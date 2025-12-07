@@ -20,6 +20,7 @@ class AppViewModel(private val usersRepository: UsersRepository?= null ) : ViewM
     private val _oldUserId= MutableStateFlow<Int?>(null)
 
     val userId: State<Int?> = _userId
+
     val oldUserId: StateFlow<Int?> = _oldUserId
     private val _isReady = MutableStateFlow(false)
     val isReady: StateFlow<Boolean> = _isReady

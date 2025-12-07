@@ -42,6 +42,7 @@ import android.util.Log
 @Composable
 fun RecipeRecommendationScreen(
     navController: NavController,
+    navigateToRecipeDetail: (Int) -> Unit,
     appViewModel: AppViewModel,
     viewModel: RecipeViewModel,
     modifier: Modifier = Modifier,
@@ -85,6 +86,7 @@ fun RecipeRecommendationScreen(
                     onIngredientToggle = viewModel::toggleIngredientExclusion,
                     onFindRecipesClick = viewModel::findRecipesWithGg,
                     onFindRecipesAIClick = viewModel::findRecipesWithAi,
+                    navigateToRecipeDetail = navigateToRecipeDetail,
                     navController = navController,
                     viewModel = viewModel,
                     appViewModel = appViewModel
@@ -101,6 +103,7 @@ fun RecipeBody(
     onIngredientToggle: (String) -> Unit,
     onFindRecipesClick: () -> Unit,
     onFindRecipesAIClick: () -> Unit,
+    navigateToRecipeDetail: (Int) -> Unit,
     navController: NavController,
     viewModel: RecipeViewModel,
     appViewModel: AppViewModel,
@@ -128,7 +131,7 @@ fun RecipeBody(
                     Spacer(Modifier.height(24.dp))
                     Text("No recipes found", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(12.dp))
-                    Text(uiState.errorMessage ?: "", textAlign = TextAlign.Center, color = Color.Gray)
+                    Text(uiState.errorMessage, textAlign = TextAlign.Center, color = Color.Gray)
                     Spacer(Modifier.height(24.dp))
                     Button(
                         onClick = { navController.navigate("my_pantry") },
@@ -167,7 +170,9 @@ fun RecipeBody(
 
                     // 3. Recipe List
                     items(items = uiState.recipes, key = { it.id }) { recipe ->
-                        RecipeCard(recipe = recipe, navController = navController)
+                        RecipeCard(
+                            recipe = recipe,
+                            onRecipeClick =  navigateToRecipeDetail )
                     }
                 }
             }
@@ -362,13 +367,13 @@ fun FilterCheckboxChip(
 
 @Composable
 fun RecipeCard(
+    onRecipeClick: (Int) -> Unit,
     recipe: RecipeUiModel,
-    navController: NavController
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { navController.navigate("recipe_detail/${recipe.id}") },
+            .clickable { onRecipeClick((recipe.id).toInt())},
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
