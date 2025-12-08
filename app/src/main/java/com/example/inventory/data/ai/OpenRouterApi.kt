@@ -56,13 +56,17 @@ data class AiRecipeList(
 
 @Serializable
 data class AiRecipe(
+    val id: Long,
     val name: String,
     val description: String,
+    val sourceUrl: String = "AI generated recipe (no source url).",
     val time_minutes: Int,
     val servings: Int,
     val calories: String? = null,
     val protein: String? = null,
     val carbs: String? = null,
-    val fat: String? = null
+    val fat: String? = null,
+    val ingredients: List<String>,
+    val instructions: List<String>?
 )
 

@@ -66,7 +66,7 @@ object DashboardDestination : NavigationDestination {
 }
 
 object RecipeDestination : NavigationDestination {
-    override val route = "recipe_recommendations"
+    override val route = "recipe"
     override val titleRes = R.string.recipe_recommendations_title
 }
 
@@ -80,6 +80,10 @@ object EditReceiptDestination : NavigationDestination {
     override val titleRes = R.string.edit_receipt_title
 }
 
+object RecipeDetailDestination : NavigationDestination {
+    override val route = "recipe_detail/{recipeId}"
+    override val titleRes = R.string.recipe_detail
+}
 object PriceTrackerDestination : NavigationDestination {
     override val route = "price_tracker"
     override val titleRes = R.string.price_tracker_title

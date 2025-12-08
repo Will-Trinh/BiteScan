@@ -31,7 +31,6 @@ import com.example.inventory.InventoryApplication
 import com.example.inventory.ui.loading.LoadingScreen
 import android.util.Log
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import com.example.inventory.ui.navigation.UploadDestination
 import com.example.inventory.ui.AppViewModel
 import com.example.inventory.ui.theme.PrimaryGreen
@@ -123,11 +122,6 @@ fun UploadScreen(
             topBar = {
                 TopAppBar(
                     title = { Row(modifier = Modifier.fillMaxWidth().padding(end = 48.dp), horizontalArrangement = Arrangement.Center) { Text("") } },
-                    navigationIcon = {
-                        IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                        }
-                    }
                 )
             },
             bottomBar = { BottomNavigationBar(navController, appViewModel) }

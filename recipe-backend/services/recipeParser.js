@@ -36,7 +36,17 @@ module.exports = async function parseRecipe(url, ingredients, style) {
     // get steps
     let rawSteps = recipeData.recipeInstructions || [];
     let steps = [];
-
+    if (Array.isArray(rawSteps)) {
+    steps = rawSteps
+    .map((item) => {
+      if (typeof item === "string") return item;
+      if (item["@type"] === "HowToStep" && item.text) return item.text;
+      if (typeof item.text === "string") return item.text;
+      if (typeof item.name === "string") return item.name;
+      return null;
+    })
+    .filter(Boolean);
+}
     if (Array.isArray(rawSteps)) {
       steps = rawSteps
         .map((s) => {
@@ -88,20 +98,41 @@ function findRecipeNode(data) {
 
   if (typeof data === "object") {
     const type = data["@type"];
+
+    // 1. @type Recipe
     if (type) {
-      if (Array.isArray(type) && type.includes("Recipe")) return data;
-      if (type === "Recipe") return data;
+      if (Array.isArray(type)) {
+        if (type.includes("Recipe")) return data;
+      } else if (type === "Recipe") {
+        return data;
+      }
     }
 
+    // 2.  @type addition BlogPosting, Article…  recipeIngredient + recipeInstructions + name/headline
+    if (
+      data.recipeIngredient &&
+      data.recipeInstructions &&
+      (data.name || data.headline)
+    ) {
+      return data;
+    }
+
+    // 3. @graph
     if (data["@graph"]) {
       const r = findRecipeNode(data["@graph"]);
       if (r) return r;
     }
-  }
 
+    // 4. search in all keys
+    for (const key in data) {
+      if (Array.isArray(data[key])) {
+        const r = findRecipeNode(data[key]);
+        if (r) return r;
+      }
+    }
+  }
   return null;
 }
-
 function calcScore(userIngredients, recipeIngredients, style, data) {
   const recipeText = recipeIngredients.join(" ").toLowerCase();
   let match = 0;

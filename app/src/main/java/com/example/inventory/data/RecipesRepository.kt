@@ -25,7 +25,8 @@ interface RecipesRepository {
     fun getAllRecipesStream(): Flow<List<Recipe>>
     fun getRecipeStream(id: Int): Flow<Recipe?>
     fun searchRecipes(query: String): Flow<List<Recipe>>
-    suspend fun insertRecipe(recipe: Recipe)
+    suspend fun insertRecipe(recipe: Recipe) : Long
+    suspend fun upsertRecipe(recipe: Recipe) : Long
     suspend fun deleteRecipe(recipe: Recipe)
     suspend fun updateRecipe(recipe: Recipe)
 }

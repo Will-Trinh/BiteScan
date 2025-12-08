@@ -253,7 +253,8 @@ class UploadViewModel(
                 merchant_address = responseJson.optString("merchant_address"),
                 transaction_date = responseJson.optString("transaction_date"),
                 transaction_time = responseJson.optString("transaction_time"),
-                total_amount = responseJson.optDouble("total_amount"),
+                total_amount = if (responseJson.has("total_amount"))
+                    responseJson.optDouble("total_amount") else responseJson.optDouble("total"),
                 line_items = (0 until (responseJson.optJSONArray("line_items")?.length() ?: 0)).map { i ->
                     val itemJson = responseJson.optJSONArray("line_items")?.getJSONObject(i)
                     LineItem(

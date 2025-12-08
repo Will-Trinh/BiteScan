@@ -1,15 +1,12 @@
 package com.example.inventory.ui.recipe
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -20,50 +17,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import com.example.inventory.InventoryApplication
 import com.example.inventory.ui.AppViewModel
 import com.example.inventory.ui.navigation.BottomNavigationBar
 import com.example.inventory.ui.theme.CookingAssistantTheme
 import com.example.inventory.ui.theme.LightGreen
 import com.example.inventory.ui.theme.PrimaryGreen
-import com.example.inventory.ui.userdata.FakeMyPantryViewModel
-import com.example.inventory.ui.userdata.FakeOnlineRecipesRepository
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun RecipeRecommendationScreen(
     navController: NavController,
+    navigateToRecipeDetail: (Int) -> Unit,
+    appViewModel: AppViewModel,
+    viewModel: RecipeViewModel,
     modifier: Modifier = Modifier,
-    viewModel: RecipeViewModel? = null,
-    appViewModel: AppViewModel
 ) {
-    val context = LocalContext.current
-    val actualViewModel = viewModel ?: remember {
-        if (context.applicationContext is InventoryApplication) {
-            val appContainer = (context.applicationContext as InventoryApplication).container
-            RecipeViewModel(
-                onlineRecipesRepository = appContainer.onlineRecipesRepository,
-                myPantryViewModel = appContainer.myPantryViewModel,
-                appViewModel = appViewModel
-            )
-        } else {
-            RecipeViewModel(
-                onlineRecipesRepository = FakeOnlineRecipesRepository(),
-                myPantryViewModel = FakeMyPantryViewModel(),
-                appViewModel = appViewModel
-            )
-        }
-    }
+    val uiState by viewModel.uiState.collectAsState()
 
-    val uiState by actualViewModel.uiState.collectAsState()
 
     CookingAssistantTheme {
         Scaffold(
@@ -71,7 +47,7 @@ fun RecipeRecommendationScreen(
                 TopAppBar(
                     title = {
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(end = 48.dp),
+                            modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.Center
                         ) {
                             Text(
@@ -81,11 +57,6 @@ fun RecipeRecommendationScreen(
                             )
                         }
                     },
-                    navigationIcon = {
-                        IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.Black)
-                        }
-                    }
                 )
             },
             bottomBar = { BottomNavigationBar(navController, appViewModel) }
@@ -98,11 +69,12 @@ fun RecipeRecommendationScreen(
             ) {
                 RecipeBody(
                     uiState = uiState,
-                    onIngredientToggle = actualViewModel::toggleIngredientExclusion,
-                    onFindRecipesClick = actualViewModel::findRecipesWithGg,
-                    onFindRecipesAIClick = actualViewModel::findRecipesWithAi,
+                    onIngredientToggle = viewModel::toggleIngredientExclusion,
+                    onFindRecipesClick = viewModel::findRecipesWithGg,
+                    onFindRecipesAIClick = viewModel::findRecipesWithAi,
+                    navigateToRecipeDetail = navigateToRecipeDetail,
                     navController = navController,
-                    viewModel = actualViewModel,
+                    viewModel = viewModel,
                     appViewModel = appViewModel
                 )
             }
@@ -117,6 +89,7 @@ fun RecipeBody(
     onIngredientToggle: (String) -> Unit,
     onFindRecipesClick: () -> Unit,
     onFindRecipesAIClick: () -> Unit,
+    navigateToRecipeDetail: (Int) -> Unit,
     navController: NavController,
     viewModel: RecipeViewModel,
     appViewModel: AppViewModel,
@@ -144,10 +117,10 @@ fun RecipeBody(
                     Spacer(Modifier.height(24.dp))
                     Text("No recipes found", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(12.dp))
-                    Text(uiState.errorMessage ?: "", textAlign = TextAlign.Center, color = Color.Gray)
+                    Text(uiState.errorMessage, textAlign = TextAlign.Center, color = Color.Gray)
                     Spacer(Modifier.height(24.dp))
                     Button(
-                        onClick = { navController.navigate("my_pantry/${appViewModel.userId.value}") },
+                        onClick = { navController.navigate("my_pantry") },
                         colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
                     ) {
                         Text("Go to My Pantry", color = Color.White)
@@ -167,7 +140,8 @@ fun RecipeBody(
                             excludedIngredients = uiState.excludedIngredients,
                             onIngredientToggle = onIngredientToggle,
                             onFindRecipesClick = onFindRecipesClick,
-                            onFindRecipesAIClick = onFindRecipesAIClick
+                            onFindRecipesAIClick = onFindRecipesAIClick,
+                            onGoToPantry = { navController.navigate("my_pantry") }
                         )
                     }
 
@@ -183,7 +157,9 @@ fun RecipeBody(
 
                     // 3. Recipe List
                     items(items = uiState.recipes, key = { it.id }) { recipe ->
-                        RecipeCard(recipe = recipe)
+                        RecipeCard(
+                            recipe = recipe,
+                            onRecipeClick =  navigateToRecipeDetail )
                     }
                 }
             }
@@ -199,6 +175,7 @@ fun AvailableIngredientsCard(
     onIngredientToggle: (String) -> Unit,
     onFindRecipesClick: () -> Unit,
     onFindRecipesAIClick: () -> Unit,
+    onGoToPantry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -228,9 +205,18 @@ fun AvailableIngredientsCard(
                     }
                 }
             }
-
             Spacer(modifier = Modifier.height(20.dp))
+
             Column(modifier = modifier.fillMaxWidth()) {
+                Button(
+                    onClick = onGoToPantry,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen),
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = true
+                ) {
+                    Text("Manage my pantry", color = Color.White, fontSize = 16.sp)
+                }
                 Button(
                     onClick = onFindRecipesClick,
                     modifier = Modifier.fillMaxWidth(),
@@ -377,9 +363,14 @@ fun FilterCheckboxChip(
 }
 
 @Composable
-fun RecipeCard(recipe: RecipeUiModel) {
+fun RecipeCard(
+    onRecipeClick: (Int) -> Unit,
+    recipe: RecipeUiModel,
+) {
     Card(
-        modifier = Modifier.fillMaxWidth().clickable { /* Navigate to detail */ },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onRecipeClick((recipe.id).toInt())},
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
@@ -410,41 +401,29 @@ fun RecipeCard(recipe: RecipeUiModel) {
 
                 Spacer(Modifier.height(8.dp))
 
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    NutritionValue("cal", recipe.calories)
-                    NutritionValue("P:", recipe.protein)
-                    NutritionValue("C:", recipe.carbs)
-                    NutritionValue("F:", recipe.fat)
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    NutritionValue(label = "Calories:", value = recipe.calories)
+                    NutritionValue(label = "Protein:", value = recipe.protein)
+                    NutritionValue(label = "Carbs:", value = recipe.carbs)
+                    NutritionValue(label = "Fat:", value = recipe.fat)
                 }
-            }
-
-            Box(
-                modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(LightGreen).padding(horizontal = 8.dp, vertical = 4.dp)
-            ) {
-                Text(recipe.ingredientUsage, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = PrimaryGreen)
             }
         }
     }
 }
 
+
 @Composable
 fun NutritionValue(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, fontSize = 14.sp, fontWeight = FontWeight.Bold)
         Text(label, fontSize = 12.sp, color = Color.Gray)
+        Text(value, fontSize = 14.sp, fontWeight = FontWeight.Bold)
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun RecipeRecommendationScreenPreview() {
-    CookingAssistantTheme {
-        RecipeRecommendationScreen(
-            navController = rememberNavController(),
-            appViewModel = AppViewModel()
-        )
-    }
-}
 
 @Preview(showBackground = true)
 @Composable
@@ -456,5 +435,32 @@ fun FiltersCardPreview() {
             onSelectStyle = {},
             onToggleFilter = {}
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun RecipeCardPreview() {
+    CookingAssistantTheme {
+        Surface(color = Color(0xFFF5F5F5)) {
+            Box(modifier = Modifier.padding(16.dp)) {
+                RecipeCard(
+                    onRecipeClick = { /* no-op for preview */ },
+                    recipe = RecipeUiModel(
+                        id = 1,
+                        name = "Cabbage Stir-Fry with Egg",
+                        subtitle = "A simple and delicious stir-fry using cabbage and eggs",
+                        time = "20 min",
+                        servings = "4",
+                        calories = "250 kcal",
+                        protein = "12g",
+                        carbs = "15g",
+                        fat = "10g",
+                        ingredientUsage = "AI",
+                        sourceUrl = ""
+                    )
+                )
+            }
+        }
     }
 }
