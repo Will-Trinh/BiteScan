@@ -44,6 +44,7 @@ import androidx.compose.ui.graphics.nativeCanvas
 import com.example.inventory.ui.AppViewModel
 import com.example.inventory.ui.theme.PrimaryGreen
 import com.example.inventory.ui.theme.LightGreen
+import com.example.inventory.ui.navigation.PriceTrackerDestination
 import androidx.compose.material.icons.filled.Warning
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -184,7 +185,7 @@ fun HistoryBody(
                     // 2. Track Prices Button
                     item {
                         TrackPricesButton(
-                            onClick = { /* TODO: Navigate to price trends screen */ },
+                            onClick = { navController.navigate(PriceTrackerDestination.route) },
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
                     }

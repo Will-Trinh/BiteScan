@@ -120,6 +120,12 @@ class FakeItemsRepository : ItemsRepository {
         val receiptIdsForUser = getReceiptIdsForUser(userId)
         return flowOf(fakeItems.filter { it.receiptId in receiptIdsForUser && it.category.equals(category, ignoreCase = true) })
     }
+
+    // Implement getItemsWithStoreForUser (same as getItemsForUser for fake data - store already set)
+    override fun getItemsWithStoreForUser(userId: Int): Flow<List<Item>> {
+        val receiptIdsForUser = getReceiptIdsForUser(userId)
+        return flowOf(fakeItems.filter { it.receiptId in receiptIdsForUser })
+    }
 }
 
 class FakeUsersRepository : UsersRepository {

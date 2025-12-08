@@ -18,11 +18,11 @@ import com.example.inventory.ui.settings.LegalScreen
 import com.example.inventory.ui.NotFoundScreen
 import com.example.inventory.ui.dashboard.DashboardScreen
 import com.example.inventory.ui.AppViewModel
-import com.example.inventory.ui.landing.CreateAccountScreenPreview
 import com.example.inventory.ui.recipe.RecipeRecommendationScreen
 import com.example.inventory.ui.landing.LandingScreen
 import com.example.inventory.ui.landing.LoginScreen
 import com.example.inventory.ui.landing.RegistrationScreen
+import com.example.inventory.ui.pricetracker.PriceTrackerScreen
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 //for progress bar
@@ -174,6 +174,14 @@ fun InventoryNavHost(
         // Recipe Recommendations
         composable(route = RecipeDestination.route) {
             RecipeRecommendationScreen(
+                navController = navController,
+                appViewModel = appViewModel
+            )
+        }
+
+        // Price Tracker
+        composable(route = PriceTrackerDestination.route) {
+            PriceTrackerScreen(
                 navController = navController,
                 appViewModel = appViewModel
             )

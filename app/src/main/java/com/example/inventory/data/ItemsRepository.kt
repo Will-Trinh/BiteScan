@@ -55,6 +55,11 @@ interface ItemsRepository{
      */
     fun getItemsForUserByCategory(userId: Int, category: String): Flow<List<Item>>
 
+    /**
+     * Retrieve items for a user with store name from receipt source.
+     */
+    fun getItemsWithStoreForUser(userId: Int): Flow<List<Item>>
+
 
 }
 

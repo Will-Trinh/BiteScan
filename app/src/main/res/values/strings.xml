@@ -81,5 +81,13 @@
     <string name="landing">Landing</string>
     <string name="recipe_recommendations_title">Recipe Recommendations</string>
 
+    <!-- Price Tracker -->
+    <string name="price_tracker_title">Price Tracker</string>
+    <string name="price_tracker_subtitle">Compare prices across different stores</string>
+    <string name="price_tracker_search_hint">Search for an item…</string>
+    <string name="price_tracker_no_items">No items to display.\nStart scanning receipts to track prices!</string>
+    <string name="price_tracker_no_results">No items found matching your search.</string>
+    <string name="price_tracker_error">Unable to load price data. Please try again later.</string>
+
 
 </resources>

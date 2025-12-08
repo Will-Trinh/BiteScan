@@ -81,4 +81,18 @@ interface ItemDao {
     ORDER BY i.name ASC
 """)
     fun getItemsForUserByCategory(userId: Int, category: String): Flow<List<Item>>
+
+    /**
+     * Retrieve items for a user with store name from receipt source.
+     */
+    @Query("""
+    SELECT i.id, i.name, i.price, i.quantity, i.date, 
+           COALESCE(NULLIF(r.source, ''), 'Unknown') as store, 
+           i.category, i.receiptId, i.calories, i.protein, i.carbs, i.fats
+    FROM items i 
+    INNER JOIN receipts r ON i.receiptId = r.receiptId 
+    WHERE r.userId = :userId 
+    ORDER BY i.name ASC
+""")
+    fun getItemsWithStoreForUser(userId: Int): Flow<List<Item>>
 }
