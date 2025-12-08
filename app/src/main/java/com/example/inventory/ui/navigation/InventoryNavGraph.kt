@@ -22,6 +22,7 @@ import com.example.inventory.ui.recipe.RecipeRecommendationScreen
 import com.example.inventory.ui.landing.LandingScreen
 import com.example.inventory.ui.landing.LoginScreen
 import com.example.inventory.ui.landing.RegistrationScreen
+import com.example.inventory.ui.pricetracker.PriceTrackerScreen
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.Box
@@ -222,6 +223,14 @@ fun InventoryNavHost(
                 navController = navController,
                 appViewModel = appViewModel,
                 recipeId = recipeId,
+            )
+        }
+
+        // Price Tracker
+        composable(route = PriceTrackerDestination.route) {
+            PriceTrackerScreen(
+                navController = navController,
+                appViewModel = appViewModel
             )
         }
     }

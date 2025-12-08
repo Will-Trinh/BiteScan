@@ -84,3 +84,7 @@ object RecipeDetailDestination : NavigationDestination {
     override val route = "recipe_detail/{recipeId}"
     override val titleRes = R.string.recipe_detail
 }
+object PriceTrackerDestination : NavigationDestination {
+    override val route = "price_tracker"
+    override val titleRes = R.string.price_tracker_title
+}

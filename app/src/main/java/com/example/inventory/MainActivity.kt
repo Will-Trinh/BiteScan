@@ -60,6 +60,7 @@ class MainActivity : ComponentActivity() {
                     NotFoundDestination.route,
                     RecipeDestination.route,
                     RecipeDetailDestination.route
+                    PriceTrackerDestination.route
                 )
                 if (!validRoutes.any { it == destination.route }) {
                     navController.navigate(NotFoundDestination.route) {
