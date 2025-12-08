@@ -2,37 +2,19 @@ package com.example.inventory.ui.recipe
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.inventory.data.OnlineRecipesRepository
 import com.example.inventory.ui.AppViewModel
 import com.example.inventory.ui.settings.MyPantryViewModel
 import android.util.Log
-import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
-import com.example.inventory.InventoryApplication
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import com.example.inventory.data.ai.OrChatRequest
-import com.example.inventory.data.ai.OrMessage
-import com.example.inventory.data.ai.OrResponseFormat
-import com.example.inventory.data.ai.AiRecipeList
-import kotlinx.serialization.json.Json
-import com.example.inventory.data.ai.OpenRouterClient
-import com.google.gson.Gson
-import com.google.gson.JsonSyntaxException
 import com.example.inventory.data.RecipesRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.example.inventory.data.Recipe
-import com.example.inventory.ui.receipt.EditReceiptViewModel
-import com.example.inventory.ui.receipt.EditUiState
-import com.example.inventory.ui.userdata.FakeItemsRepository
-import com.example.inventory.ui.userdata.FakeReceiptsRepository
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
-import java.sql.Date
-import androidx.lifecycle.viewmodel.compose.viewModel
 
 
 

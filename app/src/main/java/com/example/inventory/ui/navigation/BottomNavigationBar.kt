@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -44,6 +45,7 @@ fun BottomNavigationBar(
             DashboardDestination to Icons.Filled.Dashboard,
             UploadDestination to Icons.Filled.CameraAlt,
             HistoryDestination to Icons.Filled.History,
+            RecipeDestination to Icons.Filled.Restaurant,
             SettingsDestination to Icons.Filled.Settings
         )
 
