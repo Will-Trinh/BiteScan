@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.example.inventory.data.OnlineUsersRepository
+import android.util.Log
+
 
 class SettingsViewModel(
     private val repository: UsersRepository,
@@ -60,7 +62,6 @@ class SettingsViewModel(
             val uid = appViewModel.userId.value ?: 0
             _userId.value = uid.toString()
             loadUserDetails(uid)
-            loadUserDiet(userId)
         }
     }
     private suspend fun loadUserDiet(userId: Int) {
@@ -74,13 +75,14 @@ class SettingsViewModel(
         _userEmail.value = user?.email ?: appViewModel.email.value ?: "unknown@example.com"
     }
 
-    fun isDietSelected(diet: String) = _selectedDiet.value == diet
 
     fun selectDiet(diet: String?) {
         _selectedDiet.value = diet
         viewModelScope.launch(Dispatchers.IO) {
             val uid = appViewModel.userId.value ?: return@launch
+            Log.d("SettingsViewModel", "Updating diet for user $uid to $diet")
             repository.updateUserDiet(uid, diet)
+            appViewModel.updateUserDiet(diet)
         }
     }
 
