@@ -18,19 +18,26 @@ import com.example.inventory.ui.settings.LegalScreen
 import com.example.inventory.ui.NotFoundScreen
 import com.example.inventory.ui.dashboard.DashboardScreen
 import com.example.inventory.ui.AppViewModel
-import com.example.inventory.ui.landing.CreateAccountScreenPreview
 import com.example.inventory.ui.recipe.RecipeRecommendationScreen
 import com.example.inventory.ui.landing.LandingScreen
 import com.example.inventory.ui.landing.LoginScreen
 import com.example.inventory.ui.landing.RegistrationScreen
+import com.example.inventory.ui.pricetracker.PriceTrackerScreen
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-//for progress bar
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Alignment
 import android.util.Log
+import com.example.inventory.ui.recipe.RecipeDetailScreen
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.remember
+import com.example.inventory.InventoryApplication
+import com.example.inventory.ui.recipe.RecipeViewModel
+import com.example.inventory.ui.userdata.FakeOnlineRecipesRepository
+import com.example.inventory.ui.userdata.FakeMyPantryViewModel
+
 @Composable
 fun InventoryNavHost(
     navController: NavHostController,
@@ -40,6 +47,25 @@ fun InventoryNavHost(
 
     val oldUserId: Int? by appViewModel.oldUserId.collectAsState()
     val isReady by appViewModel.isReady.collectAsState()
+
+    val context = LocalContext.current
+    val recipeViewModel = remember {
+        if (context.applicationContext is InventoryApplication) {
+            val appContainer = (context.applicationContext as InventoryApplication).container
+            RecipeViewModel(
+                onlineRecipesRepository = appContainer.onlineRecipesRepository,
+                myPantryViewModel = appContainer.myPantryViewModel,
+                appViewModel = appViewModel
+            )
+        } else {
+            RecipeViewModel(
+                onlineRecipesRepository = FakeOnlineRecipesRepository(),
+                myPantryViewModel = FakeMyPantryViewModel(),
+                appViewModel = appViewModel
+            )
+        }
+    }
+
     if (!isReady) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
@@ -174,6 +200,35 @@ fun InventoryNavHost(
         // Recipe Recommendations
         composable(route = RecipeDestination.route) {
             RecipeRecommendationScreen(
+                navController = navController,
+                navigateToRecipeDetail = { recipeId ->
+                    Log.d("Nav", "Navigating to recipe detail with ID: $recipeId")
+                    navController.navigate("recipe_detail/$recipeId")
+                },
+                appViewModel = appViewModel,
+                viewModel = recipeViewModel
+            )
+        }
+
+        composable(
+            route = RecipeDetailDestination.route,
+            arguments = listOf(
+                navArgument("recipeId") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            Log.d("Nav", "RecipeDetailDestination called")
+            val recipeId = backStackEntry.arguments?.getInt("recipeId") ?: 0
+            Log.d("Nav", "RecipeDetailDestination called with recipeId: ${recipeId}")
+            RecipeDetailScreen(
+                navController = navController,
+                appViewModel = appViewModel,
+                recipeId = recipeId,
+            )
+        }
+
+        // Price Tracker
+        composable(route = PriceTrackerDestination.route) {
+            PriceTrackerScreen(
                 navController = navController,
                 appViewModel = appViewModel
             )

@@ -311,6 +311,7 @@ fun SettingScreen(
 
     val userName by viewModel.userName.collectAsState()
     val userEmail by viewModel.userEmail.collectAsState()
+    val diet by viewModel.diet.collectAsState()
 
 
     val isLoggedOut by viewModel.logoutCompleted.collectAsState()
@@ -346,19 +347,10 @@ fun SettingScreen(
                     title = {
                         Row(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(end = 48.dp),
+                                .fillMaxWidth(),
                             horizontalArrangement = Arrangement.Center
                         ) { Text("Settings", fontWeight = FontWeight.Bold) }
                     },
-                    navigationIcon = {
-                        IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "Back"
-                            )
-                        }
-                    }
                 )
             },
             bottomBar = { BottomNavigationBar(navController, appViewModel) }

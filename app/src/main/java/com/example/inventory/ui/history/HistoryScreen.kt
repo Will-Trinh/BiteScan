@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material3.*
@@ -44,6 +43,7 @@ import androidx.compose.ui.graphics.nativeCanvas
 import com.example.inventory.ui.AppViewModel
 import com.example.inventory.ui.theme.PrimaryGreen
 import com.example.inventory.ui.theme.LightGreen
+import com.example.inventory.ui.navigation.PriceTrackerDestination
 import androidx.compose.material.icons.filled.Warning
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -85,8 +85,7 @@ fun HistoryScreen(
                     title = {
                         Row(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(end = 48.dp),
+                                .fillMaxWidth(),
                             horizontalArrangement = Arrangement.Center
                         ) {
                             Text(
@@ -94,17 +93,6 @@ fun HistoryScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = Color.Black
                             )
-                        }
-                    },
-                    navigationIcon = {
-                        if (canNavigateBack) {
-                            IconButton(onClick = { navController.popBackStack() }) {
-                                Icon(
-                                    imageVector = Icons.Default.ArrowBack,
-                                    contentDescription = stringResource(R.string.back_button),
-                                    tint = Color.Black
-                                )
-                            }
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -184,7 +172,7 @@ fun HistoryBody(
                     // 2. Track Prices Button
                     item {
                         TrackPricesButton(
-                            onClick = { /* TODO: Navigate to price trends screen */ },
+                            onClick = { navController.navigate(PriceTrackerDestination.route) },
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
                     }

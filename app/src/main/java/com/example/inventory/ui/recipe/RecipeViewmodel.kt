@@ -10,14 +10,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import com.example.inventory.data.ai.OrChatRequest
-import com.example.inventory.data.ai.OrMessage
-import com.example.inventory.data.ai.OrResponseFormat
-import com.example.inventory.data.ai.AiRecipeList
-import kotlinx.serialization.json.Json
-import com.example.inventory.data.ai.OpenRouterClient
 import com.google.gson.Gson
-
+import com.example.inventory.data.Nutrition
 
 class RecipeViewModel(
     private val onlineRecipesRepository: OnlineRecipesRepository,
@@ -32,8 +26,16 @@ class RecipeViewModel(
 
     init {
         observeAvailableIngredients()
+        viewModelScope.launch {
+            appViewModel.userDiet.collect { diet ->
+                Log.d("RecipeViewModel", "Diet updated from AppViewModel: $diet")
+                _uiState.update { it.copy(selectedFilters = diet) }
+            }
+        }
+        appViewModel.loadUserDiet()
     }
-    fun refreshRecommendations() {
+
+    fun refresh() {
         val userId = appViewModel.userId.value ?: 0
         myPantryViewModel.loadPantryItems(userId)
     }
@@ -76,12 +78,12 @@ class RecipeViewModel(
 
     fun toggleFilter(filter: String) {
         _uiState.update {
-            val set = it.selectedFilters.toMutableSet()
-            if (set.contains(filter)) set.remove(filter) else set.add(filter)
-            it.copy(selectedFilters = set)
+            val newValue = if (_uiState.value.selectedFilters == filter) "Any" else filter
+            _uiState.value.copy(selectedFilters = newValue)
         }
     }
     fun findRecipesWithAi() {
+        Log.d("RecipeViewModel", "findRecipesWithAi() called")
         val includedIngredients = currentAllIngredients.filter {
             it !in _uiState.value.excludedIngredients
         }
@@ -101,96 +103,48 @@ class RecipeViewModel(
 
             val country = _uiState.value.selectedCountry
             val style = _uiState.value.selectedStyle
-            val filters = _uiState.value.selectedFilters.toList()
+            val filters = _uiState.value.selectedFilters
 
             try {
-                val prompt = buildAiPrompt(
+                Log.d("RecipeViewModel", "Searching recipes with ingredients: $includedIngredients")
+                val aiList = onlineRecipesRepository.searchRecipeAi(
+                    userId = appViewModel.userId.value ?: 0,
                     ingredients = includedIngredients,
-                    country = if (country == "Any") null else country,
-                    style = if (style == "Any") null else style,
+                    country = country,
+                    style = style,
                     filters = filters
                 )
-
-                Log.d("RecipeViewModel", "AI prompt: $prompt")
-
-                // 1) Build request for OpenRouter (unchanged)
-                val request = OrChatRequest(
-                    model = "openai/gpt-3.5-turbo",  // or another model you like
-                    messages = listOf(
-                        OrMessage(
-                            role = "system",
-                            content = "You are a helpful cooking assistant."
-                        ),
-                        OrMessage(
-                            role = "user",
-                            content = prompt
-                        )
-                    ),
-                    responseFormat = OrResponseFormat(type = "json_object"),
-                    temperature = 0.7
-                )
-
-                // 2) Call API (unchanged)
-                val response = OpenRouterClient.api.chatCompletion(request)
-
-                val content = response.choices.firstOrNull()?.message?.content
-                    ?: throw IllegalStateException("No content in AI response")
-
-                Log.d("RecipeViewModel", "Raw AI content (first 200 chars): ${content.take(200)}")  // Debug: Log raw to verify wrapping
-
-                // 3) NEW: Clean markdown wrappers (handles ```json
-                val cleanJson = content
-                    .replace("```json", "")   // Remove opening fence
-                    .replace("```", "")       // Remove closing fence (handles ``` or ```json)
-                    .replace("json", "")      // Extra: If just "json" without ```
-                    .trim()                   // Remove leading/trailing whitespace
-
-                Log.d("RecipeViewModel", "Cleaned JSON (first 200 chars): ${cleanJson.take(200)}")  // Debug: Verify it's now { ...
-
-                // 4) Parse JSON (using your Gson fallback)
-                val gson = Gson()
-                val aiList = gson.fromJson(cleanJson, AiRecipeList::class.java)
-
-                if (aiList == null || aiList.recipes.isEmpty()) {
-                    Log.w("RecipeViewModel", "Parsed aiList is null or empty after cleaning")
+                Log.d("RecipeViewModel", "Found recipes: $aiList")
+                if (aiList.isEmpty()) {
                     _uiState.update {
                         it.copy(
                             recipes = emptyList(),
                             isLoading = false,
-                            errorMessage = "AI could not generate recipes. Try removing some filters."
+                            errorMessage = "No recipes found. Try different ingredients or remove some filters."
                         )
                     }
                     return@launch
                 }
-
                 // 5) Map to UI model (unchanged)
-                val uiRecipes = aiList.recipes.mapIndexed { index, recipe ->
+                val uiRecipes = aiList.map { recipe ->
+                    val nutrition = parseNutrition(recipe.nutrition)
                     RecipeUiModel(
-                        id = index.toLong(),
-                        name = recipe.name,
+                        id = recipe.recipeId,
+                        name = recipe.title,
                         subtitle = recipe.description,
-                        time = "${recipe.time_minutes} min",
+                        time = "${recipe.totalTime} min",
                         servings = recipe.servings.toString(),
-                        calories = recipe.calories ?: "N/A",
-                        protein = recipe.protein ?: "N/A",
-                        carbs = recipe.carbs ?: "N/A",
-                        fat = recipe.fat ?: "N/A",
+                        calories = nutrition.calories.ifBlank { "N/A" },
+                        protein  = nutrition.protein.ifBlank { "N/A" },
+                        carbs    = nutrition.carbs.ifBlank { "N/A" },
+                        fat      = nutrition.fat.ifBlank { "N/A" },
                         ingredientUsage = "AI from your pantry",
-                        sourceUrl = "" // no URL for AI recipes
+                        sourceUrl = recipe.source,
                     )
                 }
-
+                
                 _uiState.update {
                     it.copy(recipes = uiRecipes, isLoading = false)
-                }
-
-            } catch (e: com.google.gson.JsonSyntaxException) {
-                // NEW: Specific catch for JSON issues
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        errorMessage = "AI response format error. Try again or refine prompt."
-                    )
                 }
             } catch (e: Exception) {
                 Log.e("RecipeViewModel", "Error generating AI recipes", e)
@@ -228,13 +182,14 @@ class RecipeViewModel(
             try {
                 Log.d("RecipeViewModel", "Searching recipes with ingredients: $includedIngredients")
                 val foundRecipes = onlineRecipesRepository.searchRecipes(
+                    userId = appViewModel.userId.value ?: 0,
                     ingredients = includedIngredients,
                     country = country,
                     style = style
                 )
                 Log.d("RecipeViewModel", "Found recipes: $foundRecipes")
 
-                if (foundRecipes.isNullOrEmpty()) {
+                if (foundRecipes.isEmpty()) {
                     _uiState.update {
                         it.copy(
                             recipes = emptyList(),
@@ -245,9 +200,9 @@ class RecipeViewModel(
                     return@launch
                 }
 
-                val uiRecipes = foundRecipes.mapIndexed { index, recipe ->
+                val uiRecipes = foundRecipes.map{ recipe ->
                     RecipeUiModel(
-                        id = index.toLong(),
+                        id = recipe.recipeId,
                         name = recipe.title,
                         subtitle = recipe.source.ifBlank { "AI Suggested Recipe" },
                         time = "25–45 min",
@@ -277,61 +232,6 @@ class RecipeViewModel(
         }
     }
 
-    fun clearError() = _uiState.update { it.copy(errorMessage = null) }
-
-    private fun buildAiPrompt(
-        ingredients: List<String>,
-        country: String?,
-        style: String?,
-        filters: List<String>
-    ): String {
-        val sb = StringBuilder()
-        sb.appendLine("You are helping a home cook plan meals using only ingredients from their pantry.")
-        sb.appendLine()
-        sb.appendLine("Available ingredients:")
-        ingredients.forEach { sb.appendLine("- $it") }
-        sb.appendLine()
-        sb.appendLine("Generate 4 creative recipes in JSON format with this schema:")
-        sb.appendLine(
-            """
-        {
-          "recipes": [
-            {
-              "name": "string",
-              "description": "short description",
-              "time_minutes": 30,
-              "servings": 4,
-              "calories": "approx, like '450 kcal'",
-              "protein": "e.g. '25g'",
-              "carbs": "e.g. '40g'",
-              "fat": "e.g. '15g'"
-            }
-          ]
-        }
-        """.trimIndent()
-        )
-
-        country?.let {
-            sb.appendLine()
-            sb.appendLine("Preferred cuisine: $it.")
-        }
-
-        style?.let {
-            sb.appendLine("Preferred cooking style: $it.")
-        }
-
-        if (filters.isNotEmpty()) {
-            sb.appendLine("Additional preferences: ${filters.joinToString(", ")}.")
-        }
-
-        sb.appendLine()
-        sb.appendLine("Rules:")
-        sb.appendLine("- Only use ingredients from the pantry list where possible.")
-        sb.appendLine("- If something is missing, assume basic staples like salt, pepper, oil, water are available.")
-        sb.appendLine("- Return ONLY valid JSON. No extra text, no explanations.")
-
-        return sb.toString()
-    }
 
 }
 
@@ -351,19 +251,32 @@ data class RecipeUiState(
     val availableIngredients: List<String> = emptyList(),
     val excludedIngredients: Set<String> = emptySet(),
     val allFilters: List<String> = listOf(
-        "High Protein", "Vegetarian", "Vegan", "Low Carb",
-        "Quick (<30m)", "Healthy"
+     "Vegetarian", "Vegan", "Low Carb"
+        , "Healthy", "gluten-free"
     ),
-    val selectedFilters: Set<String> = emptySet(),
+
+    val selectedFilters: String = "Any",
     val recipes: List<RecipeUiModel> = emptyList(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
 
+private fun parseNutrition(json: String?): Nutrition {
+    if (json.isNullOrBlank()) {
+        return Nutrition("N/A", "N/A", "N/A", "N/A")
+    }
+
+    return try {
+        Gson().fromJson(json, Nutrition::class.java)
+    } catch (e: Exception) {
+        Nutrition("N/A", "N/A", "N/A", "N/A")
+    }
+}
+
 
 
 data class RecipeUiModel(
-    val id: Long,
+    val id: Int,
     val name: String,
     val subtitle: String,
     val time: String,
@@ -373,5 +286,7 @@ data class RecipeUiModel(
     val carbs: String,
     val fat: String,
     val ingredientUsage: String,
-    val sourceUrl: String = ""
+    val sourceUrl: String = "",
+    val ingredients: String = "",
+    val instructions: List<String> = emptyList()
 )

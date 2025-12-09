@@ -120,6 +120,12 @@ class FakeItemsRepository : ItemsRepository {
         val receiptIdsForUser = getReceiptIdsForUser(userId)
         return flowOf(fakeItems.filter { it.receiptId in receiptIdsForUser && it.category.equals(category, ignoreCase = true) })
     }
+
+    // Implement getItemsWithStoreForUser (same as getItemsForUser for fake data - store already set)
+    override fun getItemsWithStoreForUser(userId: Int): Flow<List<Item>> {
+        val receiptIdsForUser = getReceiptIdsForUser(userId)
+        return flowOf(fakeItems.filter { it.receiptId in receiptIdsForUser })
+    }
 }
 
 class FakeUsersRepository : UsersRepository {
@@ -157,15 +163,13 @@ class FakeRecipeRepository : RecipesRepository {
     override fun getAllRecipesStream(): Flow<List<Recipe>> = flowOf(emptyList())
     override fun getRecipeStream(id: Int): Flow<Recipe?> = flowOf(null)
     override fun searchRecipes(query: String): Flow<List<Recipe>> = flowOf(emptyList())
-    override suspend fun insertRecipe(recipe: Recipe) {}
+    override suspend fun insertRecipe(recipe: Recipe) : Long { return 1L }
+    override suspend fun upsertRecipe(recipe: Recipe): Long { return 1L }
     override suspend fun deleteRecipe(recipe: Recipe) {}
     override suspend fun updateRecipe(recipe: Recipe) {}
 }
 class FakeOnlineRecipesRepository : OnlineRecipesRepository(
     recipesRepository = FakeRecipeRepository(),
-    itemsRepository = FakeItemsRepository(),
-    // nếu OnlineRecipesRepository có thêm usersRepository thì thêm FakeUsersRepository()
-    // usersRepository = FakeUsersRepository()
 ) {
     suspend fun searchRecipes(
         ingredients: List<String>,

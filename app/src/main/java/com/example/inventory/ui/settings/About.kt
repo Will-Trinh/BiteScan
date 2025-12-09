@@ -71,7 +71,7 @@ fun AboutScreen(navController: NavController, modifier: Modifier = Modifier) {
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
                 Text(
-                    text = "Released: November 2025",
+                    text = "Released: December 2025",
                     fontSize = 16.sp,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )

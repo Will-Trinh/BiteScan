@@ -15,8 +15,10 @@ import java.util.*
 import kotlinx.coroutines.flow.asStateFlow
 import android.util.Log
 import kotlinx.coroutines.flow.Flow
+//import dagger.hilt.android.lifecycle.HiltViewModel
+//import javax.inject.Inject
 
-open class MyPantryViewModel(
+open class MyPantryViewModel  constructor(
     private val itemsRepository: ItemsRepository,
     private val receiptsRepository: ReceiptsRepository
 ) : ViewModel() {

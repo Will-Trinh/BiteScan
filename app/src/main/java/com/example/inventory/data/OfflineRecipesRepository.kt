@@ -7,7 +7,8 @@ class OfflineRecipesRepository(private val recipeDao: RecipeDao) : RecipesReposi
     override fun getAllRecipesStream(): Flow<List<Recipe>> = recipeDao.getAllRecipes()
     override fun getRecipeStream(id: Int): Flow<Recipe?> = recipeDao.getRecipe(id)
     override fun searchRecipes(query: String): Flow<List<Recipe>> = recipeDao.searchRecipes(query)
-    override suspend fun insertRecipe(recipe: Recipe) = recipeDao.insertRecipe(recipe)
+    override suspend fun insertRecipe(recipe: Recipe): Long = recipeDao.insertRecipe(recipe)
+    override suspend fun upsertRecipe(recipe: Recipe): Long = recipeDao.upsertRecipe(recipe)
     override suspend fun deleteRecipe(recipe: Recipe) = recipeDao.deleteRecipe(recipe)
     override suspend fun updateRecipe(recipe: Recipe) = recipeDao.updateRecipe(recipe)
 

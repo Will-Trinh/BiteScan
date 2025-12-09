@@ -38,5 +38,11 @@ class OfflineItemsRepository (val itemDao: ItemDao) : ItemsRepository {
     override fun getItemsForUserByCategory(userId: Int, category: String): Flow<List<Item>> =
         itemDao.getItemsForUserByCategory(userId, category)
 
+    /**
+     * Retrieve items for a user with store name from receipt source.
+     */
+    override fun getItemsWithStoreForUser(userId: Int): Flow<List<Item>> =
+        itemDao.getItemsWithStoreForUser(userId)
+
     companion object
 }

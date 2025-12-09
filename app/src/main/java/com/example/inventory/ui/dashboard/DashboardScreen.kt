@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,7 +22,6 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.inventory.ui.navigation.BottomNavigationBar
 import com.example.inventory.ui.theme.CookingAssistantTheme
-import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.ui.platform.LocalContext
 import com.example.inventory.InventoryApplication
 import com.example.inventory.data.OfflineUsersRepository
@@ -59,7 +57,6 @@ fun DashboardScreen(
     }
     LaunchedEffect(userId) {
         viewModel.setCurrentUserId(userId?:0)
-        recipeViewModel.refreshRecommendations()
     }
 
 
@@ -67,7 +64,6 @@ fun DashboardScreen(
     val macroBreakdown by viewModel.macroBreakdown.collectAsState()
     val spendingByCategory by viewModel.spendingByCategory.collectAsState()
     val insights by viewModel.insights.collectAsState()
-    val recipes by viewModel.recipes.collectAsState()
 
     // Loading state
     val isLoading = metrics.calories == 0 && metrics.items == 0
@@ -137,15 +133,6 @@ fun DashboardScreen(
                             }
                         }
                     }
-
-                    item {
-                        RecipesSection(
-                            recipes = recipes,
-                            onSeeAllClick = { navController.navigate("recipe_recommendations") }
-                        )
-                    }
-
-                    item { Spacer(Modifier.height(32.dp)) }
                 }
             }
         }
@@ -424,93 +411,6 @@ fun InsightsCard(title: String, message: String, color: Color, backgroundColor: 
                 text = message,
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-            )
-        }
-    }
-}
-
-// --- Recipes Section ---
-
-@Composable
-fun RecipesSection(recipes: List<RecipeSuggestion>, onSeeAllClick: () -> Unit) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Bottom
-        ) {
-            Text(
-                text = "Recipes You Can Make",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            TextButton(onClick = onSeeAllClick) {
-                Text("See All", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
-            }
-        }
-        Spacer(Modifier.height(12.dp))
-
-        if (recipes.isEmpty()) {
-            Text(
-                text = "No recipes available yet",
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(16.dp)
-            )
-        } else {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                recipes.forEach { recipe ->
-                    RecipeItem(
-                        title = recipe.title,
-                        details = recipe.details,
-                        iconResId = recipe.iconResId
-                    )
-                    if (recipe != recipes.last()) {
-                        HorizontalDivider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), thickness = 0.5.dp)
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun RecipeItem(title: String, details: String, iconResId: Int) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(MaterialTheme.colorScheme.tertiary),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Restaurant,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(32.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        Column {
-            Text(
-                text = title,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = details,
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
