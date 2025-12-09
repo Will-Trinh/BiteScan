@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -28,8 +29,17 @@ import com.example.inventory.ui.navigation.BottomNavigationBar
 import com.example.inventory.ui.theme.CookingAssistantTheme
 import com.example.inventory.ui.theme.LightGreen
 import com.example.inventory.ui.theme.PrimaryGreen
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import android.util.Log
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class,
+    ExperimentalMaterialApi::class
+)
 @Composable
 fun RecipeRecommendationScreen(
     navController: NavController,
@@ -39,8 +49,31 @@ fun RecipeRecommendationScreen(
     modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    LaunchedEffect(Unit) {
+        viewModel.refresh()
+    }
 
 
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = uiState.isLoading,
+        onRefresh = { viewModel.refresh() }
+    )
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                // Call a function in your ViewModel to reload the diet
+                viewModel.refresh()
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
     CookingAssistantTheme {
         Scaffold(
             topBar = {
@@ -64,6 +97,7 @@ fun RecipeRecommendationScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .pullRefresh(pullRefreshState)
                     .padding(innerPadding)
                     .padding(horizontal = 16.dp)
             ) {
@@ -110,7 +144,9 @@ fun RecipeBody(
 
             uiState.recipes.isEmpty() && uiState.errorMessage != null -> {
                 Column(
-                    modifier = Modifier.align(Alignment.Center).padding(32.dp),
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(32.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(Icons.Default.Restaurant, null, tint = Color.LightGray, modifier = Modifier.size(80.dp))
@@ -330,11 +366,26 @@ fun FiltersCard(
 
             // Diet & Time - Multi Select
             Text("Diet & Time", fontWeight = FontWeight.Medium, fontSize = 14.sp, modifier = Modifier.padding(bottom = 8.dp))
+//            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+//                uiState.allFilters.forEach { filter ->
+//                    FilterCheckboxChip(
+//                        label = filter,
+//                        isSelected = uiState.selectedFilters.contains(filter),
+//                        onClick = { onToggleFilter(filter) }
+//                    )
+//                }
+//            }
+            // User Diet - one Select
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                uiState.allFilters.forEach { filter ->
+
+                Log.d("RecipeViewModel", "Filter diet is: ${uiState.selectedFilters}")
+                listOf("Any") + uiState.allFilters.forEach { filter ->
                     FilterCheckboxChip(
                         label = filter,
-                        isSelected = uiState.selectedFilters.contains(filter),
+                        isSelected = when (filter) {
+                            "Any" -> uiState.selectedFilters == "Any" || uiState.selectedFilters.isBlank()
+                            else -> uiState.selectedFilters == filter
+                        },
                         onClick = { onToggleFilter(filter) }
                     )
                 }
@@ -370,14 +421,17 @@ fun RecipeCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onRecipeClick((recipe.id).toInt())},
+            .clickable { onRecipeClick((recipe.id).toInt()) },
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(
-                modifier = Modifier.size(64.dp).clip(RoundedCornerShape(8.dp)).background(LightGreen),
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(LightGreen),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(Icons.Default.Restaurant, null, tint = PrimaryGreen, modifier = Modifier.size(32.dp))

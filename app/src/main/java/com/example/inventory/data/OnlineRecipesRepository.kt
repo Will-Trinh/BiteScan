@@ -15,11 +15,8 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.sql.Date
 import java.util.concurrent.TimeUnit
-import com.example.inventory.ui.AppViewModel
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.update
-import kotlinx.serialization.json.Json
 import kotlin.collections.emptyList
 
 
@@ -184,7 +181,7 @@ open class OnlineRecipesRepository(
         ingredients: List<String>,
         country: String? = null,
         style: String? = null,
-        filters: List<String> = emptyList(),
+        filters: String? = null,
     ): List<Recipe> = withContext(Dispatchers.IO) {
         require(ingredients.isNotEmpty()) { "Ingredients cannot be empty" }
         if (userId == 0) {
@@ -289,7 +286,7 @@ open class OnlineRecipesRepository(
         ingredients: List<String>,
         country: String?,
         style: String?,
-        filters: List<String>
+        filters: String?
     ): String {
         val sb = StringBuilder()
         sb.appendLine("You are helping a home cook plan meals using only ingredients from their pantry.")
@@ -336,8 +333,8 @@ open class OnlineRecipesRepository(
             sb.appendLine("Preferred cooking style: $it.")
         }
 
-        if (filters.isNotEmpty()) {
-            sb.appendLine("Additional preferences: ${filters.joinToString(", ")}.")
+        if (filters != null) {
+            sb.appendLine("Additional preferences: ${filters}.")
         }
 
         sb.appendLine()

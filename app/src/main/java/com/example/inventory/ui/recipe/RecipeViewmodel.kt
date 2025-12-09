@@ -13,7 +13,6 @@ import kotlinx.coroutines.launch
 import com.google.gson.Gson
 import com.example.inventory.data.Nutrition
 
-
 class RecipeViewModel(
     private val onlineRecipesRepository: OnlineRecipesRepository,
     private val myPantryViewModel: MyPantryViewModel,
@@ -27,8 +26,16 @@ class RecipeViewModel(
 
     init {
         observeAvailableIngredients()
+        viewModelScope.launch {
+            appViewModel.userDiet.collect { diet ->
+                Log.d("RecipeViewModel", "Diet updated from AppViewModel: $diet")
+                _uiState.update { it.copy(selectedFilters = diet) }
+            }
+        }
+        appViewModel.loadUserDiet()
     }
-    fun refreshRecommendations() {
+
+    fun refresh() {
         val userId = appViewModel.userId.value ?: 0
         myPantryViewModel.loadPantryItems(userId)
     }
@@ -71,9 +78,8 @@ class RecipeViewModel(
 
     fun toggleFilter(filter: String) {
         _uiState.update {
-            val set = it.selectedFilters.toMutableSet()
-            if (set.contains(filter)) set.remove(filter) else set.add(filter)
-            it.copy(selectedFilters = set)
+            val newValue = if (_uiState.value.selectedFilters == filter) "Any" else filter
+            _uiState.value.copy(selectedFilters = newValue)
         }
     }
     fun findRecipesWithAi() {
@@ -97,7 +103,7 @@ class RecipeViewModel(
 
             val country = _uiState.value.selectedCountry
             val style = _uiState.value.selectedStyle
-            val filters = _uiState.value.selectedFilters.toList()
+            val filters = _uiState.value.selectedFilters
 
             try {
                 Log.d("RecipeViewModel", "Searching recipes with ingredients: $includedIngredients")
@@ -225,8 +231,6 @@ class RecipeViewModel(
             }
         }
     }
-    //fun clearError() = _uiState.update { it.copy(errorMessage = null) }
-
 
 
 }
@@ -247,10 +251,11 @@ data class RecipeUiState(
     val availableIngredients: List<String> = emptyList(),
     val excludedIngredients: Set<String> = emptySet(),
     val allFilters: List<String> = listOf(
-        "High Protein", "Vegetarian", "Vegan", "Low Carb",
-        "Quick (<30m)", "Healthy"
+     "Vegetarian", "Vegan", "Low Carb"
+        , "Healthy", "gluten-free"
     ),
-    val selectedFilters: Set<String> = emptySet(),
+
+    val selectedFilters: String = "Any",
     val recipes: List<RecipeUiModel> = emptyList(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null

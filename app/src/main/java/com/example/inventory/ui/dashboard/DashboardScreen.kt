@@ -57,7 +57,6 @@ fun DashboardScreen(
     }
     LaunchedEffect(userId) {
         viewModel.setCurrentUserId(userId?:0)
-        recipeViewModel.refreshRecommendations()
     }
 
 

@@ -24,7 +24,7 @@ class RecipeDetailViewModel(
     private val appViewModel: AppViewModel
 ) : ViewModel() {
 
-
+    //get user diet from appViewModel
     private val _uiState = MutableStateFlow(RecipeDetailUiState())
     val uiState: StateFlow<RecipeDetailUiState> = _uiState.asStateFlow()
 
