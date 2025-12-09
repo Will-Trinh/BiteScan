@@ -59,7 +59,7 @@ class MainActivity : ComponentActivity() {
                     AboutDestination.route,
                     NotFoundDestination.route,
                     RecipeDestination.route,
-                    RecipeDetailDestination.route
+                    RecipeDetailDestination.route,
                     PriceTrackerDestination.route
                 )
                 if (!validRoutes.any { it == destination.route }) {
