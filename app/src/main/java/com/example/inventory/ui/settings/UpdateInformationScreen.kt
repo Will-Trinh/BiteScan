@@ -164,6 +164,7 @@ fun UpdateInformationScreen(
                                 conn.setRequestProperty("Content-Type", "application/json")
                                 conn.doOutput = true
                                 val json = JSONObject().apply {
+                                    // this technically shouldnt be here, bnut im lazy, remove email later
                                     put("email", "_@gmail.com")
                                     put("password", uiState.newPassword)
                                     put("username", uiState.userName)
