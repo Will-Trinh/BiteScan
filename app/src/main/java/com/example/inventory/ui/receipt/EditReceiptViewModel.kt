@@ -40,18 +40,18 @@ class EditReceiptViewModel(
     val editUiState: StateFlow<EditUiState> = _editUiState.asStateFlow()
     var deleteItems: List<Item> = emptyList()
 
-//deleteItem and update listItem in EditReceiptScreen
+    //deleteItem and update listItem in EditReceiptScreen
     fun deleteItem(selectedItemIndex: Int) {
         try{
-        val currentItems = _editUiState.value.itemList.toMutableList()
-        //get item to delete
-        deleteItems = deleteItems + currentItems[selectedItemIndex]
-        currentItems.removeAt(selectedItemIndex)
-        _editUiState.value = _editUiState.value.copy(
-            itemList = currentItems.sortedBy { it.id },
-            totalItems = calculateTotalItem(currentItems),
-            totalPrice = calculateTotalPrice(currentItems)
-        )}catch (e: Exception) {
+            val currentItems = _editUiState.value.itemList.toMutableList()
+            //get item to delete
+            deleteItems = deleteItems + currentItems[selectedItemIndex]
+            currentItems.removeAt(selectedItemIndex)
+            _editUiState.value = _editUiState.value.copy(
+                itemList = currentItems.sortedBy { it.id },
+                totalItems = calculateTotalItem(currentItems),
+                totalPrice = calculateTotalPrice(currentItems)
+            )}catch (e: Exception) {
             Log.e("EditReceiptVM", "Error deleting item: ${e.message}")}
     }
 
@@ -191,6 +191,60 @@ class EditReceiptViewModel(
             }
         }
     }
+
+    /** Process items first, then save with nutrition data */
+    suspend fun processItemsAndSave(receipt: Receipt, userId: Int) {
+        try {
+            withTimeout(300000L) {
+                val processedItems = withContext(Dispatchers.IO) { _processItems() }
+                // Update UI state with processed items
+                _editUiState.value = _editUiState.value.copy(itemList = processedItems)
+                Log.d("EditReceiptVM", "Items processed successfully, now saving...")
+            }
+        } catch (e: TimeoutCancellationException) {
+            Log.e("EditReceiptVM", "Processing timed out: ${e.message}", e)
+        } catch (e: Exception) {
+            Log.e("EditReceiptVM", "Processing failed: ${e.message}", e)
+        }
+        // Now save the updated items (whether processed or original)
+        saveUpdatedItemsInternal(receipt, userId)
+    }
+
+    /** Internal save method that runs synchronously within a coroutine */
+    private suspend fun saveUpdatedItemsInternal(receipt: Receipt, userId: Int) {
+        try {
+            //delete items
+            deleteItems.forEach { item ->
+                itemsRepository.deleteItem(item)
+            }
+            //update receipt
+            receiptsRepository.updateReceipt(receipt)
+            //check if item is in receipt, update item in receipt, if item is new add, insert it in to the receipt.
+            val updatedItems = _editUiState.value.itemList.map { it.copy(receiptId = receipt.receiptId) }
+            updatedItems.forEach { item ->
+                if (item.id == 0) {
+                    itemsRepository.insertItem(item.copy(receiptId = receipt.receiptId))
+                    Log.d("EditReceiptVM", "Item ID ${item.id} saved successfully")
+                } else {
+                    itemsRepository.updateItem(item.copy(receiptId = receipt.receiptId))
+                    Log.d("EditReceiptVM", "Item ID ${item.id} updated successfully")
+                }
+            }
+            val receiptID = receipt.receiptId
+            //syns client receipt to server
+            Log.d("EditReceiptVM", "Receipt ID $receiptID uploading to server")
+            onlineReceiptsRepository!!.uploadReceiptToServer(receiptID, userId)
+            Log.d("EditReceiptVM", "Receipt ID $receiptID uploaded to server successfully")
+            _editUiState.value = _editUiState.value.copy(
+                receipt = receipt,
+                itemList = updatedItems
+            )
+            Log.d("EditReceiptVM", "Items saved successfully")
+
+        } catch (e: Exception) {
+            Log.e("EditReceiptVM", " Error saving items: ${e}")
+        }
+    }
     /** Delete receipt (placeholder for API DELETE) */
     suspend fun deleteReceipt(receipt: Receipt, userId: Int) {
         receiptsRepository.deleteReceipt(receipt)
@@ -216,7 +270,6 @@ class EditReceiptViewModel(
     }
 
     private suspend fun _processItems(): MutableList<Item> {
-        // TODO:
         // this url needs to be dynamic so we dont gotta change it everywhere, put in config
         Log.d("UploadViewModel", "Starting API call to $nutritionApiUrl")
 

@@ -271,10 +271,9 @@ fun EditReceiptScreen(
                             val receipt = editUiState.receipt
                             if (receipt != null) {
                                 actualViewModel.viewModelScope.launch {
-                                    actualViewModel.saveUpdatedItems(
-                                        receipt.copy(status = "Completed"),userId!!
+                                    actualViewModel.processItemsAndSave(
+                                        receipt.copy(status = "Completed"), userId!!
                                     )
-                                    actualViewModel.processItems()
                                 }
                                 navController.navigate("history") {
                                     popUpTo(navController.graph.startDestinationId) {
@@ -636,5 +635,3 @@ fun ItemsCardPreview() {
         }
     }
 }
-
-

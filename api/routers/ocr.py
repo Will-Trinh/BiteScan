@@ -39,6 +39,10 @@ async def ocr_receipt(data: dict):
         # Parse CLI output as JSON
         parsed_result = json.loads(result.stdout.strip())
 
+        if not parsed_result.get("store"):
+            parsed_result["store"] = "Unknown Store"
+        if not parsed_result.get("merchant_name"):
+            parsed_result["merchant_name"] = "Unknown Store"
         for item in parsed_result["line_items"]:
             if not item.get("item_quantity"):
                 item["item_quantity"] = 1
