@@ -1,5 +1,6 @@
 package com.example.inventory.ui.landing
 
+import android.annotation.SuppressLint
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -59,6 +60,9 @@ fun LoginScreen(
             throw IllegalStateException("Application context is not an instance of InventoryApplication")
     }
     }
+
+
+
 
     val loginResult = actualViewModel.loginResult.collectAsState().value
     val isLoading = actualViewModel.isLoading.collectAsState().value
@@ -249,10 +253,13 @@ fun LoginScreen(
 
     //Added: Show login result as Toast
     LaunchedEffect(loginResult) {
-        loginResult?.let { result ->
+        loginResult.let { result ->
             Toast.makeText(
                 context,
-                if (result.success) "Login success: User Name: ${result.username}, User ID=${result.uid}" else "Login failed: ${result.errorMessage}",
+                if (result.success) "Login success: User Name: ${result.username}, User ID=${result.uid}"
+                else if (result.errorMessage == null) "Welcome to BiteScan!"
+                else "Login failed: ${result.errorMessage}"
+                ,
                 Toast.LENGTH_LONG
             ).show()
             if (result.success) {
@@ -409,6 +416,7 @@ fun RowScope.ToggleButton(
     }
 }
 
+@SuppressLint("ViewModelConstructorInComposable")
 @Preview(showBackground = true)
 @Composable
 fun LoginScreenPreview() {
