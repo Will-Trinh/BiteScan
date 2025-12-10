@@ -216,7 +216,6 @@ class EditReceiptViewModel(
     }
 
     private suspend fun _processItems(): MutableList<Item> {
-        // TODO:
         // this url needs to be dynamic so we dont gotta change it everywhere, put in config
         Log.d("UploadViewModel", "Starting API call to $nutritionApiUrl")
 

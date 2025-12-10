@@ -71,7 +71,7 @@ class LoginScreenViewModel(
                     OutputStreamWriter(conn.outputStream).use { it.write(json.toString()) }
 
                     val responseCode = conn.responseCode
-                    Log.d("LoginVM", "Response code: $responseCode")
+//                    Log.d("LoginVM", "Response code: $responseCode")
                     if (responseCode == 500) {
                         val json = JSONObject().apply {
                             put("email", email)
@@ -94,7 +94,7 @@ class LoginScreenViewModel(
                             loadReceiptsUser(userId)
                             Log.d("LoginVM", "syns successfully")
                         } catch (e: Exception) {
-                            Log.e("LoginVM", "Error during sync: ${e.message}")
+//                            Log.e("LoginVM", "Error during sync: ${e.message}")
                             _loginResult.value = _loginResult.value.copy(success = false, errorMessage = "Error during sync: ${e.message}")
                         }}
                         viewModelScope.launch { usersRepository.insertUser(User(userId = userId, username = username, email = email, phone ="", diet = ""))}
@@ -125,12 +125,12 @@ class LoginScreenViewModel(
                     } else {
                         return@withContext LoginResult(
                             success = false,
-                            errorMessage = "Login failed ($responseCode)",
+//                            errorMessage = "Login failed ($responseCode)",
                             email = ""
                         )
                     }
                 } catch (e: Exception) {
-                    Log.e("LoginVM", "Error during login: ${e.message}", e)
+//                    Log.e("LoginVM", "Error during login: ${e.message}", e)
                     LoginResult(success = false, errorMessage = "Connect failed: ${e.message}", uid = 0, phone = null, email = "", username = "")
                 }
             }

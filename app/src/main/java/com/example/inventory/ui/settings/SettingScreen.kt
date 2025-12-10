@@ -331,11 +331,12 @@ fun SettingScreen(
     // Navigate away on logout (unchanged)
     LaunchedEffect(isLoggedOut) {
         if (isLoggedOut) {
-            navController.navigate("login") {
-                popUpTo(navController.graph.startDestinationId) { inclusive = true }
+            navController.navigate("landing") {
+                popUpTo(navController.graph.startDestinationId) {
+                    inclusive = true
+                }
                 launchSingleTop = true
             }
-            android.util.Log.d("Log Out", "Logged out successfully")
             Toast.makeText(context, "Logged out successfully", Toast.LENGTH_LONG).show()
         }
     }
