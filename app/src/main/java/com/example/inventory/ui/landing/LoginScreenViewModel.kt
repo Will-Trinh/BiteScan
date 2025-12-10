@@ -72,7 +72,16 @@ class LoginScreenViewModel(
 
                     val responseCode = conn.responseCode
                     Log.d("LoginVM", "Response code: $responseCode")
+                    if (responseCode == 500) {
+                        val json = JSONObject().apply {
+                            put("email", email)
+                            put("password", password)
+                        }
+                        OutputStreamWriter(conn.outputStream).use { it.write(json.toString()) }
 
+                        val responseCode = conn.responseCode
+                        Log.d("LoginVM", "Response code: $responseCode")
+                    }
                     if (responseCode == 200) {
                         val raw = conn.inputStream.bufferedReader().use { it.readText() }
                         Log.d("API_RAW_RESPONSE", raw)

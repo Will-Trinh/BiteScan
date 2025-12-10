@@ -132,7 +132,10 @@ class UploadViewModel(
                     updateStep(2, StepStatus.COMPLETED)
                     //Loading step 4: Connecting to Server...
                     updateStep(3, StepStatus.IN_PROGRESS, 0.4f)
+                    //check if server is connected, if not discard the connection
                     val receiptData = withContext(Dispatchers.IO) { callPythonOcrApi(base64Image) }
+                    //Loading step 5: Reading the receipt...
+                    delay(600)
                     updateStep(3, StepStatus.COMPLETED)
                     //Loading step 5: Finishing the receipt...
                     delay(600)
