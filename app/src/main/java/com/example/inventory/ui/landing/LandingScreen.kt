@@ -16,17 +16,17 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.inventory.ui.theme.CookingAssistantTheme
 import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import com.example.inventory.R
 import com.example.inventory.ui.theme.PrimaryGreen
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.text.style.TextAlign
 
 @Composable
 fun LandingScreen(
@@ -34,34 +34,38 @@ fun LandingScreen(
     modifier: Modifier = Modifier,
     navController: NavController
 ) {
-    // Mimic the overall gray background and the rounded-corner content area
     Surface(
         modifier = modifier
             .fillMaxSize()
             .background(Color.White)
-            .padding(16.dp), // Padding around the main content card
-        color = Color.White // Set Surface color to match
+            .padding(16.dp),
+        color = Color.White
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .clip(RoundedCornerShape(32.dp)) // Large corner radius for the main content box
+                .clip(RoundedCornerShape(32.dp))
                 .background(Color.White)
-                .padding(top = 16.dp), // Top padding for the content inside the white box
+                .verticalScroll(rememberScrollState())     // 👈 make it scrollable
+                .padding(top = 16.dp, bottom = 24.dp),     // add bottom padding so button isn't clipped
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-
-            // Logo and Welcome Text
-            Row (verticalAlignment = Alignment.CenterVertically,
+            // Logo and title
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(top=80.dp)) {
+                modifier = Modifier
+                    .padding(top = 40.dp)                  // a bit smaller than 80dp
+                    .fillMaxWidth()
+            ) {
                 Icon(
                     imageVector = Icons.Default.Eco,
                     contentDescription = "BiteScan Logo",
                     tint = PrimaryGreen,
                     modifier = Modifier.size(50.dp)
                 )
+                Spacer(Modifier.width(8.dp))
                 Text(
                     text = "BiteScan",
                     fontSize = 40.sp,
@@ -70,20 +74,21 @@ fun LandingScreen(
                 )
             }
 
-            // Image Placeholder Section (Receipt and Phone)
+            // Image
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(0.9f), // Slightly smaller width
-                contentAlignment = Alignment.Center,
-
+                    .fillMaxWidth(0.9f)
+                    .padding(top = 24.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Image(painter = painterResource(id = R.drawable.your_receipt_and_phone_image),
+                Image(
+                    painter = painterResource(id = R.drawable.your_receipt_and_phone_image),
                     contentDescription = "Receipt and Phone Placeholder",
                     modifier = Modifier.size(300.dp)
-                    )
+                )
             }
 
-            // Main Title
+            // Title text
             Text(
                 text = buildAnnotatedString {
                     append("Track nutrition\nfrom your ")
@@ -94,38 +99,42 @@ fun LandingScreen(
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                textAlign = TextAlign.Center,
                 lineHeight = 40.sp,
-                modifier = Modifier.padding(horizontal = 32.dp)
+                modifier = Modifier.padding(horizontal = 32.dp, vertical = 16.dp)
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Subtitle/Description
+            // Subtitle
             Text(
                 text = "Snap a photo of your grocery receipt and get instant nutrition insights and spending analysis",
                 fontSize = 16.sp,
                 color = Color.Gray,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 48.dp)
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-            // Get Started Button
+            // Button
             Button(
-                onClick = { onGetStartedClick() },
+                onClick = onGetStartedClick,
                 modifier = Modifier
-                    .fillMaxWidth(0.8f) // Controls the button width
-                    .height(40.dp)
-                    .shadow(elevation = 8.dp, shape = RoundedCornerShape(28.dp), clip = true), // Added shadow for lift
-                shape = RoundedCornerShape(28.dp), // Pill-shaped button
+                    .fillMaxWidth(0.8f)
+                    .height(48.dp)
+                    .shadow(
+                        elevation = 8.dp,
+                        shape = RoundedCornerShape(28.dp),
+                        clip = true
+                    ),
+                shape = RoundedCornerShape(28.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen),
-                contentPadding = PaddingValues(horizontal = 24.dp),
+                contentPadding = PaddingValues(horizontal = 24.dp)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 60.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 40.dp)
                 ) {
                     Text(
                         text = "Get Started",
@@ -133,7 +142,7 @@ fun LandingScreen(
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.weight(1f))
                     Icon(
                         imageVector = Icons.Default.ArrowForward,
                         tint = Color.White,
@@ -143,15 +152,7 @@ fun LandingScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(24.dp))
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun LandingScreenPreview() {
-    CookingAssistantTheme {
-        LandingScreen(onGetStartedClick = { /* Do nothing for preview */ }, navController = rememberNavController())
     }
 }

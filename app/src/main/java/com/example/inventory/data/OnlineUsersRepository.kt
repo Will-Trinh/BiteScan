@@ -68,7 +68,11 @@ class OnlineUsersRepository(
 
         try {
             if (!response.isSuccessful) {
-                throw Exception("Upload failed: ${response.code} - ${response.message}")
+//                throw Exception("Upload failed: ${response.code} - ${response.message}")
+                Log.e(
+                    "OnlineUsersRepository",
+                    "Upload failed: $response - $body"
+                )
             }
 
             Log.d("OnlineUserRepository", "Upload UserId=$userId completed.")
