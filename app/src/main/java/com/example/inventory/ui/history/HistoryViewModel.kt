@@ -32,9 +32,11 @@ class ReceiptViewModel(
                     val items = itemsRepository.getItemsForReceipt(receipt.receiptId).first()
                     val totalPrice = items.sumOf { it.price * it.quantity.toDouble() }
                     val totalItems = items.size
+                    val calories = items.sumOf { it.calories?.toInt() ?: 0}
                     summaryMap[receipt.receiptId] = ReceiptSummary(
                         totalPrice = totalPrice,
-                        itemCount = totalItems
+                        itemCount = totalItems,
+                        calories = calories
                     )
 
                 }
@@ -143,5 +145,6 @@ enum class SyncStatus {
 }
 data class ReceiptSummary(
     val totalPrice: Double,
-    val itemCount: Int
+    val itemCount: Int,
+    val calories: Int
 )

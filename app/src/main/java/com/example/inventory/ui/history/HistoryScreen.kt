@@ -408,7 +408,7 @@ fun HistoryReceiptCard(
     // Calculate values using ViewModel logic
     val totalPrice = receiptUiState.receiptSummary[receipt.receiptId]?.totalPrice
     val itemCount = receiptUiState.receiptSummary[receipt.receiptId]?.itemCount
-    val totalCalories = 2000 // Placeholder for calorie calculation
+    val totalCalories = receiptUiState.receiptSummary[receipt.receiptId]?.calories
 
     // Function to format time ago (simplistic for UI)
     val timeAgo: String = remember(receipt.date) {
